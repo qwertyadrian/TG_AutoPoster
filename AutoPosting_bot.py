@@ -39,10 +39,15 @@ def send_new_posts(items, last_id):
         elif item['attachment']['type'] == 'link':
             send_post_with_link(item)
         elif item['attachment']['type'] == 'doc':
-            # Функция отправки документов не реализована
             send_post_with_doc(item)
         elif item['attachment']['type'] == 'video':
         	send_post_with_video(item)
+        elif item['attachment']['type'] == 'poll':
+            # Функция отправки опросов не реализована
+            send_post_with_poll(item)
+        elif item['attachment']['type'] == 'audio':
+        	# Функция отправки аудиозаписей не реализована
+        	send_post_with_music(item)
         else:
         	logging.warning('In the post, no text, photos, videos, links and documents not found.')
     # Спим секунду, чтобы избежать разного рода ошибок и ограничений (на всякий случай!)
@@ -75,7 +80,7 @@ def send_post_with_many_photos(post):
         bot.sendPhoto(CHAT_ID, photo, caption_formatted)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            # Функция отправки аудио не реализована
+            # Функция отправки аудиозаписей не реализована
             pass
         else:
             photo = i['photo']['src_big']
@@ -95,13 +100,49 @@ def send_post_with_video(post):
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachment']['video']['owner_id'], '_', post['attachment']['video']['vid'])
     caption = post['text']
     pattern = r'<br>'
-    caption_formatted = re.sub(pattern, '\n', caption) + '\n' + link
+    caption_formatted = re.sub(pattern, '\n', caption)
     text = caption_formatted + '\n' + link
     bot.sendMessage(CHAT_ID, text)
 
 def send_post_with_doc(post):
-    # Функция отправки документов не реализована
+    caption = post['text']
+    pattern = r'<br>'
+    caption_formatted = re.sub(pattern, '\n', caption)
+    document = post['attachment']['doc']['url']
+    if len(caption_formatted) > 199:
+        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendPhoto(CHAT_ID, document)
+    else:
+        bot.sendDocument(CHAT_ID, document, caption_formatted)
+    for i in post['attachments'][1:]:
+        bot.sendDocument(CHAT_ID, i['doc']['url'])
+        
+        
+def send_post_with_poll(post):
+	# Функция отправки опросов не реализована
     pass
+    
+    
+def send_post_with_music(post):
+    # Функция отправки аудиозаписей не реализована
+    media = []
+    caption = post['text']
+    pattern = r'<br>'
+    caption_formatted = re.sub(pattern, '\n', caption)
+    if caption == '':
+        caption_formatted = None
+    else:
+        bot.sendMessage(CHAT_ID, caption_formatted)
+    for i in post['attachments'][1:]:
+        if i['type'] == 'audio':
+            # Функция отправки аудиозаписей не реализована
+            pass
+        elif i['type'] == 'doc':
+            bot.sendDocument(CHAT_ID, i['doc']['url'])
+        else:
+            photo = i['photo']['src_big']
+            media.append({'media': photo, 'type': 'photo'})
+    bot.sendMediaGroup(CHAT_ID, media)
 
 
 def check_new_posts_vk():
