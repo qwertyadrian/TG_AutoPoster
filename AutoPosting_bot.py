@@ -7,11 +7,10 @@ import logging
 import re
 from time import sleep
 
-TOKEN = '466499924:AAFfU9g-ra-rV2a938bBQrMStmRxMIVqzpw'
-URL_VK = 'https://api.vk.com/method/wall.get?domain=hotelab&count=5&filter=owner&access_token=7f627d7f6788caa7fd2e86445f2634e3f4a555a3ace765b1175b9548011fbb75f281a18cbadb995e4e8d0'
+TOKEN = '**INPUT BOT TOKEN HERE**'
+URL_VK = 'https://api.vk.com/method/wall.get?domain=**INPUT GROUP NAME HERE**&count=**NUMBER OF RECORDS**&filter=owner&access_token=**INPUT YOUR VK TOKEN HERE**'
 FILENAME_VK = 'last_known_id.txt'
-CHANNEL_NAME = '@hotelab'
-CHAT_ID = '389716215'
+CHAT_ID = '**IUNPUT YOUR CHAT ID OR CHANNEL, SUPERGROUP ID**'
 BASE_VIDEO_URL = 'https://vk.com/video'
 bot = telepot.Bot(TOKEN)
 
