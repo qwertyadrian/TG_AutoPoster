@@ -84,7 +84,7 @@ def send_post_with_many_photos(post):
             pass
         else:
             photo = i['photo']['src_big']
-    media.append({'media': photo, 'type': 'photo'})
+        media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
 
 
