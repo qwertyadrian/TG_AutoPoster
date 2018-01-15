@@ -65,6 +65,7 @@ def send_post_with_one_photo(post):
         bot.sendMessage(CHAT_ID, caption_formatted)
     else:
         bot.sendPhoto(CHAT_ID, photo, caption_formatted)
+    sleep(5)
 
 
 def send_post_with_many_photos(post):
@@ -86,6 +87,7 @@ def send_post_with_many_photos(post):
             photo = i['photo']['src_big']
         media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
+    sleep(5)
 
 
 def send_post_with_link(post):
@@ -94,6 +96,7 @@ def send_post_with_link(post):
     pattern = r'<br>'
     caption_formatted = re.sub(pattern, '\n', caption) + '\n' + link
     bot.sendMessage(CHAT_ID, caption_formatted)
+    sleep(5)
     
     
 def send_post_with_video(post):
@@ -103,6 +106,7 @@ def send_post_with_video(post):
     caption_formatted = re.sub(pattern, '\n', caption)
     text = caption_formatted + '\n' + link
     bot.sendMessage(CHAT_ID, text)
+    sleep(5)
 
 def send_post_with_doc(post):
     caption = post['text']
@@ -116,6 +120,7 @@ def send_post_with_doc(post):
         bot.sendDocument(CHAT_ID, document, caption_formatted)
     for i in post['attachments'][1:]:
         bot.sendDocument(CHAT_ID, i['doc']['url'])
+    sleep(5)
         
         
 def send_post_with_poll(post):
@@ -143,6 +148,7 @@ def send_post_with_music(post):
             photo = i['photo']['src_big']
             media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
+    sleep(5)
 
 
 def check_new_posts_vk():
