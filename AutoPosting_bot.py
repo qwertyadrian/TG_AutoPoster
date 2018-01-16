@@ -177,7 +177,7 @@ def check_new_posts_vk():
             with open(FILENAME_VK, 'wt') as file:
                 try:
                     tmp = entries[0]['is_pinned']
-                    # Если первый пост - закрепленный, то сохраняем ID второго.
+                    # Если первый пост - закрепленный, то сохраняем ID второго
                     file.write(str(entries[1]['id']))
                     logging.info('New last_id (VK) is {!s}'.format((entries[1]['id'])))
                 except KeyError:
