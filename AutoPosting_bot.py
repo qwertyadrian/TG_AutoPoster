@@ -13,6 +13,7 @@ COUNT = '**INPUT NUMBER OF POSTS**'
 TOKEN_VK = '**INPUT YOUR VK TOKEN HERE**'
 URL_VK = 'https://api.vk.com/method/wall.get?domain=' + GROUP + '&count=' + COUNT + '&filter=owner&access_token=' + TOKEN_VK
 CHAT_ID = '**IUNPUT YOUR CHAT ID OR CHANNEL, SUPERGROUP ID**'
+FILENAME_VK = 'last_known_id.txt'
 BASE_VIDEO_URL = 'https://vk.com/video'
 bot = telepot.Bot(TOKEN)
 
