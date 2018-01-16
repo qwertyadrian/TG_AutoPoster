@@ -8,8 +8,10 @@ import re
 from time import sleep
 
 TOKEN = '**INPUT BOT TOKEN HERE**'
-URL_VK = 'https://api.vk.com/method/wall.get?domain=**INPUT GROUP NAME HERE**&count=**NUMBER OF RECORDS**&filter=owner&access_token=**INPUT YOUR VK TOKEN HERE**'
-FILENAME_VK = 'last_known_id.txt'
+GROUP = '**INPUT YOUR GROUP ID HERE**'
+COUNT = '**INPUT NUMBER OF POSTS**'
+TOKEN_VK = '**INPUT YOUR VK TOKEN HERE**'
+URL_VK = 'https://api.vk.com/method/wall.get?domain=' + GROUP + '&count=' + COUNT + '&filter=owner&access_token=' + TOKEN_VK
 CHAT_ID = '**IUNPUT YOUR CHAT ID OR CHANNEL, SUPERGROUP ID**'
 BASE_VIDEO_URL = 'https://vk.com/video'
 bot = telepot.Bot(TOKEN)
