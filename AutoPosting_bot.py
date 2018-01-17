@@ -28,26 +28,33 @@ def send_new_posts(items, last_id):
         if item['id'] <= last_id:
             logging.info('New posts not detected. Switching to waiting...')
             break
-        if item['attachment']['type'] == 'photo' and len(item['attachments']) == 1:
-            send_post_with_one_photo(item)
-        elif item['attachment']['type'] == 'photo' and len(item['attachments']) > 1:
-            send_post_with_many_photos(item)
-        elif item['attachment']['type'] == 'link':
-            send_post_with_link(item)
-        elif item['attachment']['type'] == 'doc':
-            send_post_with_doc(item)
-        elif item['attachment']['type'] == 'video':
-        	send_post_with_video(item)
-        elif item['attachment']['type'] == 'poll':
-            # Функция отправки опросов не реализована
-            send_post_with_poll(item)
-        elif item['attachment']['type'] == 'audio':
-        	# Функция отправки аудиозаписей не реализована
-        	send_post_with_music(item)
-        else:
-        	logging.warning('In the post, no text, photos, videos, links and documents not found.')
-    # Спим секунду, чтобы избежать разного рода ошибок и ограничений (на всякий случай!)
+        try:
+            if item['attachment']['type'] == 'photo' and len(item['attachments']) == 1:
+                send_post_with_one_photo(item)
+            elif item['attachment']['type'] == 'photo' and len(item['attachments']) > 1:
+                send_post_with_many_photos(item)
+            elif item['attachment']['type'] == 'link':
+                send_post_with_link(item)
+            elif item['attachment']['type'] == 'doc':
+                send_post_with_doc(item)
+            elif item['attachment']['type'] == 'video':
+            	send_post_with_video(item)
+            elif item['attachment']['type'] == 'poll':
+                # Функция отправки опросов не реализована
+                send_post_with_poll(item)
+            elif item['attachment']['type'] == 'audio':
+            	# Функция отправки аудиозаписей не реализована
+            	send_post_with_music(item)
+            else:
+            	pass
+        except KeyError:
+            logging.warning('In the post, no text, photos, videos, links and documents not found.')
+            if item['text'] != '':
+                bot.sendMessage(CHAT_ID, item['text'])
+            else:
+                pass
     sleep(1)
+    # Спим секунду, чтобы избежать разного рода ошибок и ограничений (на всякий случай!)
     return
 
 
