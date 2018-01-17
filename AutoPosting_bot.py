@@ -8,7 +8,6 @@ import re
 from config import *
 from time import sleep
 
-
 bot = telepot.Bot(TOKEN)
 
 
@@ -56,12 +55,14 @@ def send_post_with_one_photo(post):
     photo = post['attachment']['photo']['src_big']
     caption = post['text']
     pattern = r'<br>'
+    pattern1 = '@' + GROUP
     caption_formatted = re.sub(pattern, '\n', caption)
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
-        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendMessage(CHAT_ID, caption_formatted1)
     else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
+        bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
     sleep(5)
 
 
@@ -69,21 +70,26 @@ def send_post_with_many_photos(post):
     media = []
     caption = post['text']
     pattern = r'<br>'
+    pattern1 = '@' + GROUP
     caption_formatted = re.sub(pattern, '\n', caption)
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     photo = post['attachment']['photo']['src_big']
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
-        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendMessage(CHAT_ID, caption_formatted1)
     else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
+        bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             # Функция отправки аудиозаписей не реализована
             pass
         else:
             photo = i['photo']['src_big']
-        media.append({'media': photo, 'type': 'photo'})
-    bot.sendMediaGroup(CHAT_ID, media)
+            media.append({'media': photo, 'type': 'photo'})
+    if len(media) == 0:
+        pass
+    else:
+        bot.sendMediaGroup(CHAT_ID, media)
     sleep(5)
 
 
@@ -91,8 +97,10 @@ def send_post_with_link(post):
     link = post['attachment']['link']['url']
     caption = post['text']
     pattern = r'<br>'
-    caption_formatted = re.sub(pattern, '\n', caption) + '\n' + link
-    bot.sendMessage(CHAT_ID, caption_formatted)
+    pattern1 = '@' + GROUP
+    caption_formatted = re.sub(pattern, '\n', caption)
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted) + '\n' + link
+    bot.sendMessage(CHAT_ID, caption_formatted1)
     sleep(5)
     
     
@@ -100,21 +108,25 @@ def send_post_with_video(post):
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachment']['video']['owner_id'], '_', post['attachment']['video']['vid'])
     caption = post['text']
     pattern = r'<br>'
+    pattern1 = '@' + GROUP
     caption_formatted = re.sub(pattern, '\n', caption)
-    text = caption_formatted + '\n' + link
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
+    text = caption_formatted1 + '\n' + link
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
 
 def send_post_with_doc(post):
     caption = post['text']
     pattern = r'<br>'
+    pattern1 = '@' + GROUP
     caption_formatted = re.sub(pattern, '\n', caption)
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     document = post['attachment']['doc']['url']
     if len(caption_formatted) > 199:
-        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendMessage(CHAT_ID, caption_formatted1)
         bot.sendPhoto(CHAT_ID, document)
     else:
-        bot.sendDocument(CHAT_ID, document, caption_formatted)
+        bot.sendDocument(CHAT_ID, document, caption_formatted1)
     for i in post['attachments'][1:]:
         bot.sendDocument(CHAT_ID, i['doc']['url'])
     sleep(5)
@@ -130,11 +142,13 @@ def send_post_with_music(post):
     media = []
     caption = post['text']
     pattern = r'<br>'
+    pattern1 = '@' + GROUP
     caption_formatted = re.sub(pattern, '\n', caption)
+    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     if caption == '':
         caption_formatted = None
     else:
-        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendMessage(CHAT_ID, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             # Функция отправки аудиозаписей не реализована
