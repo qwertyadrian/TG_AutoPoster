@@ -10,7 +10,6 @@ from time import sleep
 
 bot = telepot.Bot(TOKEN)
 
-
 def get_data():
     timeout = eventlet.Timeout(10)
     try:
