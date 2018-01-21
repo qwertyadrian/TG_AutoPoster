@@ -119,6 +119,9 @@ def send_post_with_video(post):
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     text = caption_formatted1 + '\n' + link
+    for i in post['attachments'][1:]:
+        link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['vid'])
+        text = text + '\n' + link
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
 
