@@ -11,10 +11,10 @@ from time import sleep
 bot = telepot.Bot(TOKEN)
 
 
-def get_data():
+def get_data(URL):
     timeout = eventlet.Timeout(10)
     try:
-        feed = requests.get(URL_VK)
+        feed = requests.get(URL)
         return feed.json()
     except:
         logging.warning('Got Timeout while retrieving VK JSON data. Cancelling...')
@@ -23,28 +23,28 @@ def get_data():
         timeout.cancel()
 
 
-def send_new_posts(items, last_id):
+def send_new_posts(items, last_id, group):
     for item in items:
         if item['id'] <= last_id:
             logging.info('New posts not detected. Switching to waiting...')
             break
         try:
             if item['attachment']['type'] == 'photo' and len(item['attachments']) == 1:
-                send_post_with_one_photo(item)
+                send_post_with_one_photo(item, group)
             elif item['attachment']['type'] == 'photo' and len(item['attachments']) > 1:
-                send_post_with_many_photos(item)
+                send_post_with_many_photos(item, group)
             elif item['attachment']['type'] == 'link':
-                send_post_with_link(item)
+                send_post_with_link(item, group)
             elif item['attachment']['type'] == 'doc':
-                send_post_with_doc(item)
+                send_post_with_doc(item, group)
             elif item['attachment']['type'] == 'video':
-            	send_post_with_video(item)
+            	send_post_with_video(item, group)
             elif item['attachment']['type'] == 'poll':
                 # Функция отправки опросов не реализована
-                send_post_with_poll(item)
+                send_post_with_poll(item, group)
             elif item['attachment']['type'] == 'audio':
             	# Функция отправки аудиозаписей не реализована
-            	send_post_with_music(item)
+            	send_post_with_music(item, group)
             else:
             	pass
         except KeyError:
@@ -58,11 +58,11 @@ def send_new_posts(items, last_id):
     return
 
 
-def send_post_with_one_photo(post):
+def send_post_with_one_photo(post, group):
     photo = post['attachment']['photo']['src_big']
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     if len(caption_formatted) > 199:
@@ -73,11 +73,11 @@ def send_post_with_one_photo(post):
     sleep(5)
 
 
-def send_post_with_many_photos(post):
+def send_post_with_many_photos(post, group):
     media = []
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     photo = post['attachment']['photo']['src_big']
@@ -100,22 +100,22 @@ def send_post_with_many_photos(post):
     sleep(5)
 
 
-def send_post_with_link(post):
+def send_post_with_link(post, group):
     link = post['attachment']['link']['url']
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted) + '\n' + link
     bot.sendMessage(CHAT_ID, caption_formatted1)
     sleep(5)
     
     
-def send_post_with_video(post):
+def send_post_with_video(post, group):
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachment']['video']['owner_id'], '_', post['attachment']['video']['vid'])
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     text = caption_formatted1 + '\n' + link
@@ -125,10 +125,10 @@ def send_post_with_video(post):
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
 
-def send_post_with_doc(post):
+def send_post_with_doc(post, group):
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     document = post['attachment']['doc']['url']
@@ -142,17 +142,17 @@ def send_post_with_doc(post):
     sleep(5)
         
         
-def send_post_with_poll(post):
+def send_post_with_poll(post, group):
 	# Функция отправки опросов не реализована
     pass
     
     
-def send_post_with_music(post):
+def send_post_with_music(post, group):
     # Функция отправки аудиозаписей не реализована
     media = []
     caption = post['text']
     pattern = r'<br>'
-    pattern1 = '@' + GROUP
+    pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     if caption == '':
@@ -172,7 +172,7 @@ def send_post_with_music(post):
     sleep(5)
 
 
-def check_new_posts_vk():
+def check_new_posts_vk(URL, group, FILENAME_VK):
     # Пишем текущее время начала
     logging.info('[VK] Started scanning for new posts')
     with open(FILENAME_VK, 'rt') as file:
@@ -181,7 +181,7 @@ def check_new_posts_vk():
             logging.error('Could not read from storage. Skipped iteration.')
             return
         logging.info('Last ID (VK) = {!s}'.format(last_id))
-        feed = get_data()
+        feed = get_data(URL)
         # Если ранее случился таймаут, пропускаем итерацию. Если всё нормально - парсим посты.
         if feed is not None:
             entries = feed['response'][1:]
@@ -189,9 +189,9 @@ def check_new_posts_vk():
                 # Если пост был закреплен, пропускаем его
                 tmp = entries[0]['is_pinned']
                 # И запускаем отправку сообщений
-                send_new_posts(entries[1:], last_id)
+                send_new_posts(entries[1:], last_id, group)
             except KeyError:
-                send_new_posts(entries, last_id)
+                send_new_posts(entries, last_id, group)
             # Записываем новый last_id в файл.
             with open(FILENAME_VK, 'wt') as file:
                 try:
@@ -211,6 +211,7 @@ if __name__ == '__main__':
         logging.getLogger('requests').setLevel(logging.CRITICAL)
         logging.basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s',
                             level=logging.INFO, filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
-        check_new_posts_vk()
+        for (key, value) in URLS.items():
+            check_new_posts_vk(key, *value)
         logging.info('[App] Script went to sleep.')
         sleep(60 * 5)
