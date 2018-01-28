@@ -1,8 +1,9 @@
 TOKEN = ''
-GROUP = ''
 COUNT = ''
 TOKEN_VK = ''
-URL_VK = 'https://api.vk.com/method/wall.get?domain=' + GROUP + '&count=' + COUNT + '&filter=owner&access_token=' + TOKEN_VK
+GROUP_1 = ''
+URL_VK_1 = 'https://api.vk.com/method/wall.get?domain=' + GROUP + '&count=' + COUNT + '&filter=owner&access_token=' + TOKEN_VK
 CHAT_ID = ''
-FILENAME_VK = 'last_known_id.txt'
+FILENAME_VK_1 = 'last_known_id_1.txt'
 BASE_VIDEO_URL = 'https://vk.com/video'
+URLS = {URL_VK_1: (GROUP_1, FILENAME_VK_1)}
