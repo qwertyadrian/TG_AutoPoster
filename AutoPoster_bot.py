@@ -90,6 +90,12 @@ def send_post_with_many_photos(post, group):
         if i['type'] == 'audio':
             # Функция отправки аудиозаписей не реализована
             pass
+        elif i['type'] == 'poll':
+            # Функция отправки опросов не реализована
+            pass
+        elif i['type'] == 'link':
+            link = i['link']['url']
+            bot.sendMessage(CHAT_ID, link)
         else:
             photo = i['photo']['src_big']
             media.append({'media': photo, 'type': 'photo'})
