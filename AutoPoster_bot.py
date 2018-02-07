@@ -59,12 +59,12 @@ def send_new_posts(items, last_id, group):
 
 
 def send_post_with_one_photo(post, group):
-	try:
-		photo = post['attachments'][0]['photo']['photo_75']
-		photo = post['attachments'][0]['photo']['photo_130']
-		photo = post['attachments'][0]['photo']['photo_604']
-		photo = post['attachments'][0]['photo']['photo_807']
-		photo = post['attachments'][0]['photo']['photo_1280']
+    try:
+        photo = post['attachments'][0]['photo']['photo_75']
+        photo = post['attachments'][0]['photo']['photo_130']
+        photo = post['attachments'][0]['photo']['photo_604']
+        photo = post['attachments'][0]['photo']['photo_807']
+        photo = post['attachments'][0]['photo']['photo_1280']
         photo = post['attachments'][0]['photo']['photo_2560']
     except KeyError:
         pass
@@ -90,10 +90,10 @@ def send_post_with_many_photos(post, group):
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     try:
         photo = post['attachments'][0]['photo']['photo_75']
-		photo = post['attachments'][0]['photo']['photo_130']
-		photo = post['attachments'][0]['photo']['photo_604']
-		photo = post['attachments'][0]['photo']['photo_807']
-		photo = post['attachments'][0]['photo']['photo_1280']
+        photo = post['attachments'][0]['photo']['photo_130']
+        photo = post['attachments'][0]['photo']['photo_604']
+        photo = post['attachments'][0]['photo']['photo_807']
+        photo = post['attachments'][0]['photo']['photo_1280']
         photo = post['attachments'][0]['photo']['photo_2560']
     except KeyError:
         pass
@@ -117,10 +117,10 @@ def send_post_with_many_photos(post, group):
         else:
             try:
                 photo = i['photo']['photo_75']
-		        photo = i['photo']['photo_130']
-		        photo = i['photo']['photo_604']
-		        photo = i['photo']['photo_807']
-		        photo = i['photo']['photo_1280']
+                photo = i['photo']['photo_130']
+                photo = i['photo']['photo_604']
+                photo = i['photo']['photo_807']
+                photo = i['photo']['photo_1280']
                 photo = i['photo']['photo_2560']
             except KeyError:
                 pass
@@ -200,10 +200,10 @@ def send_post_with_music(post, group):
         else:
             try:
                 photo = i['photo']['photo_75']
-		        photo = i['photo']['photo_130']
-		        photo = i['photo']['photo_604']
-		        photo = i['photo']['photo_807']
-		        photo = i['photo']['photo_1280']
+                photo = i['photo']['photo_130']
+                photo = i['photo']['photo_604']
+                photo = i['photo']['photo_807']
+                photo = i['photo']['photo_1280']
                 photo = i['photo']['photo_2560']
             except KeyError:
                 pass
