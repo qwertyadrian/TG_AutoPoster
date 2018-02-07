@@ -29,20 +29,20 @@ def send_new_posts(items, last_id, group):
             logging.info('New posts not detected. Switching to waiting...')
             break
         try:
-            if item['attachment']['type'] == 'photo' and len(item['attachments']) == 1:
+            if item['attachments'][0]['type'] == 'photo' and len(item['attachments']) == 1:
                 send_post_with_one_photo(item, group)
-            elif item['attachment']['type'] == 'photo' and len(item['attachments']) > 1:
+            elif item['attachments'][0]['type'] == 'photo' and len(item['attachments']) > 1:
                 send_post_with_many_photos(item, group)
-            elif item['attachment']['type'] == 'link':
+            elif item['attachments'][0]['type'] == 'link':
                 send_post_with_link(item, group)
-            elif item['attachment']['type'] == 'doc':
+            elif item['attachments'][0]['type'] == 'doc':
                 send_post_with_doc(item, group)
-            elif item['attachment']['type'] == 'video':
+            elif item['attachments'][0]['type'] == 'video':
             	send_post_with_video(item, group)
-            elif item['attachment']['type'] == 'poll':
+            elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
                 send_post_with_poll(item, group)
-            elif item['attachment']['type'] == 'audio':
+            elif item['attachments'][0]['type'] == 'audio':
             	# Функция отправки аудиозаписей не реализована
             	send_post_with_music(item, group)
             else:
@@ -59,7 +59,15 @@ def send_new_posts(items, last_id, group):
 
 
 def send_post_with_one_photo(post, group):
-    photo = post['attachment']['photo']['src_big']
+	try:
+		photo = post['attachments'][0]['photo']['photo_75']
+		photo = post['attachments'][0]['photo']['photo_130']
+		photo = post['attachments'][0]['photo']['photo_604']
+		photo = post['attachments'][0]['photo']['photo_807']
+		photo = post['attachments'][0]['photo']['photo_1280']
+        photo = post['attachments'][0]['photo']['photo_2560']
+    except KeyError:
+        pass
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -80,7 +88,15 @@ def send_post_with_many_photos(post, group):
     pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
-    photo = post['attachment']['photo']['src_big']
+    try:
+        photo = post['attachments'][0]['photo']['photo_75']
+		photo = post['attachments'][0]['photo']['photo_130']
+		photo = post['attachments'][0]['photo']['photo_604']
+		photo = post['attachments'][0]['photo']['photo_807']
+		photo = post['attachments'][0]['photo']['photo_1280']
+        photo = post['attachments'][0]['photo']['photo_2560']
+    except KeyError:
+        pass
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
         bot.sendMessage(CHAT_ID, caption_formatted1)
@@ -95,9 +111,19 @@ def send_post_with_many_photos(post, group):
             pass
         elif i['type'] == 'link':
             link = i['link']['url']
-            bot.sendMessage(CHAT_ID, link)
+            title = i['link']['title']
+            text = '[{0}]({1})'.format(title, text)
+            bot.sendMessage(CHAT_ID, link, parse_mod='Markdown')
         else:
-            photo = i['photo']['src_big']
+            try:
+                photo = i['photo']['photo_75']
+		        photo = i['photo']['photo_130']
+		        photo = i['photo']['photo_604']
+		        photo = i['photo']['photo_807']
+		        photo = i['photo']['photo_1280']
+                photo = i['photo']['photo_2560']
+            except KeyError:
+                pass
             media.append({'media': photo, 'type': 'photo'})
     if len(media) == 0:
         pass
@@ -107,7 +133,7 @@ def send_post_with_many_photos(post, group):
 
 
 def send_post_with_link(post, group):
-    link = post['attachment']['link']['url']
+    link = post['attachments'][0]['link']['url']
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -118,7 +144,7 @@ def send_post_with_link(post, group):
     
     
 def send_post_with_video(post, group):
-    link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachment']['video']['owner_id'], '_', post['attachment']['video']['vid'])
+    link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_', post['attachments'][0]['video']['id'])
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -126,7 +152,7 @@ def send_post_with_video(post, group):
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
     text = caption_formatted1 + '\n' + link
     for i in post['attachments'][1:]:
-        link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['vid'])
+        link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
         text = text + '\n' + link
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
@@ -137,7 +163,7 @@ def send_post_with_doc(post, group):
     pattern1 = '@' + group
     caption_formatted = re.sub(pattern, '\n', caption)
     caption_formatted1 = re.sub(pattern1, '', caption_formatted)
-    document = post['attachment']['doc']['url']
+    document = post['attachments'][0]['doc']['url']
     if len(caption_formatted) > 199:
         bot.sendMessage(CHAT_ID, caption_formatted1)
         bot.sendPhoto(CHAT_ID, document)
@@ -172,7 +198,15 @@ def send_post_with_music(post, group):
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
         else:
-            photo = i['photo']['src_big']
+            try:
+                photo = i['photo']['photo_75']
+		        photo = i['photo']['photo_130']
+		        photo = i['photo']['photo_604']
+		        photo = i['photo']['photo_807']
+		        photo = i['photo']['photo_1280']
+                photo = i['photo']['photo_2560']
+            except KeyError:
+                pass
             media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
     sleep(5)
@@ -190,7 +224,7 @@ def check_new_posts_vk(URL, group, FILENAME_VK):
         feed = get_data(URL)
         # Если ранее случился таймаут, пропускаем итерацию. Если всё нормально - парсим посты.
         if feed is not None:
-            entries = feed['response'][1:]
+            entries = feed['response']['items']
             try:
                 # Если пост был закреплен, пропускаем его
                 tmp = entries[0]['is_pinned']
