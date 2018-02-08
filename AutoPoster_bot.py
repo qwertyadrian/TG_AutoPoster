@@ -23,28 +23,28 @@ def get_data(URL):
         timeout.cancel()
 
 
-def send_new_posts(items, last_id, group):
+def send_new_posts(items, last_id, group, CHAT_ID):
     for item in items:
         if item['id'] <= last_id:
             logging.info('New posts not detected. Switching to waiting...')
             break
         try:
             if item['attachments'][0]['type'] == 'photo' and len(item['attachments']) == 1:
-                send_post_with_one_photo(item, group)
+                send_post_with_one_photo(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'photo' and len(item['attachments']) > 1:
-                send_post_with_many_photos(item, group)
+                send_post_with_many_photos(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'link':
-                send_post_with_link(item, group)
+                send_post_with_link(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'doc':
-                send_post_with_doc(item, group)
+                send_post_with_doc(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'video':
-            	send_post_with_video(item, group)
+            	send_post_with_video(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
-                send_post_with_poll(item, group)
+                send_post_with_poll(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'audio':
             	# Функция отправки аудиозаписей не реализована
-            	send_post_with_music(item, group)
+            	send_post_with_music(item, group, CHAT_ID)
             else:
             	pass
         except KeyError:
@@ -58,7 +58,7 @@ def send_new_posts(items, last_id, group):
     return
 
 
-def send_post_with_one_photo(post, group):
+def send_post_with_one_photo(post, group, CHAT_ID):
     try:
         photo = post['attachments'][0]['photo']['photo_75']
         photo = post['attachments'][0]['photo']['photo_130']
@@ -81,7 +81,7 @@ def send_post_with_one_photo(post, group):
     sleep(5)
 
 
-def send_post_with_many_photos(post, group):
+def send_post_with_many_photos(post, group, CHAT_ID):
     media = []
     caption = post['text']
     pattern = r'<br>'
@@ -132,7 +132,7 @@ def send_post_with_many_photos(post, group):
     sleep(5)
 
 
-def send_post_with_link(post, group):
+def send_post_with_link(post, group, CHAT_ID):
     link = post['attachments'][0]['link']['url']
     caption = post['text']
     pattern = r'<br>'
@@ -143,7 +143,7 @@ def send_post_with_link(post, group):
     sleep(5)
     
     
-def send_post_with_video(post, group):
+def send_post_with_video(post, group, CHAT_ID):
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_', post['attachments'][0]['video']['id'])
     caption = post['text']
     pattern = r'<br>'
@@ -157,7 +157,7 @@ def send_post_with_video(post, group):
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
 
-def send_post_with_doc(post, group):
+def send_post_with_doc(post, group, CHAT_ID):
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -174,12 +174,12 @@ def send_post_with_doc(post, group):
     sleep(5)
         
         
-def send_post_with_poll(post, group):
+def send_post_with_poll(post, group, CHAT_ID):
 	# Функция отправки опросов не реализована
     pass
     
     
-def send_post_with_music(post, group):
+def send_post_with_music(post, group, CHAT_ID):
     # Функция отправки аудиозаписей не реализована
     media = []
     caption = post['text']
@@ -212,7 +212,7 @@ def send_post_with_music(post, group):
     sleep(5)
 
 
-def check_new_posts_vk(URL, group, FILENAME_VK):
+def check_new_posts_vk(URL, group, FILENAME_VK, CHAT_ID):
     # Пишем текущее время начала
     logging.info('[VK] Started scanning for new posts')
     with open(FILENAME_VK, 'rt') as file:
@@ -229,9 +229,9 @@ def check_new_posts_vk(URL, group, FILENAME_VK):
                 # Если пост был закреплен, пропускаем его
                 tmp = entries[0]['is_pinned']
                 # И запускаем отправку сообщений
-                send_new_posts(entries[1:], last_id, group)
+                send_new_posts(entries[1:], last_id, group, CHAT_ID)
             except KeyError:
-                send_new_posts(entries, last_id, group)
+                send_new_posts(entries, last_id, group, CHAT_ID)
             # Записываем новый last_id в файл.
             with open(FILENAME_VK, 'wt') as file:
                 try:
