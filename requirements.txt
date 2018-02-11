@@ -9,3 +9,5 @@ aiohttp==2.3.9
 enum34==1.1.6
 multidict==4.0.0
 yarl==1.0.0
+telepot
+pyTelegramBotApi
