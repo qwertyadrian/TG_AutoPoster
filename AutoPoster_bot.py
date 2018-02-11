@@ -38,15 +38,15 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             elif item['attachments'][0]['type'] == 'doc':
                 send_post_with_doc(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'video':
-            	send_post_with_video(item, group, CHAT_ID)
+                send_post_with_video(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
                 send_post_with_poll(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'audio':
-            	# Функция отправки аудиозаписей не реализована
-            	send_post_with_music(item, group, CHAT_ID)
+                # Функция отправки аудиозаписей не реализована
+                send_post_with_music(item, group, CHAT_ID)
             else:
-            	pass
+                pass
         except KeyError:
             logging.warning('In the post, no text, photos, videos, links and documents not found.')
             if item['text'] != '':
@@ -112,7 +112,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         elif i['type'] == 'link':
             link = i['link']['url']
             title = i['link']['title']
-            text = '[{0}]({1})'.format(title, text)
+            text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, link, parse_mod='Markdown')
         else:
             try:
@@ -157,6 +157,7 @@ def send_post_with_video(post, group, CHAT_ID):
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
 
+
 def send_post_with_doc(post, group, CHAT_ID):
     caption = post['text']
     pattern = r'<br>'
@@ -175,7 +176,7 @@ def send_post_with_doc(post, group, CHAT_ID):
         
         
 def send_post_with_poll(post, group, CHAT_ID):
-	# Функция отправки опросов не реализована
+    # Функция отправки опросов не реализована
     pass
     
     
