@@ -12,6 +12,12 @@ bot = telepot.Bot(TOKEN)
 
 
 def get_data(URL):
+    """
+    Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
+    ничего
+    :param URL: str
+    :return: dict
+    """
     timeout = eventlet.Timeout(10)
     try:
         feed = requests.get(URL)
@@ -24,20 +30,34 @@ def get_data(URL):
 
 
 def send_new_posts(items, last_id, group, CHAT_ID):
+    """
+    Функция отправки постов. Она распределяет посты различным категориям (отдельным функциям).
+    :param items: list
+    :param last_id: int
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     for item in items:
         if item['id'] <= last_id:
             logging.info('New posts not detected. Switching to waiting...')
+            # Если новые посты не обнаружены пропускаем итерацию
             break
         try:
             if item['attachments'][0]['type'] == 'photo' and len(item['attachments']) == 1:
+                # Если первый первый прикрепленный файл - фото и оно одно, то выполняется фунция ниже
                 send_post_with_one_photo(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'photo' and len(item['attachments']) > 1:
+                # Если первый первый прикрепленный файл - фото их несколько, то выполняется фунция ниже
                 send_post_with_many_photos(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'link':
+                # Если первый первый прикрепленный файл - ссылка, то выполняется фунция ниже
                 send_post_with_link(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'doc':
+                # Если первый первый прикрепленный файл - документ, то выполняется фунция ниже
                 send_post_with_doc(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'video':
+                # Если первый первый прикрепленный файл - видео, то выполняется фунция ниже
                 send_post_with_video(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
@@ -58,7 +78,14 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     return
 
 
-def send_post_with_one_photo(post, group, CHAT_ID):
+def send_post_with_one_photo(post, group, CHAT_ID):  # todo Объединить функцию send_post_with_one_photo с send_post_with_many_photos
+    """
+    Функция отправки поста с одним фото.
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     try:
         photo = post['attachments'][0]['photo']['photo_75']
         photo = post['attachments'][0]['photo']['photo_130']
@@ -82,6 +109,13 @@ def send_post_with_one_photo(post, group, CHAT_ID):
 
 
 def send_post_with_many_photos(post, group, CHAT_ID):
+    """
+    Функция отправки поста с несколькими фото (вложениями)
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     media = []
     caption = post['text']
     pattern = r'<br>'
@@ -113,7 +147,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             link = i['link']['url']
             title = i['link']['title']
             text = '[{0}]({1})'.format(title, link)
-            bot.sendMessage(CHAT_ID, link, parse_mod='Markdown')
+            bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -133,6 +167,13 @@ def send_post_with_many_photos(post, group, CHAT_ID):
 
 
 def send_post_with_link(post, group, CHAT_ID):
+    """
+    Функция отправки поста с ссылкой.
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     link = post['attachments'][0]['link']['url']
     caption = post['text']
     pattern = r'<br>'
@@ -144,7 +185,15 @@ def send_post_with_link(post, group, CHAT_ID):
     
     
 def send_post_with_video(post, group, CHAT_ID):
-    link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_', post['attachments'][0]['video']['id'])
+    """
+    Функция отправки поста с видео.
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
+    link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_',
+                                     post['attachments'][0]['video']['id'])
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -159,6 +208,13 @@ def send_post_with_video(post, group, CHAT_ID):
 
 
 def send_post_with_doc(post, group, CHAT_ID):
+    """
+    Функция отправки поста с документом.
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -175,12 +231,19 @@ def send_post_with_doc(post, group, CHAT_ID):
     sleep(5)
         
         
-def send_post_with_poll(post, group, CHAT_ID):
+def send_post_with_poll(post, group, CHAT_ID):  # todo Реализовать отправку опросов
     # Функция отправки опросов не реализована
     pass
     
     
 def send_post_with_music(post, group, CHAT_ID):
+    """
+    Функция отправки постов с музыкой (не реализовано до конца)
+    :param post: dict
+    :param group: str
+    :param CHAT_ID: str
+    :return: None
+    """
     # Функция отправки аудиозаписей не реализована
     media = []
     caption = post['text']
@@ -194,7 +257,7 @@ def send_post_with_music(post, group, CHAT_ID):
         bot.sendMessage(CHAT_ID, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            # Функция отправки аудиозаписей не реализована
+            # Функция отправки аудиозаписей не реализована todo Реализовать отправку музыки
             pass
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
@@ -214,6 +277,15 @@ def send_post_with_music(post, group, CHAT_ID):
 
 
 def check_new_posts_vk(URL, group, FILENAME_VK, CHAT_ID):
+    """
+    Основная функция программы. В ней вызываются остальные функции.
+    Посты передаются в функцию send_new_posts
+    :param URL: str
+    :param group: str
+    :param FILENAME_VK: str
+    :param CHAT_ID: str
+    :return: None
+    """
     # Пишем текущее время начала
     logging.info('[VK] Started scanning for new posts')
     with open(FILENAME_VK, 'rt') as file:
