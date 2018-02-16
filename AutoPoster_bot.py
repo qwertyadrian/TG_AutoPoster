@@ -148,6 +148,9 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             title = i['link']['title']
             text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
+        elif i['type'] == 'doc':
+            doc = i['doc']['url']
+            bot.sendDocument(CHAT_ID, doc)
         else:
             try:
                 photo = i['photo']['photo_75']
