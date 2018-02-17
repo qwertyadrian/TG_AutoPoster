@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import telepot
-import telebot
 import requests
 import eventlet
 import logging
 import re
+import vk_api
+from vk_api.audio import VkAudio
 from config import *
 from time import sleep
 
 bot = telepot.Bot(TOKEN)
-bot_1 = telebot.TeleBot(TOKEN)
+session = vk_api.VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
+vkaudio = VkAudio(session)
+
 
 def get_data(URL):
     """
@@ -20,10 +23,11 @@ def get_data(URL):
     :return: dict
     """
     timeout = eventlet.Timeout(10)
+    # noinspection PyBroadException
     try:
         feed = requests.get(URL)
         return feed.json()
-    except:
+    except Exception:
         logging.warning('Got Timeout while retrieving VK JSON data. Cancelling...')
         return None
     finally:
