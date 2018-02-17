@@ -1,3 +1,4 @@
+vk_api
 certifi==2017.11.5
 chardet==3.0.4
 idna==2.6
