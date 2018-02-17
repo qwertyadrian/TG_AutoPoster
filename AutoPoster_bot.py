@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import telepot
+import telebot
 import requests
 import eventlet
 import logging
@@ -9,7 +10,7 @@ from config import *
 from time import sleep
 
 bot = telepot.Bot(TOKEN)
-
+bot_1 = telebot.TeleBot(TOKEN)
 
 def get_data(URL):
     """
