@@ -12,10 +12,11 @@ from time import sleep
 
 bot = telepot.Bot(TOKEN)
 session = vk_api.VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
-vkaudio = VkAudio(session)
+session.auth()
+audio = VkAudio(session)
+api = session.get_api()
 
-
-def get_data(URL):
+def get_data(group):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
@@ -25,8 +26,8 @@ def get_data(URL):
     timeout = eventlet.Timeout(10)
     # noinspection PyBroadException
     try:
-        feed = requests.get(URL)
-        return feed.json()
+        feed = api.wall.get(domain=group, count=11)
+        return feed
     except Exception:
         logging.warning('Got Timeout while retrieving VK JSON data. Cancelling...')
         return None
@@ -143,8 +144,17 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            # Функция отправки аудиозаписей не реализована
-            pass
+            track = i['audio']['artist'] + ' - ' +  i['audio']['title']
+            try:
+                track_list = audio.get(owner_id=i['audio']['owner_id'])
+            except vk_api.exceptions.AccessDenied:
+                track_list = audio.search(q=track)
+            if track_list == []:
+                track_list = audio.search(q=track)
+            for k in track_list:
+                if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
+                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=k['artist'], title=k['title'])
+                    break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
             pass
@@ -265,8 +275,17 @@ def send_post_with_music(post, group, CHAT_ID):
         bot.sendMessage(CHAT_ID, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            # Функция отправки аудиозаписей не реализована todo Реализовать отправку музыки
-            pass
+            track = i['audio']['artist'] + ' - ' +  i['audio']['title']
+            try:
+                track_list = audio.get(owner_id=i['audio']['owner_id'])
+            except vk_api.exceptions.AccessDenied:
+                track_list = audio.search(q=track)
+            if track_list == []:
+                track_list = audio.search(q=track)
+            for k in track_list:
+                if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
+                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=k['artist'], title=k['title'])
+                    break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
         else:
@@ -284,14 +303,13 @@ def send_post_with_music(post, group, CHAT_ID):
     sleep(5)
 
 
-def check_new_posts_vk(URL, group, FILENAME_VK, CHAT_ID):
+def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
     """
     Основная функция программы. В ней вызываются остальные функции.
     Посты передаются в функцию send_new_posts
-    :param URL: str
-    :param group: str
-    :param FILENAME_VK: str
-    :param CHAT_ID: str
+    :param group: Короткое название группы
+    :param FILENAME_VK: Название файла, в котором сохраняется ID  почледнего отправленного поста.
+    :param CHAT_ID: ID чата, в который отправляются посты
     :return: None
     """
     # Пишем текущее время начала
@@ -302,10 +320,10 @@ def check_new_posts_vk(URL, group, FILENAME_VK, CHAT_ID):
             logging.error('Could not read from storage. Skipped iteration.')
             return
         logging.info('Last ID (VK) = {!s}'.format(last_id))
-        feed = get_data(URL)
+        feed = get_data(group)
         # Если ранее случился таймаут, пропускаем итерацию. Если всё нормально - парсим посты.
         if feed is not None:
-            entries = feed['response']['items']
+            entries = feed['items']
             try:
                 # Если пост был закреплен, пропускаем его
                 tmp = entries[0]['is_pinned']
