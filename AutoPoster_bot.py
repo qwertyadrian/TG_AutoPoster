@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import telepot
-import requests
 import eventlet
 import logging
 import re
@@ -16,12 +15,13 @@ session.auth()
 audio = VkAudio(session)
 api = session.get_api()
 
+
 def get_data(group):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
-    :param URL: str
-    :return: dict
+    :param group: ID группы ВК
+    :return: Возвращает словарь с постами
     """
     timeout = eventlet.Timeout(10)
     # noinspection PyBroadException
@@ -38,10 +38,10 @@ def get_data(group):
 def send_new_posts(items, last_id, group, CHAT_ID):
     """
     Функция отправки постов. Она распределяет посты различным категориям (отдельным функциям).
-    :param items: list
-    :param last_id: int
-    :param group: str
-    :param CHAT_ID: str
+    :param items: Список постов
+    :param last_id: ID последнего отправленного поста
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     for item in items:
@@ -84,12 +84,12 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     return
 
 
-def send_post_with_one_photo(post, group, CHAT_ID):  # todo Объединить функцию send_post_with_one_photo с send_post_with_many_photos
+def send_post_with_one_photo(post, group, CHAT_ID):
     """
     Функция отправки поста с одним фото.
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     try:
@@ -117,9 +117,9 @@ def send_post_with_one_photo(post, group, CHAT_ID):  # todo Объединить
 def send_post_with_many_photos(post, group, CHAT_ID):
     """
     Функция отправки поста с несколькими фото (вложениями)
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     media = []
@@ -144,12 +144,12 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            track = i['audio']['artist'] + ' - ' +  i['audio']['title']
+            track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
                 track_list = audio.get(owner_id=i['audio']['owner_id'])
             except vk_api.exceptions.AccessDenied:
                 track_list = audio.search(q=track)
-            if track_list == []:
+            if not track_list:
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
@@ -187,9 +187,9 @@ def send_post_with_many_photos(post, group, CHAT_ID):
 def send_post_with_link(post, group, CHAT_ID):
     """
     Функция отправки поста с ссылкой.
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     link = post['attachments'][0]['link']['url']
@@ -205,9 +205,9 @@ def send_post_with_link(post, group, CHAT_ID):
 def send_post_with_video(post, group, CHAT_ID):
     """
     Функция отправки поста с видео.
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_',
@@ -228,9 +228,9 @@ def send_post_with_video(post, group, CHAT_ID):
 def send_post_with_doc(post, group, CHAT_ID):
     """
     Функция отправки поста с документом.
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     caption = post['text']
@@ -257,9 +257,9 @@ def send_post_with_poll(post, group, CHAT_ID):  # todo Реализовать о
 def send_post_with_music(post, group, CHAT_ID):
     """
     Функция отправки постов с музыкой (не реализовано до конца)
-    :param post: dict
-    :param group: str
-    :param CHAT_ID: str
+    :param post: Словарь с информацией о посте
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
     # Функция отправки аудиозаписей не реализована
@@ -275,12 +275,12 @@ def send_post_with_music(post, group, CHAT_ID):
         bot.sendMessage(CHAT_ID, caption_formatted1)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
-            track = i['audio']['artist'] + ' - ' +  i['audio']['title']
+            track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
                 track_list = audio.get(owner_id=i['audio']['owner_id'])
             except vk_api.exceptions.AccessDenied:
                 track_list = audio.search(q=track)
-            if track_list == []:
+            if not track_list:
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
@@ -332,6 +332,7 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
             except KeyError:
                 send_new_posts(entries, last_id, group, CHAT_ID)
             # Записываем новый last_id в файл.
+            # noinspection PyAssignmentToLoopOrWithParameter
             with open(FILENAME_VK, 'wt') as file:
                 try:
                     tmp = entries[0]['is_pinned']

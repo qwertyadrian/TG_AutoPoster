@@ -2,7 +2,6 @@ vk_api
 certifi==2017.11.5
 chardet==3.0.4
 idna==2.6
-requests==2.18.4
 urllib3==1.22
 telepot==12.5
 eventlet==0.22.0
