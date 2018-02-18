@@ -5,6 +5,10 @@ import eventlet
 import logging
 import re
 import vk_api
+import wget
+import os
+import mutagen
+from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
 from time import sleep
@@ -123,6 +127,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     :return: None
     """
     media = []
+    tracks = []
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -146,14 +151,24 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
-                track_list = audio.get(owner_id=i['audio']['owner_id'])
+                track_list = audio.get(owner_id=post['attachments'][0]['photo']['owner_id'])
             except vk_api.exceptions.AccessDenied:
                 track_list = audio.search(q=track)
             if not track_list:
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
-                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=i['audio']['artist'], title=i['audio']['title'])
+                    file = wget.download(k['url'])
+                    try:
+                        music = EasyID3(file)
+                    except mutagen.id3.ID3NoHeaderError:
+                        music = mutagen.File(file, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['title']
+                    music['artist'] = i['audio']['artist']
+                    music.save()
+                    del music
+                    tracks.append(file)
                     break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
@@ -181,6 +196,9 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         pass
     else:
         bot.sendMediaGroup(CHAT_ID, media)
+    for m in tracks:
+        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        os.remove(m)
     sleep(5)
 
 
@@ -264,6 +282,7 @@ def send_post_with_music(post, group, CHAT_ID):
     """
     # Функция отправки аудиозаписей не реализована
     media = []
+    tracks = []
     caption = post['text']
     pattern = r'<br>'
     pattern1 = '@' + group
@@ -284,7 +303,17 @@ def send_post_with_music(post, group, CHAT_ID):
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
-                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=i['audio']['artist'], title=i['audio']['title'])
+                    file = wget.download(k['url'])
+                    try:
+                        music = EasyID3(file)
+                    except mutagen.id3.ID3NoHeaderError:
+                        music = mutagen.File(file, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['artist']
+                    music['artist'] = i['audio']['title']
+                    music.save()
+                    del music
+                    tracks.append(file)
                     break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
@@ -300,6 +329,9 @@ def send_post_with_music(post, group, CHAT_ID):
                 pass
             media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
+    for m in tracks:
+        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        os.remove(m)
     sleep(5)
 
 
