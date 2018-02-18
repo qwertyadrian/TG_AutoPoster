@@ -153,7 +153,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
-                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=k['artist'], title=k['title'])
+                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=i['audio']['artist'], title=i['audio']['title'])
                     break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
@@ -284,7 +284,7 @@ def send_post_with_music(post, group, CHAT_ID):
                 track_list = audio.search(q=track)
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
-                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=k['artist'], title=k['title'])
+                    bot.sendAudio(CHAT_ID, audio=k['url'], performer=i['audio']['artist'], title=i['audio']['title'])
                     break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
