@@ -7,6 +7,7 @@ import re
 import vk_api
 import wget
 import os
+import re
 import mutagen
 from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
@@ -159,16 +160,18 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
                     file = wget.download(k['url'])
+                    name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
+                    os.rename(file, name)
                     try:
-                        music = EasyID3(file)
+                        music = EasyID3(name)
                     except mutagen.id3.ID3NoHeaderError:
-                        music = mutagen.File(file, easy=True)
+                        music = mutagen.File(name, easy=True)
                         music.add_tags()
                     music['title'] = i['audio']['title']
                     music['artist'] = i['audio']['artist']
                     music.save()
                     del music
-                    tracks.append(file)
+                    tracks.append(name)
                     break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
@@ -197,7 +200,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
         os.remove(m)
     sleep(5)
 
@@ -304,16 +307,18 @@ def send_post_with_music(post, group, CHAT_ID):
             for k in track_list:
                 if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
                     file = wget.download(k['url'])
+                    name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
+                    os.rename(file, name)
                     try:
-                        music = EasyID3(file)
+                        music = EasyID3(name)
                     except mutagen.id3.ID3NoHeaderError:
-                        music = mutagen.File(file, easy=True)
+                        music = mutagen.File(name, easy=True)
                         music.add_tags()
                     music['title'] = i['audio']['artist']
                     music['artist'] = i['audio']['title']
                     music.save()
                     del music
-                    tracks.append(file)
+                    tracks.append(name)
                     break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
@@ -330,7 +335,7 @@ def send_post_with_music(post, group, CHAT_ID):
             media.append({'media': photo, 'type': 'photo'})
     bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
         os.remove(m)
     sleep(5)
 
