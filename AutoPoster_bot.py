@@ -9,6 +9,7 @@ import wget
 import os
 import re
 import mutagen
+from urllib3 import exceptions
 from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
@@ -237,7 +238,15 @@ def send_post_with_album(post, group, CHAT_ID):
         except KeyError:
             pass
         if len(media) == 10:
-            bot.sendMediaGroup(chat_id, media)
+            timeout = eventlet.Timeout(45)
+            try:
+                bot.sendMediaGroup(chat_id, media)
+            except exceptions.ReadTimeoutError:
+                print('Попытка отправки альбома не удалась. Повтор...')
+                sleep(5)
+                bot.sendMediaGroup(chat_id, media)
+            finally:
+                timeout.cancel()
             media = []
         else:
             media.append({'media': photo, 'type': 'photo'})
