@@ -76,6 +76,8 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             elif item['attachments'][0]['type'] == 'audio':
                 # Функция отправки аудиозаписей не реализована
                 send_post_with_music(item, group, CHAT_ID)
+            elif item['attachments'][0]['type'] == 'album':
+                send_post_with_album(item, group, CHAT_ID)
             else:
                 pass
         except KeyError:
@@ -107,15 +109,13 @@ def send_post_with_one_photo(post, group, CHAT_ID):
     except KeyError:
         pass
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption)
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
-        bot.sendMessage(CHAT_ID, caption_formatted1)
+        bot.sendMessage(CHAT_ID, caption_formatted)
     else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
+        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
     sleep(5)
 
 
@@ -130,10 +130,8 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     media = []
     tracks = []
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption)
     try:
         photo = post['attachments'][0]['photo']['photo_75']
         photo = post['attachments'][0]['photo']['photo_130']
@@ -145,9 +143,9 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         pass
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
-        bot.sendMessage(CHAT_ID, caption_formatted1)
+        bot.sendMessage(CHAT_ID, caption_formatted)
     else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted1)
+        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -215,14 +213,36 @@ def send_post_with_link(post, group, CHAT_ID):
     """
     link = post['attachments'][0]['link']['url']
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted) + '\n' + link
-    bot.sendMessage(CHAT_ID, caption_formatted1)
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption) + '\n' + link
+    bot.sendMessage(CHAT_ID, caption_formatted)
     sleep(5)
     
-    
+
+def send_post_with_album(post, group, CHAT_ID):
+    media = []
+    caption = post['text']
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption)
+    bot.sendMessage(CHAT_ID, caption_formatted)
+    album = api.photos.get(owner_id=post['attachments'][0]['album']['owner_id'], album_id=int(post['attachments'][0]['album']['id']), count=1000)['items']
+    for i in album:
+        try:
+            photo = i['photo_75']
+            photo = i['photo_130']
+            photo = i['photo_604']
+            photo = i['photo_807']
+            photo = i['photo_1280']
+            photo = i['photo_2560']
+        except KeyError:
+            pass
+        if len(media) == 10:
+            bot.sendMediaGroup(chat_id, media)
+            media = []
+        else:
+            media.append({'media': photo, 'type': 'photo'})
+
+
 def send_post_with_video(post, group, CHAT_ID):
     """
     Функция отправки поста с видео.
@@ -234,11 +254,9 @@ def send_post_with_video(post, group, CHAT_ID):
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_',
                                      post['attachments'][0]['video']['id'])
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
-    text = caption_formatted1 + '\n' + link
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption_formatted)
+    text = caption_formatted + '\n' + link
     for i in post['attachments'][1:]:
         link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
         text = text + '\n' + link
@@ -255,16 +273,14 @@ def send_post_with_doc(post, group, CHAT_ID):
     :return: None
     """
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
+    pattern     = '@' + group
+    caption_formatted = re.sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
     if len(caption_formatted) > 199:
-        bot.sendMessage(CHAT_ID, caption_formatted1)
+        bot.sendMessage(CHAT_ID, caption_formatted)
         bot.sendPhoto(CHAT_ID, document)
     else:
-        bot.sendDocument(CHAT_ID, document, caption_formatted1)
+        bot.sendDocument(CHAT_ID, document, caption_formatted)
     for i in post['attachments'][1:]:
         bot.sendDocument(CHAT_ID, i['doc']['url'])
     sleep(5)
@@ -287,14 +303,12 @@ def send_post_with_music(post, group, CHAT_ID):
     media = []
     tracks = []
     caption = post['text']
-    pattern = r'<br>'
-    pattern1 = '@' + group
-    caption_formatted = re.sub(pattern, '\n', caption)
-    caption_formatted1 = re.sub(pattern1, '', caption_formatted)
+    pattern = '@' + group
+    caption_formatted = re.sub(pattern, '', caption)
     if caption == '':
         caption_formatted = None
     else:
-        bot.sendMessage(CHAT_ID, caption_formatted1)
+        bot.sendMessage(CHAT_ID, caption_formatted)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
