@@ -150,14 +150,11 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            try:
-                track_list = audio.get(owner_id=post['attachments'][0]['photo']['owner_id'])
-            except vk_api.exceptions.AccessDenied:
-                track_list = audio.search(q=track)
-            if not track_list:
-                track_list = audio.search(q=track)
+            track_list = audio.search(q=track)
             for k in track_list:
-                if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
+                artist = re.search(i['audio']['artist'], k['artist'])
+                title = re.search(i['audio']['title'], k['title'])
+                if artist.group() == i['audio']['artist'] and title.group() == i['audio']['title']:
                     file = wget.download(k['url'])
                     name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
                     os.rename(file, name)
@@ -321,14 +318,11 @@ def send_post_with_music(post, group, CHAT_ID):
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            try:
-                track_list = audio.get(owner_id=i['audio']['owner_id'])
-            except vk_api.exceptions.AccessDenied:
-                track_list = audio.search(q=track)
-            if not track_list:
-                track_list = audio.search(q=track)
+            track_list = audio.search(q=track)
             for k in track_list:
-                if k['artist'] == i['audio']['artist'] and k['title'] == i['audio']['title']:
+                artist = re.search(i['audio']['artist'], k['artist'])
+                title = re.search(i['audio']['title'], k['title'])
+                if artist.group() == i['audio']['artist'] and title.group() == i['audio']['title']:
                     file = wget.download(k['url'])
                     name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
                     os.rename(file, name)
