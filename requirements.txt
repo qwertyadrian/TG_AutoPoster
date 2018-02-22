@@ -1,15 +1,8 @@
 wget
 mutagen
 vk_api
-certifi==2017.11.5
-chardet==3.0.4
-idna==2.6
-urllib3==1.22
 telepot==12.5
 eventlet==0.22.0
-aiohttp==2.3.9
-enum34==1.1.6
-multidict==4.0.0
-yarl==1.0.0
+urllib3
 telepot
-pyTelegramBotApi
+bs4

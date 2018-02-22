@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import telepot
-import eventlet
-import logging
-import re
-import vk_api
-import wget
-import os
-import re
-import mutagen
+from telepot import Bot
+from eventlet import Timeout
+from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
+from vk_api import VkApi
+from wget import download
+from os import rename, remove
+from re import sub, search
+from mutagen import id3, File
 from urllib3 import exceptions
 from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
 from time import sleep
 
-bot = telepot.Bot(TOKEN)
-session = vk_api.VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
+bot = Bot(TOKEN)
+session = VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
 session.auth()
 audio = VkAudio(session)
 api = session.get_api()
@@ -29,13 +28,13 @@ def get_data(group):
     :param group: ID группы ВК
     :return: Возвращает словарь с постами
     """
-    timeout = eventlet.Timeout(10)
+    timeout = Timeout(10)
     # noinspection PyBroadException
     try:
         feed = api.wall.get(domain=group, count=11)
         return feed
     except Exception:
-        logging.warning('Got Timeout while retrieving VK JSON data. Cancelling...')
+        warning('Got Timeout while retrieving VK JSON data. Cancelling...')
         return None
     finally:
         timeout.cancel()
@@ -52,7 +51,7 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     """
     for item in items:
         if item['id'] <= last_id:
-            logging.info('New posts not detected. Switching to waiting...')
+            info('New posts not detected. Switching to waiting...')
             # Если новые посты не обнаружены пропускаем итерацию
             break
         try:
@@ -82,7 +81,7 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             else:
                 pass
         except KeyError:
-            logging.warning('In the post, no text, photos, videos, links and documents not found.')
+            warning('In the post, no text, photos, videos, links and documents not found.')
             if item['text'] != '':
                 bot.sendMessage(CHAT_ID, item['text'])
             else:
@@ -111,7 +110,7 @@ def send_post_with_one_photo(post, group, CHAT_ID):
         pass
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption)
+    caption_formatted = sub(pattern, '', caption)
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, photo)
         bot.sendMessage(CHAT_ID, caption_formatted)
@@ -132,7 +131,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     tracks = []
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption)
+    caption_formatted = sub(pattern, '', caption)
     try:
         photo = post['attachments'][0]['photo']['photo_75']
         photo = post['attachments'][0]['photo']['photo_130']
@@ -152,23 +151,24 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                artist = re.search(i['audio']['artist'], k['artist'])
-                title = re.search(i['audio']['title'], k['title'])
-                if artist.group() == i['audio']['artist'] and title.group() == i['audio']['title']:
-                    file = wget.download(k['url'])
-                    name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
-                    os.rename(file, name)
-                    try:
-                        music = EasyID3(name)
-                    except mutagen.id3.ID3NoHeaderError:
-                        music = mutagen.File(name, easy=True)
-                        music.add_tags()
-                    music['title'] = i['audio']['title']
-                    music['artist'] = i['audio']['artist']
-                    music.save()
-                    del music
-                    tracks.append(name)
-                    break
+                artist = search(i['audio']['artist'].lower(), k['artist'].lower())
+                title = search(i['audio']['title'].lower(), k['title'].lower())
+                if artist and title:
+                    if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
+                        file = download(k['url'])
+                        name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                        rename(file, name)
+                        try:
+                            music = EasyID3(name)
+                        except id3.ID3NoHeaderError:
+                            music = File(name, easy=True)
+                            music.add_tags()
+                        music['title'] = i['audio']['title']
+                        music['artist'] = i['audio']['artist']
+                        music.save()
+                        del music
+                        tracks.append(name)
+                        break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
             pass
@@ -197,7 +197,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
         bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
-        os.remove(m)
+        remove(m)
     sleep(5)
 
 
@@ -212,18 +212,19 @@ def send_post_with_link(post, group, CHAT_ID):
     link = post['attachments'][0]['link']['url']
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption) + '\n' + link
+    caption_formatted = sub(pattern, '', caption) + '\n' + link
     bot.sendMessage(CHAT_ID, caption_formatted)
     sleep(5)
-    
+
 
 def send_post_with_album(post, group, CHAT_ID):
     media = []
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption)
+    caption_formatted = sub(pattern, '', caption)
     bot.sendMessage(CHAT_ID, caption_formatted)
-    album = api.photos.get(owner_id=post['attachments'][0]['album']['owner_id'], album_id=int(post['attachments'][0]['album']['id']), count=1000)['items']
+    album = api.photos.get(owner_id=post['attachments'][0]['album']['owner_id'],
+                           album_id=int(post['attachments'][0]['album']['id']), count=1000)['items']
     for i in album:
         try:
             photo = i['photo_75']
@@ -235,13 +236,13 @@ def send_post_with_album(post, group, CHAT_ID):
         except KeyError:
             pass
         if len(media) == 10:
-            timeout = eventlet.Timeout(45)
+            timeout = Timeout(45)
             try:
-                bot.sendMediaGroup(chat_id, media)
+                bot.sendMediaGroup(CHAT_ID, media)
             except exceptions.ReadTimeoutError:
                 print('Попытка отправки альбома не удалась. Повтор...')
                 sleep(5)
-                bot.sendMediaGroup(chat_id, media)
+                bot.sendMediaGroup(CHAT_ID, media)
             finally:
                 timeout.cancel()
             media = []
@@ -261,7 +262,7 @@ def send_post_with_video(post, group, CHAT_ID):
                                      post['attachments'][0]['video']['id'])
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption_formatted)
+    caption_formatted = sub(pattern, '', caption)
     text = caption_formatted + '\n' + link
     for i in post['attachments'][1:]:
         link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
@@ -279,8 +280,8 @@ def send_post_with_doc(post, group, CHAT_ID):
     :return: None
     """
     caption = post['text']
-    pattern     = '@' + group
-    caption_formatted = re.sub(pattern, '', caption)
+    pattern = '@' + group
+    caption_formatted = sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
     if len(caption_formatted) > 199:
         bot.sendMessage(CHAT_ID, caption_formatted)
@@ -290,13 +291,13 @@ def send_post_with_doc(post, group, CHAT_ID):
     for i in post['attachments'][1:]:
         bot.sendDocument(CHAT_ID, i['doc']['url'])
     sleep(5)
-        
-        
+
+
 def send_post_with_poll(post, group, CHAT_ID):  # todo Реализовать отправку опросов
     # Функция отправки опросов не реализована
     pass
-    
-    
+
+
 def send_post_with_music(post, group, CHAT_ID):
     """
     Функция отправки постов с музыкой (не реализовано до конца)
@@ -310,7 +311,7 @@ def send_post_with_music(post, group, CHAT_ID):
     tracks = []
     caption = post['text']
     pattern = '@' + group
-    caption_formatted = re.sub(pattern, '', caption)
+    caption_formatted = sub(pattern, '', caption)
     if caption == '':
         caption_formatted = None
     else:
@@ -320,23 +321,24 @@ def send_post_with_music(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                artist = re.search(i['audio']['artist'], k['artist'])
-                title = re.search(i['audio']['title'], k['title'])
-                if artist.group() == i['audio']['artist'] and title.group() == i['audio']['title']:
-                    file = wget.download(k['url'])
-                    name = re.sub(r"[/\"?:|<>*]", '', k['artist'] +  ' - ' + k['title'] + '.mp3')
-                    os.rename(file, name)
-                    try:
-                        music = EasyID3(name)
-                    except mutagen.id3.ID3NoHeaderError:
-                        music = mutagen.File(name, easy=True)
-                        music.add_tags()
-                    music['title'] = i['audio']['artist']
-                    music['artist'] = i['audio']['title']
-                    music.save()
-                    del music
-                    tracks.append(name)
-                    break
+                artist = search(i['audio']['artist'].lower(), k['artist'].lower())
+                title = search(i['audio']['title'].lower(), k['title'].lower())
+                if artist and title:
+                    if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
+                        file = download(k['url'])
+                        name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                        rename(file, name)
+                        try:
+                            music = EasyID3(name)
+                        except id3.ID3NoHeaderError:
+                            music = File(name, easy=True)
+                            music.add_tags()
+                        music['title'] = i['audio']['title']
+                        music['artist'] = i['audio']['artist']
+                        music.save()
+                        del music
+                        tracks.append(name)
+                        break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
         else:
@@ -353,7 +355,7 @@ def send_post_with_music(post, group, CHAT_ID):
     bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
         bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
-        os.remove(m)
+        remove(m)
     sleep(5)
 
 
@@ -367,13 +369,13 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
     :return: None
     """
     # Пишем текущее время начала
-    logging.info('[VK] Started scanning for new posts')
+    info('[VK] Started scanning for new posts')
     with open(FILENAME_VK, 'rt') as file:
         last_id = int(file.read())
         if last_id is None:
-            logging.error('Could not read from storage. Skipped iteration.')
+            error('Could not read from storage. Skipped iteration.')
             return
-        logging.info('Last ID (VK) = {!s}'.format(last_id))
+        info('Last ID (VK) = {!s}'.format(last_id))
         feed = get_data(group)
         # Если ранее случился таймаут, пропускаем итерацию. Если всё нормально - парсим посты.
         if feed is not None:
@@ -392,20 +394,20 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
                     tmp = entries[0]['is_pinned']
                     # Если первый пост - закрепленный, то сохраняем ID второго
                     file.write(str(entries[1]['id']))
-                    logging.info('New last_id (VK) is {!s}'.format((entries[1]['id'])))
+                    info('New last_id (VK) is {!s}'.format((entries[1]['id'])))
                 except KeyError:
                     file.write(str(entries[0]['id']))
-                    logging.info('New last_id (VK) is {!s}'.format((entries[0]['id'])))
-    logging.info('[VK] Finished scanning')
+                    info('New last_id (VK) is {!s}'.format((entries[0]['id'])))
+    info('[VK] Finished scanning')
     return
 
 
 if __name__ == '__main__':
     while True:
-        logging.getLogger('requests').setLevel(logging.CRITICAL)
-        logging.basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s',
-                            level=logging.INFO, filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
+        getLogger('requests').setLevel(CRITICAL)
+        basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
+                    filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
         for (key, value) in URLS.items():
             check_new_posts_vk(key, *value)
-        logging.info('[App] Script went to sleep.')
+        info('[App] Script went to sleep.')
         sleep(60 * 5)
