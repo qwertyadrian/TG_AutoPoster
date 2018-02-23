@@ -72,7 +72,7 @@ def send_new_posts(items, last_id, group, CHAT_ID):
                 send_post_with_video(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
-                send_post_with_poll(item, group, CHAT_ID)
+                pass
             elif item['attachments'][0]['type'] == 'audio':
                 # Функция отправки аудиозаписей не реализована
                 send_post_with_music(item, group, CHAT_ID)
@@ -293,11 +293,6 @@ def send_post_with_doc(post, group, CHAT_ID):
     sleep(5)
 
 
-def send_post_with_poll(post, group, CHAT_ID):  # todo Реализовать отправку опросов
-    # Функция отправки опросов не реализована
-    pass
-
-
 def send_post_with_music(post, group, CHAT_ID):
     """
     Функция отправки постов с музыкой (не реализовано до конца)
@@ -370,6 +365,13 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
     """
     # Пишем текущее время начала
     info('[VK] Started scanning for new posts')
+    try:
+        with open(FILENAME_VK, 'rt'):
+            pass
+    except FileNotFoundError:
+        f = open(FILENAME_VK, 'w')
+        f.write('0')
+        f.close()
     with open(FILENAME_VK, 'rt') as file:
         last_id = int(file.read())
         if last_id is None:
