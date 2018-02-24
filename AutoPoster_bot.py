@@ -151,8 +151,12 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                artist = search(i['audio']['artist'].lower(), k['artist'].lower())
-                title = search(i['audio']['title'].lower(), k['title'].lower())
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist'])
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title'])
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist'])
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title'])
+                artist = search(i_artist.lower(), k_artist.lower())
+                title = search(i_title.lower(), k_title.lower())
                 if artist and title:
                     if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
                         file = download(k['url'])
@@ -316,8 +320,12 @@ def send_post_with_music(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                artist = search(i['audio']['artist'].lower(), k['artist'].lower())
-                title = search(i['audio']['title'].lower(), k['title'].lower())
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist'])
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title'])
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist'])
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title'])
+                artist = search(i_artist.lower(), k_artist.lower())
+                title = search(i_title.lower(), k_title.lower())
                 if artist and title:
                     if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
                         file = download(k['url'])
