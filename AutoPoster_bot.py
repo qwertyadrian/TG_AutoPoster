@@ -6,7 +6,7 @@ from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
 from wget import download
 from os import rename, remove
-from re import sub, search
+from re import sub
 from mutagen import id3, File
 from urllib3 import exceptions
 from mutagen.easyid3 import EasyID3
