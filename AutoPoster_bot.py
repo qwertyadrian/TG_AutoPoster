@@ -105,7 +105,7 @@ def send_post_with_one_photo(post, group, CHAT_ID):
         photo = post['attachments'][0]['photo']['photo_604']
         photo = post['attachments'][0]['photo']['photo_807']
         photo = post['attachments'][0]['photo']['photo_1280']
-        photo = post['attachments'][0]['photo']['photo_2560']
+        # photo = post['attachments'][0]['photo']['photo_2560']
     except KeyError:
         pass
     caption = post['text']
@@ -138,7 +138,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
         photo = post['attachments'][0]['photo']['photo_604']
         photo = post['attachments'][0]['photo']['photo_807']
         photo = post['attachments'][0]['photo']['photo_1280']
-        photo = post['attachments'][0]['photo']['photo_2560']
+        # photo = post['attachments'][0]['photo']['photo_2560']
     except KeyError:
         pass
     if len(caption_formatted) > 199:
@@ -151,28 +151,25 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist'])
-                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title'])
-                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist'])
-                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title'])
-                artist = search(i_artist.lower(), k_artist.lower())
-                title = search(i_title.lower(), k_title.lower())
-                if artist and title:
-                    if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
-                        file = download(k['url'])
-                        name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                        rename(file, name)
-                        try:
-                            music = EasyID3(name)
-                        except id3.ID3NoHeaderError:
-                            music = File(name, easy=True)
-                            music.add_tags()
-                        music['title'] = i['audio']['title']
-                        music['artist'] = i['audio']['artist']
-                        music.save()
-                        del music
-                        tracks.append(name)
-                        break
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
+                if k_artist == i_artist and k_title == i_title:
+                    file = download(k['url'])
+                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                    rename(file, name)
+                    try:
+                        music = EasyID3(name)
+                    except id3.ID3NoHeaderError:
+                        music = File(name, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['title']
+                    music['artist'] = i['audio']['artist']
+                    music.save()
+                    del music
+                    tracks.append(name)
+                    break
         elif i['type'] == 'poll':
             # Функция отправки опросов не реализована
             pass
@@ -191,7 +188,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
                 photo = i['photo']['photo_604']
                 photo = i['photo']['photo_807']
                 photo = i['photo']['photo_1280']
-                photo = i['photo']['photo_2560']
+                # photo = i['photo']['photo_2560']
             except KeyError:
                 pass
             media.append({'media': photo, 'type': 'photo'})
@@ -236,7 +233,7 @@ def send_post_with_album(post, group, CHAT_ID):
             photo = i['photo_604']
             photo = i['photo_807']
             photo = i['photo_1280']
-            photo = i['photo_2560']
+            # photo = i['photo_2560']
         except KeyError:
             pass
         if len(media) == 10:
@@ -320,28 +317,25 @@ def send_post_with_music(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             track_list = audio.search(q=track)
             for k in track_list:
-                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist'])
-                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title'])
-                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist'])
-                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title'])
-                artist = search(i_artist.lower(), k_artist.lower())
-                title = search(i_title.lower(), k_title.lower())
-                if artist and title:
-                    if artist.group() == i['audio']['artist'].lower() and title.group() == i['audio']['title'].lower():
-                        file = download(k['url'])
-                        name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                        rename(file, name)
-                        try:
-                            music = EasyID3(name)
-                        except id3.ID3NoHeaderError:
-                            music = File(name, easy=True)
-                            music.add_tags()
-                        music['title'] = i['audio']['title']
-                        music['artist'] = i['audio']['artist']
-                        music.save()
-                        del music
-                        tracks.append(name)
-                        break
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
+                if k_artist == i_artist and k_title == i_title:
+                    file = download(k['url'])
+                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                    rename(file, name)
+                    try:
+                        music = EasyID3(name)
+                    except id3.ID3NoHeaderError:
+                        music = File(name, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['title']
+                    music['artist'] = i['audio']['artist']
+                    music.save()
+                    del music
+                    tracks.append(name)
+                    break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
         else:
@@ -351,7 +345,7 @@ def send_post_with_music(post, group, CHAT_ID):
                 photo = i['photo']['photo_604']
                 photo = i['photo']['photo_807']
                 photo = i['photo']['photo_1280']
-                photo = i['photo']['photo_2560']
+                # photo = i['photo']['photo_2560']
             except KeyError:
                 pass
             media.append({'media': photo, 'type': 'photo'})
