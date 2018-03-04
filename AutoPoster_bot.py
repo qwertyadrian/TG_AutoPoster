@@ -197,7 +197,7 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
+        bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
     sleep(5)
 
@@ -349,9 +349,12 @@ def send_post_with_music(post, group, CHAT_ID):
             except KeyError:
                 pass
             media.append({'media': photo, 'type': 'photo'})
-    bot.sendMediaGroup(CHAT_ID, media)
+    try:
+        bot.sendMediaGroup(CHAT_ID, media)
+    except ValueError:
+        pass
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'), caption=m)
+        bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
     sleep(5)
 
