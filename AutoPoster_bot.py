@@ -284,13 +284,42 @@ def send_post_with_doc(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
+    tracks = []
+    media = []
     if len(caption_formatted) > 199:
         bot.sendMessage(CHAT_ID, caption_formatted)
         bot.sendPhoto(CHAT_ID, document)
     else:
         bot.sendDocument(CHAT_ID, document, caption_formatted)
     for i in post['attachments'][1:]:
-        bot.sendDocument(CHAT_ID, i['doc']['url'])
+        if i['type'] == 'audio':
+            track = i['audio']['artist'] + ' - ' + i['audio']['title']
+            track_list = audio.search(q=track)
+            for k in track_list:
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
+                if k_artist == i_artist and k_title == i_title:
+                    file = download(k['url'])
+                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                    rename(file, name)
+                    try:
+                        music = EasyID3(name)
+                    except id3.ID3NoHeaderError:
+                        music = File(name, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['title']
+                    music['artist'] = i['audio']['artist']
+                    music.save()
+                    del music
+                    tracks.append(name)
+                    break
+        elif i['type'] == 'doc':
+            bot.sendDocument(CHAT_ID, i['doc']['url'])
+    for m in tracks:
+        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        remove(m)
     sleep(5)
 
 
@@ -302,7 +331,6 @@ def send_post_with_music(post, group, CHAT_ID):
     :param CHAT_ID: ID чата/канала Telegram
     :return: None
     """
-    # Функция отправки аудиозаписей не реализована
     media = []
     tracks = []
     caption = post['text']
