@@ -317,6 +317,28 @@ def send_post_with_doc(post, group, CHAT_ID):
                     break
         elif i['type'] == 'doc':
             bot.sendDocument(CHAT_ID, i['doc']['url'])
+        elif i['type'] == 'poll':
+            pass
+        elif i['type'] == 'link':
+            link = i['link']['url']
+            title = i['link']['title']
+            text = '[{0}]({1})'.format(title, link)
+            bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
+        else:
+            try:
+                photo = i['photo']['photo_75']
+                photo = i['photo']['photo_130']
+                photo = i['photo']['photo_604']
+                photo = i['photo']['photo_807']
+                photo = i['photo']['photo_1280']
+                # photo = i['photo']['photo_2560']
+            except KeyError:
+                pass
+            media.append({'media': photo, 'type': 'photo'})
+    if len(media) == 0:
+        pass
+    else:
+        bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
         bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
@@ -337,7 +359,7 @@ def send_post_with_music(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     if caption == '':
-        caption_formatted = None
+        pass
     else:
         bot.sendMessage(CHAT_ID, caption_formatted)
     for i in post['attachments'][1:]:
