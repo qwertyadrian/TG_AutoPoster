@@ -13,6 +13,7 @@ from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
 from time import sleep
+from os.path import getsize
 
 bot = Bot(TOKEN)
 session = VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
@@ -179,8 +180,11 @@ def send_post_with_many_photos(post, group, CHAT_ID):
             text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
         elif i['type'] == 'doc':
-            doc = i['doc']['url']
-            bot.sendDocument(CHAT_ID, doc)
+            file = download(i['doc']['url'])
+            rename(file, i['doc']['title'])
+            if getsize(i['doc']['title']) < 52428800:
+                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                remove(i['doc']['title'])
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -316,7 +320,13 @@ def send_post_with_doc(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            bot.sendDocument(CHAT_ID, i['doc']['url'])
+            file = download(i['doc']['url'])
+            rename(file, i['doc']['title'])
+            if getsize(i['doc']['title']) < 52428800:
+                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                remove(i['doc']['title'])
+            else:
+                remove(i['doc']['title'])
         elif i['type'] == 'poll':
             pass
         elif i['type'] == 'link':
@@ -387,7 +397,11 @@ def send_post_with_music(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            bot.sendDocument(CHAT_ID, i['doc']['url'])
+            file = download(i['doc']['url'])
+            rename(file, i['doc']['title'])
+            if getsize(i['doc']['title']) < 52428800:
+                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                remove(i['doc']['title'])
         else:
             try:
                 photo = i['photo']['photo_75']
