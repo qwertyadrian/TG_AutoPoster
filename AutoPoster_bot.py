@@ -26,6 +26,7 @@ def get_data(group):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
+
     :param group: ID группы ВК
     :return: Возвращает словарь с постами
     """
@@ -44,10 +45,11 @@ def get_data(group):
 def send_new_posts(items, last_id, group, CHAT_ID):
     """
     Функция отправки постов. Она распределяет посты различным категориям (отдельным функциям).
+
     :param items: Список постов
     :param last_id: ID последнего отправленного поста
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     for item in items:
@@ -56,20 +58,17 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             # Если новые посты не обнаружены пропускаем итерацию
             break
         try:
-            if item['attachments'][0]['type'] == 'photo' and len(item['attachments']) == 1:
-                # Если первый первый прикрепленный файл - фото и оно одно, то выполняется фунция ниже
-                send_post_with_one_photo(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'photo' and len(item['attachments']) > 1:
-                # Если первый первый прикрепленный файл - фото их несколько, то выполняется фунция ниже
-                send_post_with_many_photos(item, group, CHAT_ID)
+            if item['attachments'][0]['type'] == 'photo':
+                # Если первый первый прикрепленный файл - фото, то выполняется функция ниже
+                send_post_with_photos(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'link':
-                # Если первый первый прикрепленный файл - ссылка, то выполняется фунция ниже
+                # Если первый первый прикрепленный файл - ссылка, то выполняется функция ниже
                 send_post_with_link(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'doc':
-                # Если первый первый прикрепленный файл - документ, то выполняется фунция ниже
+                # Если первый первый прикрепленный файл - документ, то выполняется функция ниже
                 send_post_with_doc(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'video':
-                # Если первый первый прикрепленный файл - видео, то выполняется фунция ниже
+                # Если первый первый прикрепленный файл - видео, то выполняется функция ниже
                 send_post_with_video(item, group, CHAT_ID)
             elif item['attachments'][0]['type'] == 'poll':
                 # Функция отправки опросов не реализована
@@ -92,40 +91,13 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     return
 
 
-def send_post_with_one_photo(post, group, CHAT_ID):
-    """
-    Функция отправки поста с одним фото.
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
-    :return: None
-    """
-    try:
-        photo = post['attachments'][0]['photo']['photo_75']
-        photo = post['attachments'][0]['photo']['photo_130']
-        photo = post['attachments'][0]['photo']['photo_604']
-        photo = post['attachments'][0]['photo']['photo_807']
-        photo = post['attachments'][0]['photo']['photo_1280']
-        # photo = post['attachments'][0]['photo']['photo_2560']
-    except KeyError:
-        pass
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
-    if len(caption_formatted) > 199:
-        bot.sendPhoto(CHAT_ID, photo)
-        bot.sendMessage(CHAT_ID, caption_formatted)
-    else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
-    sleep(5)
-
-
-def send_post_with_many_photos(post, group, CHAT_ID):
+def send_post_with_photos(post, group, CHAT_ID):
     """
     Функция отправки поста с несколькими фото (вложениями)
+
     :param post: Словарь с информацией о посте
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     media = []
@@ -201,17 +173,22 @@ def send_post_with_many_photos(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        if getsize(m) > 52428800:
+            remove(m)
+        else:
+            bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
     sleep(5)
+    return
 
 
 def send_post_with_link(post, group, CHAT_ID):
     """
     Функция отправки поста с ссылкой.
+
     :param post: Словарь с информацией о посте
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     link = post['attachments'][0]['link']['url']
@@ -220,9 +197,18 @@ def send_post_with_link(post, group, CHAT_ID):
     caption_formatted = sub(pattern, '', caption) + '\n' + link
     bot.sendMessage(CHAT_ID, caption_formatted)
     sleep(5)
+    return
 
 
 def send_post_with_album(post, group, CHAT_ID):
+    """
+    Функция отправки альбома.
+
+    :param post: Пост, в котором есть прикрепленный альбом.
+    :param group: ID группы ВК
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
+    :return: None
+    """
     media = []
     caption = post['text']
     pattern = '@' + group
@@ -253,14 +239,16 @@ def send_post_with_album(post, group, CHAT_ID):
             media = []
         else:
             media.append({'media': photo, 'type': 'photo'})
+    return
 
 
 def send_post_with_video(post, group, CHAT_ID):
     """
     Функция отправки поста с видео.
+
     :param post: Словарь с информацией о посте
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_',
@@ -274,14 +262,16 @@ def send_post_with_video(post, group, CHAT_ID):
         text = text + '\n' + link
     bot.sendMessage(CHAT_ID, text)
     sleep(5)
+    return
 
 
 def send_post_with_doc(post, group, CHAT_ID):
     """
     Функция отправки поста с документом.
+
     :param post: Словарь с информацией о посте
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     caption = post['text']
@@ -350,17 +340,22 @@ def send_post_with_doc(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        if getsize(m) > 52428800:
+            remove(m)
+        else:
+            bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
     sleep(5)
+    return
 
 
 def send_post_with_music(post, group, CHAT_ID):
     """
     Функция отправки постов с музыкой (не реализовано до конца)
+
     :param post: Словарь с информацией о посте
     :param group: ID группы ВК
-    :param CHAT_ID: ID чата/канала Telegram
+    :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
     media = []
@@ -418,17 +413,22 @@ def send_post_with_music(post, group, CHAT_ID):
     except ValueError:
         pass
     for m in tracks:
-        bot.sendAudio(CHAT_ID, open(m, 'rb'))
+        if getsize(m) > 52428800:
+            remove(m)
+        else:
+            bot.sendAudio(CHAT_ID, open(m, 'rb'))
         remove(m)
     sleep(5)
+    return
 
 
 def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
     """
     Основная функция программы. В ней вызываются остальные функции.
     Посты передаются в функцию send_new_posts
+
     :param group: Короткое название группы
-    :param FILENAME_VK: Название файла, в котором сохраняется ID  почледнего отправленного поста.
+    :param FILENAME_VK: Имя файла, в котором сохраняется ID почледнего отправленного поста.
     :param CHAT_ID: ID чата, в который отправляются посты
     :return: None
     """
@@ -475,7 +475,7 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
 
 if __name__ == '__main__':
     while True:
-        getLogger('requests').setLevel(CRITICAL)
+        getLogger('AutoPoster').setLevel(CRITICAL)
         basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
                     filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
         for (key, value) in URLS.items():
