@@ -100,8 +100,9 @@ def send_post_with_photos(post, group, CHAT_ID):
     :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
-    media = []
+    album = []
     tracks = []
+    videos = []
     caption = post['text']
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
@@ -151,13 +152,18 @@ def send_post_with_photos(post, group, CHAT_ID):
             title = i['link']['title']
             text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
+        elif i['type'] == 'video':
+            link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
+            videos.append(link)
         elif i['type'] == 'doc':
             file = download(i['doc']['url'])
             rename(file, i['doc']['title'])
             if getsize(i['doc']['title']) < 52428800:
                 bot.sendDocument(CHAT_ID, i['doc']['url'])
                 remove(i['doc']['title'])
-        else:
+            else:
+                remove(i['doc']['title'])
+        elif i['type'] == 'photo':
             try:
                 photo = i['photo']['photo_75']
                 photo = i['photo']['photo_130']
@@ -167,11 +173,15 @@ def send_post_with_photos(post, group, CHAT_ID):
                 # photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
-    if len(media) == 0:
+            album.append({'media': photo, 'type': 'photo'})
+        else:
+            pass
+    try:
+        bot.sendMediaGroup(CHAT_ID, album)
+    except ValueError:
         pass
-    else:
-        bot.sendMediaGroup(CHAT_ID, media)
+    for i in videos:
+        bot.sendMessage(CHAT_ID, i)
     for m in tracks:
         if getsize(m) > 52428800:
             remove(m)
@@ -279,7 +289,7 @@ def send_post_with_doc(post, group, CHAT_ID):
     caption_formatted = sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
     tracks = []
-    media = []
+    album = []
     if len(caption_formatted) > 199:
         bot.sendMessage(CHAT_ID, caption_formatted)
         bot.sendPhoto(CHAT_ID, document)
@@ -334,11 +344,11 @@ def send_post_with_doc(post, group, CHAT_ID):
                 # photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
-    if len(media) == 0:
+            album.append({'media': photo, 'type': 'photo'})
+    try:
+        bot.sendMediaGroup(CHAT_ID, album)
+    except ValueError:
         pass
-    else:
-        bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
         if getsize(m) > 52428800:
             remove(m)
@@ -358,7 +368,7 @@ def send_post_with_music(post, group, CHAT_ID):
     :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
-    media = []
+    album = []
     tracks = []
     caption = post['text']
     pattern = '@' + group
@@ -397,6 +407,8 @@ def send_post_with_music(post, group, CHAT_ID):
             if getsize(i['doc']['title']) < 52428800:
                 bot.sendDocument(CHAT_ID, i['doc']['url'])
                 remove(i['doc']['title'])
+            else:
+                remove(i['doc']['title'])
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -407,9 +419,9 @@ def send_post_with_music(post, group, CHAT_ID):
                 # photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
+            album.append({'media': photo, 'type': 'photo'})
     try:
-        bot.sendMediaGroup(CHAT_ID, media)
+        bot.sendMediaGroup(CHAT_ID, album)
     except ValueError:
         pass
     for m in tracks:
