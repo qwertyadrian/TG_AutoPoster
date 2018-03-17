@@ -155,7 +155,9 @@ def send_post_with_photos(post, group, CHAT_ID):
             file = download(i['doc']['url'])
             rename(file, i['doc']['title'])
             if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
+                remove(i['doc']['title'])
+            else:
                 remove(i['doc']['title'])
         else:
             try:
@@ -257,10 +259,11 @@ def send_post_with_video(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     text = caption_formatted + '\n' + link
+    bot.sendMessage(CHAT_ID, text)
     for i in post['attachments'][1:]:
         link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
         text = text + '\n' + link
-    bot.sendMessage(CHAT_ID, text)
+        bot.sendMessage(CHAT_ID, text)
     sleep(5)
     return
 
@@ -278,13 +281,19 @@ def send_post_with_doc(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
+    doc = download(document)
+    rename(doc, post['attachments'][0]['doc']['title'])
     tracks = []
     media = []
-    if len(caption_formatted) > 199:
-        bot.sendMessage(CHAT_ID, caption_formatted)
-        bot.sendPhoto(CHAT_ID, document)
+    if getsize(post['attachments'][0]['doc']['title']) < 52428800:
+        if len(caption_formatted) > 199:
+            bot.sendMessage(CHAT_ID, caption_formatted)
+            bot.sendPhoto(CHAT_ID, open(post['attachments'][0]['doc']['title'], 'rb'))
+        else:
+            bot.sendDocument(CHAT_ID, open(post['attachments'][0]['doc']['title'], 'rb'), caption_formatted)
+        remove(post['attachments'][0]['doc']['title'])
     else:
-        bot.sendDocument(CHAT_ID, document, caption_formatted)
+        remove(post['attachments'][0]['doc']['title'])
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -313,7 +322,7 @@ def send_post_with_doc(post, group, CHAT_ID):
             file = download(i['doc']['url'])
             rename(file, i['doc']['title'])
             if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
                 remove(i['doc']['title'])
             else:
                 remove(i['doc']['title'])
@@ -395,7 +404,9 @@ def send_post_with_music(post, group, CHAT_ID):
             file = download(i['doc']['url'])
             rename(file, i['doc']['title'])
             if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, i['doc']['url'])
+                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
+                remove(i['doc']['title'])
+            else:
                 remove(i['doc']['title'])
         else:
             try:
