@@ -175,11 +175,14 @@ def send_post_with_photos(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        if getsize(m) > 52428800:
+        try:
+            if getsize(m) > 52428800:
+                remove(m)
+            else:
+               bot.sendAudio(CHAT_ID, open(m, 'rb'))
             remove(m)
-        else:
-            bot.sendAudio(CHAT_ID, open(m, 'rb'))
-        remove(m)
+        except FileNotFoundError:
+            continue
     sleep(5)
     return
 
@@ -349,11 +352,14 @@ def send_post_with_doc(post, group, CHAT_ID):
     else:
         bot.sendMediaGroup(CHAT_ID, media)
     for m in tracks:
-        if getsize(m) > 52428800:
+        try:
+            if getsize(m) > 52428800:
+                remove(m)
+            else:
+               bot.sendAudio(CHAT_ID, open(m, 'rb'))
             remove(m)
-        else:
-            bot.sendAudio(CHAT_ID, open(m, 'rb'))
-        remove(m)
+        except FileNotFoundError:
+            continue
     sleep(5)
     return
 
@@ -424,11 +430,14 @@ def send_post_with_music(post, group, CHAT_ID):
     except ValueError:
         pass
     for m in tracks:
-        if getsize(m) > 52428800:
+        try:
+            if getsize(m) > 52428800:
+                remove(m)
+            else:
+               bot.sendAudio(CHAT_ID, open(m, 'rb'))
             remove(m)
-        else:
-            bot.sendAudio(CHAT_ID, open(m, 'rb'))
-        remove(m)
+        except FileNotFoundError:
+            continue
     sleep(5)
     return
 
