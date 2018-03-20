@@ -494,11 +494,17 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
 
 
 if __name__ == '__main__':
-    while True:
-        getLogger('AutoPoster').setLevel(CRITICAL)
-        basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
-                    filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
+    getLogger('AutoPoster').setLevel(CRITICAL)
+    basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
+                filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
+    if SINGLE_RUN:
         for (key, value) in URLS.items():
             check_new_posts_vk(key, *value)
-        info('[App] Script went to sleep.')
-        sleep(60 * 5)
+        info('[App] Script exited.\n')
+    else:
+        while True:
+            for (key, value) in URLS.items():
+                check_new_posts_vk(key, *value)
+            info('[App] Script went to sleep.')
+            sleep(60 * 5)
+        
