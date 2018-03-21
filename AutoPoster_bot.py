@@ -117,10 +117,8 @@ def send_post_with_photos(post, group, CHAT_ID):
     if len(caption_formatted) > 199:
         bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'))
         bot.sendMessage(CHAT_ID, caption_formatted)
-        remove(photo)
     else:
         bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'), caption_formatted)
-        remove(photo)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -153,7 +151,7 @@ def send_post_with_photos(post, group, CHAT_ID):
             text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'], out=i['doc']['title'])
+            doc = download(i['doc']['url'], out=i['doc']['title'])
             if getsize(doc) < 52428800:
                 bot.sendDocument(CHAT_ID, open(doc, 'rb'))
                 remove(doc)
@@ -320,7 +318,7 @@ def send_post_with_doc(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'], out=i['doc']['title'])
+            doc = download(i['doc']['url'], out=i['doc']['title'])
             if getsize(doc) < 52428800:
                 bot.sendDocument(CHAT_ID, open(doc, 'rb'))
                 remove(doc)
@@ -403,7 +401,7 @@ def send_post_with_music(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'], out=i['doc']['title'])
+            doc = download(i['doc']['url'], out=i['doc']['title'])
             if getsize(doc) < 52428800:
                 bot.sendDocument(CHAT_ID, open(doc, 'rb'))
                 remove(doc)
