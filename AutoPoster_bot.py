@@ -5,7 +5,7 @@ from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
 from wget import download
-from os import rename, remove
+from os import remove, scandir, mkdir, chdir
 from re import sub
 from mutagen import id3, File
 from urllib3 import exceptions
@@ -111,14 +111,16 @@ def send_post_with_photos(post, group, CHAT_ID):
         photo = post['attachments'][0]['photo']['photo_604']
         photo = post['attachments'][0]['photo']['photo_807']
         photo = post['attachments'][0]['photo']['photo_1280']
-        # photo = post['attachments'][0]['photo']['photo_2560']
+        photo = post['attachments'][0]['photo']['photo_2560']
     except KeyError:
         pass
     if len(caption_formatted) > 199:
-        bot.sendPhoto(CHAT_ID, photo)
+        bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'))
         bot.sendMessage(CHAT_ID, caption_formatted)
+        remove(photo)
     else:
-        bot.sendPhoto(CHAT_ID, photo, caption_formatted)
+        bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'), caption_formatted)
+        remove(photo)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -129,9 +131,8 @@ def send_post_with_photos(post, group, CHAT_ID):
                 i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
                 i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
                 if k_artist == i_artist and k_title == i_title:
-                    file = download(k['url'])
                     name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    rename(file, name)
+                    file = download(k['url'], out=name)
                     try:
                         music = EasyID3(name)
                     except id3.ID3NoHeaderError:
@@ -152,13 +153,12 @@ def send_post_with_photos(post, group, CHAT_ID):
             text = '[{0}]({1})'.format(title, link)
             bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'])
-            rename(file, i['doc']['title'])
-            if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
-                remove(i['doc']['title'])
+            file = download(i['doc']['url'], out=i['doc']['title'])
+            if getsize(doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
+                remove(doc)
             else:
-                remove(i['doc']['title'])
+                remove(doc)
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -166,10 +166,10 @@ def send_post_with_photos(post, group, CHAT_ID):
                 photo = i['photo']['photo_604']
                 photo = i['photo']['photo_807']
                 photo = i['photo']['photo_1280']
-                # photo = i['photo']['photo_2560']
+                photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
+            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
     if len(media) == 0:
         pass
     else:
@@ -284,19 +284,18 @@ def send_post_with_doc(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     document = post['attachments'][0]['doc']['url']
-    doc = download(document)
-    rename(doc, post['attachments'][0]['doc']['title'])
+    doc = download(document, out=post['attachments'][0]['doc']['title'])
     tracks = []
     media = []
-    if getsize(post['attachments'][0]['doc']['title']) < 52428800:
+    if getsize(doc) < 52428800:
         if len(caption_formatted) > 199:
             bot.sendMessage(CHAT_ID, caption_formatted)
-            bot.sendPhoto(CHAT_ID, open(post['attachments'][0]['doc']['title'], 'rb'))
+            bot.sendPhoto(CHAT_ID, open(doc, 'rb'))
         else:
-            bot.sendDocument(CHAT_ID, open(post['attachments'][0]['doc']['title'], 'rb'), caption_formatted)
-        remove(post['attachments'][0]['doc']['title'])
+            bot.sendDocument(CHAT_ID, open(doc, 'rb'), caption_formatted)
+        remove(doc)
     else:
-        remove(post['attachments'][0]['doc']['title'])
+        remove(doc)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -307,9 +306,8 @@ def send_post_with_doc(post, group, CHAT_ID):
                 i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
                 i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
                 if k_artist == i_artist and k_title == i_title:
-                    file = download(k['url'])
                     name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    rename(file, name)
+                    file = download(k['url'], out=name)
                     try:
                         music = EasyID3(name)
                     except id3.ID3NoHeaderError:
@@ -322,13 +320,12 @@ def send_post_with_doc(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'])
-            rename(file, i['doc']['title'])
-            if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
-                remove(i['doc']['title'])
+            file = download(i['doc']['url'], out=i['doc']['title'])
+            if getsize(doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
+                remove(doc)
             else:
-                remove(i['doc']['title'])
+                remove(doc)
         elif i['type'] == 'poll':
             pass
         elif i['type'] == 'link':
@@ -343,10 +340,10 @@ def send_post_with_doc(post, group, CHAT_ID):
                 photo = i['photo']['photo_604']
                 photo = i['photo']['photo_807']
                 photo = i['photo']['photo_1280']
-                # photo = i['photo']['photo_2560']
+                photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
+            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
     if len(media) == 0:
         pass
     else:
@@ -392,9 +389,8 @@ def send_post_with_music(post, group, CHAT_ID):
                 i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
                 i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
                 if k_artist == i_artist and k_title == i_title:
-                    file = download(k['url'])
                     name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    rename(file, name)
+                    file = download(k['url'], out=name)
                     try:
                         music = EasyID3(name)
                     except id3.ID3NoHeaderError:
@@ -407,13 +403,12 @@ def send_post_with_music(post, group, CHAT_ID):
                     tracks.append(name)
                     break
         elif i['type'] == 'doc':
-            file = download(i['doc']['url'])
-            rename(file, i['doc']['title'])
-            if getsize(i['doc']['title']) < 52428800:
-                bot.sendDocument(CHAT_ID, open(i['doc']['title'], 'rb'))
-                remove(i['doc']['title'])
+            file = download(i['doc']['url'], out=i['doc']['title'])
+            if getsize(doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
+                remove(doc)
             else:
-                remove(i['doc']['title'])
+                remove(doc)
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -421,10 +416,10 @@ def send_post_with_music(post, group, CHAT_ID):
                 photo = i['photo']['photo_604']
                 photo = i['photo']['photo_807']
                 photo = i['photo']['photo_1280']
-                # photo = i['photo']['photo_2560']
+                photo = i['photo']['photo_2560']
             except KeyError:
                 pass
-            media.append({'media': photo, 'type': 'photo'})
+            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
     try:
         bot.sendMediaGroup(CHAT_ID, media)
     except ValueError:
@@ -497,9 +492,16 @@ if __name__ == '__main__':
     getLogger('AutoPoster').setLevel(CRITICAL)
     basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
                 filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
+    try:
+        mkdir('data')
+        chdir('data')
+    except FileExistsError:
+        chdir('data')
     if SINGLE_RUN:
         for (key, value) in URLS.items():
             check_new_posts_vk(key, *value)
+        for i in scandir():
+            remove(i.name)
         info('[App] Script exited.\n')
     else:
         while True:
