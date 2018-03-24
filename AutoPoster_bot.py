@@ -5,7 +5,7 @@ from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
 from wget import download
-from os import remove, listdir, mkdir, chdir
+from os import remove, listdir, mkdir, chdir, rename
 from re import sub
 from mutagen import id3, File
 from urllib3 import exceptions
@@ -155,12 +155,13 @@ def send_post_with_photos(post, group, CHAT_ID):
             doc = download(i['doc']['url'], out='file')
             with open(doc, 'rb') as file:
                 mime = get(file.read(128))
-            doc = doc + mime.extension[0]
-            if getsize(doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
-                remove(doc)
+            new_doc = doc + '.' + mime.extension[0]
+            rename(doc, new_doc)
+            if getsize(new_doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
+                remove(new_doc)
             else:
-                remove(doc)
+                remove(new_doc)
         else:
             try:
                 photo = i['photo']['photo_75']
@@ -291,16 +292,17 @@ def send_post_with_doc(post, group, CHAT_ID):
     media = []
     with open(doc, 'rb') as file:
         mime = get(file.read(128))
-    doc = doc + mime.extension[0]
-    if getsize(doc) < 52428800:
+    new_doc = doc + '.' + mime.extension[0]
+    rename(doc, new_doc)
+    if getsize(new_doc) < 52428800:
         if len(caption_formatted) > 199:
             bot.sendMessage(CHAT_ID, caption_formatted)
-            bot.sendPhoto(CHAT_ID, open(doc, 'rb'))
+            bot.sendPhoto(CHAT_ID, open(new_doc, 'rb'))
         else:
-            bot.sendDocument(CHAT_ID, open(doc, 'rb'), caption_formatted)
-        remove(doc)
+            bot.sendDocument(CHAT_ID, open(new_doc, 'rb'), caption_formatted)
+        remove(new_doc)
     else:
-        remove(doc)
+        remove(new_doc)
     for i in post['attachments'][1:]:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -328,12 +330,13 @@ def send_post_with_doc(post, group, CHAT_ID):
             doc = download(i['doc']['url'], out='file')
             with open(doc, 'rb') as file:
                 mime = get(file.read(128))
-                doc = doc + mime.extension[0]
-            if getsize(doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
-                remove(doc)
+            new_doc = doc + '.' + mime.extension[0]
+            rename(doc, new_doc)
+            if getsize(new_doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
+                remove(new_doc)
             else:
-                remove(doc)
+                remove(new_doc)
         elif i['type'] == 'poll':
             pass
         elif i['type'] == 'link':
@@ -416,12 +419,13 @@ def send_post_with_music(post, group, CHAT_ID):
             doc = download(i['doc']['url'], out='file')
             with open(doc, 'rb') as file:
                 mime = get(file.read(128))
-            doc = doc + mime.extension[0]
-            if getsize(doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(doc, 'rb'))
-                remove(doc)
+            new_doc = doc + '.' + mime.extension[0]
+            rename(doc, new_doc)
+            if getsize(new_doc) < 52428800:
+                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
+                remove(new_doc)
             else:
-                remove(doc)
+                remove(new_doc)
         elif i['type'] == 'photo':
             photo = i['photo']['photo_75']
             try:
