@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from telepot import Bot
+from telepot.exception import TelegramError
 from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
@@ -91,6 +92,83 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     # Спим секунду, чтобы избежать разного рода ошибок и ограничений (на всякий случай!)
     return
 
+
+def send_post(post, group, CHAT_ID):
+    photos = []
+    tracks = []
+    docs = []
+    links = ''
+    videos = []
+    caption = post['text']
+    pattern = '@' + group
+    caption_formatted = sub(pattern, '', caption)
+    for i in post['attachments']:
+        if i['type'] == 'audio':
+            track = i['audio']['artist'] + ' - ' + i['audio']['title']
+            track_list = audio.search(q=track)
+            for k in track_list:
+                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
+                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
+                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
+                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
+                if k_artist == i_artist and k_title == i_title:
+                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
+                    file = download(k['url'], out=name)
+                    try:
+                        music = EasyID3(file)
+                    except id3.ID3NoHeaderError:
+                        music = File(file, easy=True)
+                        music.add_tags()
+                    music['title'] = i['audio']['title']
+                    music['artist'] = i['audio']['artist']
+                    music.save()
+                    del music
+                    tracks.append(name)
+                    break
+        elif i['type'] == 'link':
+            link = i['link']['url']
+            title = i['link']['title']
+            text = '[{0}]({1})'.format(title, link)
+            links += text + '\n'
+            # bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
+        elif i['type'] == 'doc':
+            doc = download(i['doc']['url'], out='file')
+            with open(doc, 'rb') as file:
+                mime = get(file.read(128))
+            new_doc = doc + '.' + mime.extension[0]
+            rename(doc, new_doc)
+            if getsize(new_doc) < 52428800:
+                # bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
+                # remove(new_doc)
+                docs.append(open(new_doc, 'rb'))
+            else:
+                remove(new_doc)
+        elif i['type'] == 'photo':
+            photo = i['photo']['photo_75']
+            try:
+                photo = i['photo']['photo_130']
+                photo = i['photo']['photo_604']
+                photo = i['photo']['photo_807']
+                photo = i['photo']['photo_1280']
+                photo = i['photo']['photo_2560']
+            except KeyError:
+                pass
+            photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
+        elif i['type'] == 'video':
+            link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
+            videos.append(link)
+            # text = text + '\n' + link
+            # bot.sendMessage(CHAT_ID, text)
+        else:
+            # Если тип вложения не определен, он не будет обработан
+            # Поддержка других  вложений будет реализована в будущем
+            pass
+    if caption_formatted:
+        bot.sendMessage(CHAT_ID, caption_formatted)
+    else:
+        info('Text in post not found. Skipping sending text message')
+    if photos:
+        
 
 def send_post_with_photos(post, group, CHAT_ID):
     """
