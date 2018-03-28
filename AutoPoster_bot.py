@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from telepot import Bot
-from telepot.exception import TelegramError
 from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
@@ -60,28 +59,10 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             # Если новые посты не обнаружены пропускаем итерацию
             break
         try:
-            if item['attachments'][0]['type'] == 'photo':
-                # Если первый первый прикрепленный файл - фото, то выполняется функция ниже
-                send_post_with_photos(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'link':
-                # Если первый первый прикрепленный файл - ссылка, то выполняется функция ниже
-                send_post_with_link(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'doc':
-                # Если первый первый прикрепленный файл - документ, то выполняется функция ниже
-                send_post_with_doc(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'video':
-                # Если первый первый прикрепленный файл - видео, то выполняется функция ниже
-                send_post_with_video(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'poll':
-                # Функция отправки опросов не реализована
-                pass
-            elif item['attachments'][0]['type'] == 'audio':
-                # Функция отправки аудиозаписей не реализована
-                send_post_with_music(item, group, CHAT_ID)
-            elif item['attachments'][0]['type'] == 'album':
+            if item['attachments'][0]['type'] == 'album':
                 send_post_with_album(item, group, CHAT_ID)
             else:
-                pass
+                send_post(item, group, CHAT_ID)
         except KeyError:
             warning('In the post, no text, photos, videos, links and documents not found.')
             if item['text'] != '':
@@ -168,93 +149,16 @@ def send_post(post, group, CHAT_ID):
     else:
         info('Text in post not found. Skipping sending text message')
     if photos:
-        
-
-def send_post_with_photos(post, group, CHAT_ID):
-    """
-    Функция отправки поста с несколькими фото (вложениями)
-
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата, канала или ваш Telegram ID
-    :return: None
-    """
-    media = []
-    tracks = []
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
-    photo = post['attachments'][0]['photo']['photo_75']
-    try:
-        photo = post['attachments'][0]['photo']['photo_130']
-        photo = post['attachments'][0]['photo']['photo_604']
-        photo = post['attachments'][0]['photo']['photo_807']
-        photo = post['attachments'][0]['photo']['photo_1280']
-        photo = post['attachments'][0]['photo']['photo_2560']
-    except KeyError:
-        pass
-    if len(caption_formatted) > 199:
-        bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'))
-        bot.sendMessage(CHAT_ID, caption_formatted)
-    else:
-        bot.sendPhoto(CHAT_ID, open(download(photo), 'rb'), caption_formatted)
-    for i in post['attachments'][1:]:
-        if i['type'] == 'audio':
-            track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            track_list = audio.search(q=track)
-            for k in track_list:
-                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
-                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
-                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
-                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
-                if k_artist == i_artist and k_title == i_title:
-                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    file = download(k['url'], out=name)
-                    try:
-                        music = EasyID3(file)
-                    except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
-                        music.add_tags()
-                    music['title'] = i['audio']['title']
-                    music['artist'] = i['audio']['artist']
-                    music.save()
-                    del music
-                    tracks.append(name)
-                    break
-        elif i['type'] == 'poll':
-            # Функция отправки опросов не реализована
-            pass
-        elif i['type'] == 'link':
-            link = i['link']['url']
-            title = i['link']['title']
-            text = '[{0}]({1})'.format(title, link)
-            bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
-        elif i['type'] == 'doc':
-            doc = download(i['doc']['url'], out='file')
-            with open(doc, 'rb') as file:
-                mime = get(file.read(128))
-            new_doc = doc + '.' + mime.extension[0]
-            rename(doc, new_doc)
-            if getsize(new_doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
-                remove(new_doc)
-            else:
-                remove(new_doc)
+        if len(photos) == 1:
+            bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
         else:
-            try:
-                photo = i['photo']['photo_75']
-                photo = i['photo']['photo_130']
-                photo = i['photo']['photo_604']
-                photo = i['photo']['photo_807']
-                photo = i['photo']['photo_1280']
-                photo = i['photo']['photo_2560']
-            except KeyError:
-                pass
-            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-    if len(media) == 0:
-        pass
-    else:
-        bot.sendMediaGroup(CHAT_ID, media)
+            bot.sendMediaGroup(CHAT_ID, photos)
+    if links:
+        bot.sendMessage(CHAT_ID, links)
+    for m in videos:
+        bot.sendMessage(CHAT_ID, m)
+    for m in docs:
+        bot.sendDocument(CHAT_ID, m)
     for m in tracks:
         try:
             if getsize(m) > 52428800:
@@ -264,27 +168,7 @@ def send_post_with_photos(post, group, CHAT_ID):
             remove(m)
         except FileNotFoundError:
             continue
-    sleep(5)
-    return
-
-
-def send_post_with_link(post, group, CHAT_ID):
-    """
-    Функция отправки поста с ссылкой.
-
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата, канала или ваш Telegram ID
-    :return: None
-    """
-    link = post['attachments'][0]['link']['url']
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption) + '\n' + link
-    bot.sendMessage(CHAT_ID, caption_formatted)
-    sleep(5)
-    return
-
+        
 
 def send_post_with_album(post, group, CHAT_ID):
     """
@@ -325,210 +209,6 @@ def send_post_with_album(post, group, CHAT_ID):
             media = []
         else:
             media.append({'media': photo, 'type': 'photo'})
-    return
-
-
-def send_post_with_video(post, group, CHAT_ID):
-    """
-    Функция отправки поста с видео.
-
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата, канала или ваш Telegram ID
-    :return: None
-    """
-    link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, post['attachments'][0]['video']['owner_id'], '_',
-                                     post['attachments'][0]['video']['id'])
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
-    text = caption_formatted + '\n' + link
-    bot.sendMessage(CHAT_ID, text)
-    for i in post['attachments'][1:]:
-        link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
-        text = text + '\n' + link
-        bot.sendMessage(CHAT_ID, text)
-    sleep(5)
-    return
-
-
-def send_post_with_doc(post, group, CHAT_ID):
-    """
-    Функция отправки поста с документом.
-
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата, канала или ваш Telegram ID
-    :return: None
-    """
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
-    document = post['attachments'][0]['doc']['url']
-    doc = download(document, out='file')
-    tracks = []
-    media = []
-    with open(doc, 'rb') as file:
-        mime = get(file.read(128))
-    new_doc = doc + '.' + mime.extension[0]
-    rename(doc, new_doc)
-    if getsize(new_doc) < 52428800:
-        if len(caption_formatted) > 199:
-            bot.sendMessage(CHAT_ID, caption_formatted)
-            bot.sendPhoto(CHAT_ID, open(new_doc, 'rb'))
-        else:
-            bot.sendDocument(CHAT_ID, open(new_doc, 'rb'), caption_formatted)
-        remove(new_doc)
-    else:
-        remove(new_doc)
-    for i in post['attachments'][1:]:
-        if i['type'] == 'audio':
-            track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            track_list = audio.search(q=track)
-            for k in track_list:
-                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
-                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
-                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
-                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
-                if k_artist == i_artist and k_title == i_title:
-                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    file = download(k['url'], out=name)
-                    try:
-                        music = EasyID3(file)
-                    except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
-                        music.add_tags()
-                    music['title'] = i['audio']['title']
-                    music['artist'] = i['audio']['artist']
-                    music.save()
-                    del music
-                    tracks.append(name)
-                    break
-        elif i['type'] == 'doc':
-            doc = download(i['doc']['url'], out='file')
-            with open(doc, 'rb') as file:
-                mime = get(file.read(128))
-            new_doc = doc + '.' + mime.extension[0]
-            rename(doc, new_doc)
-            if getsize(new_doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
-                remove(new_doc)
-            else:
-                remove(new_doc)
-        elif i['type'] == 'poll':
-            pass
-        elif i['type'] == 'link':
-            link = i['link']['url']
-            title = i['link']['title']
-            text = '[{0}]({1})'.format(title, link)
-            bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
-        elif i['type'] == 'photo':
-            photo = i['photo']['photo_75']
-            try:
-                photo = i['photo']['photo_130']
-                photo = i['photo']['photo_604']
-                photo = i['photo']['photo_807']
-                photo = i['photo']['photo_1280']
-                photo = i['photo']['photo_2560']
-            except KeyError:
-                pass
-            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-        else:
-            pass
-    if len(media) == 0:
-        pass
-    else:
-        bot.sendMediaGroup(CHAT_ID, media)
-    for m in tracks:
-        try:
-            if getsize(m) > 52428800:
-                remove(m)
-            else:
-                bot.sendAudio(CHAT_ID, open(m, 'rb'))
-            remove(m)
-        except FileNotFoundError:
-            continue
-    sleep(5)
-    return
-
-
-def send_post_with_music(post, group, CHAT_ID):
-    """
-    Функция отправки постов с музыкой (не реализовано до конца)
-
-    :param post: Словарь с информацией о посте
-    :param group: ID группы ВК
-    :param CHAT_ID: ID чата, канала или ваш Telegram ID
-    :return: None
-    """
-    media = []
-    tracks = []
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
-    if caption == '':
-        pass
-    else:
-        bot.sendMessage(CHAT_ID, caption_formatted)
-    for i in post['attachments'][1:]:
-        if i['type'] == 'audio':
-            track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            track_list = audio.search(q=track)
-            for k in track_list:
-                k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
-                k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
-                i_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['artist']).lower()
-                i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', i['audio']['title']).lower()
-                if k_artist == i_artist and k_title == i_title:
-                    name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                    file = download(k['url'], out=name)
-                    try:
-                        music = EasyID3(file)
-                    except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
-                        music.add_tags()
-                    music['title'] = i['audio']['title']
-                    music['artist'] = i['audio']['artist']
-                    music.save()
-                    del music
-                    tracks.append(name)
-                    break
-        elif i['type'] == 'doc':
-            doc = download(i['doc']['url'], out='file')
-            with open(doc, 'rb') as file:
-                mime = get(file.read(128))
-            new_doc = doc + '.' + mime.extension[0]
-            rename(doc, new_doc)
-            if getsize(new_doc) < 52428800:
-                bot.sendDocument(CHAT_ID, open(new_doc, 'rb'))
-                remove(new_doc)
-            else:
-                remove(new_doc)
-        elif i['type'] == 'photo':
-            photo = i['photo']['photo_75']
-            try:
-                photo = i['photo']['photo_130']
-                photo = i['photo']['photo_604']
-                photo = i['photo']['photo_807']
-                photo = i['photo']['photo_1280']
-                photo = i['photo']['photo_2560']
-            except KeyError:
-                pass
-            media.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-    try:
-        bot.sendMediaGroup(CHAT_ID, media)
-    except ValueError:
-        pass
-    for m in tracks:
-        try:
-            if getsize(m) > 52428800:
-                remove(m)
-            else:
-                bot.sendAudio(CHAT_ID, open(m, 'rb'))
-            remove(m)
-        except FileNotFoundError:
-            continue
-    sleep(5)
     return
 
 
