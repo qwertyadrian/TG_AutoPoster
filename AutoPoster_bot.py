@@ -144,15 +144,25 @@ def send_post(post, group, CHAT_ID):
             # Если тип вложения не определен, он не будет обработан
             # Поддержка других  вложений будет реализована в будущем
             pass
-    if caption_formatted:
-        bot.sendMessage(CHAT_ID, caption_formatted)
-    else:
-        info('Text in post not found. Skipping sending text message')
-    if photos:
+    if photos and caption_formatted:
         if len(photos) == 1:
-            bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
+            if len(caption_formatted) < 200:
+                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'], caption_formatted)
+            else:
+                bot.sendMessage(CHAT_ID, caption_formatted)
+                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
         else:
-            bot.sendMediaGroup(CHAT_ID, photos)
+            if len(caption_formatted) < 200:
+                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'], caption_formatted)
+                bot.sendMediaGroup(CHAT_ID, photos)
+            else:
+                bot.sendMessage(CHAT_ID, caption_formatted)
+                bot.sendMediaGroup(CHAT_ID, photos)
+    elif caption_formatted:
+        bot.sendMessage(CHAT_ID, caption_formatted)
+    elif photos:
+        info('Text in post not found. Skipping sending text message')
+        bot.sendMediaGroup(CHAT_ID, photos)
     if links:
         bot.sendMessage(CHAT_ID, links)
     for m in videos:
