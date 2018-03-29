@@ -164,7 +164,7 @@ def send_post(post, group, CHAT_ID):
         info('Text in post not found. Skipping sending text message')
         bot.sendMediaGroup(CHAT_ID, photos)
     if links:
-        bot.sendMessage(CHAT_ID, links)
+        bot.sendMessage(CHAT_ID, links, parse_mode='Markdown')
     for m in videos:
         bot.sendMessage(CHAT_ID, m)
     for m in docs:
