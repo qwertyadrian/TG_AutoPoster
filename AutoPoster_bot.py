@@ -86,7 +86,10 @@ def send_post(post, group, CHAT_ID):
     for i in post['attachments']:
         if i['type'] == 'audio':
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
-            track_list = audio.search(q=track)
+            try:
+                track_list = audio.search(q=track)
+            except TypeError:
+                continue
             for k in track_list:
                 k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
                 k_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['title']).lower()
