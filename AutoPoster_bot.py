@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from telepot import Bot
+from telepot import *
 from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
@@ -8,7 +8,7 @@ from wget import download
 from os import remove, listdir, mkdir, chdir, rename
 from re import sub
 from mutagen import id3, File
-from urllib3 import exceptions
+from urllib3 import *
 from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
@@ -17,10 +17,14 @@ from os.path import getsize
 from fleep import get
 
 bot = Bot(TOKEN)
-session = VkApi(LOGIN, PASSWORD, auth_handler=auth_handler)
+session = VkApi(LOGIN, PASSWORD, auth_handler=auth_handler, captcha_handler=captcha_handler)
 session.auth()
 audio = VkAudio(session)
-api = session.get_api()
+api_vk = session.get_api()
+# Если нужно прокси, раскоментируйте следующие 3 строки ниже
+# proxy_url = "https://144.76.62.29:3128" # Переменная с HTTPS прокси
+# api._pools = { 'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
+# api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
 
 
 def get_data(group):
@@ -31,16 +35,13 @@ def get_data(group):
     :param group: ID группы ВК
     :return: Возвращает словарь с постами
     """
-    timeout = Timeout(10)
     # noinspection PyBroadException
     try:
-        feed = api.wall.get(domain=group, count=11)
+        feed = api_vk.wall.get(domain=group, count=11)
         return feed
     except Exception:
         warning('Got Timeout while retrieving VK JSON data. Cancelling...')
         return None
-    finally:
-        timeout.cancel()
 
 
 def send_new_posts(items, last_id, group, CHAT_ID):
@@ -197,7 +198,7 @@ def send_post_with_album(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     bot.sendMessage(CHAT_ID, caption_formatted)
-    album = api.photos.get(owner_id=post['attachments'][0]['album']['owner_id'],
+    album = api_vk.photos.get(owner_id=post['attachments'][0]['album']['owner_id'],
                            album_id=int(post['attachments'][0]['album']['id']), count=1000)['items']
     for i in album:
         photo = i['photo_75']
@@ -236,7 +237,7 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
     :return: None
     """
     # Пишем текущее время начала
-    info('[VK] Started scanning for new posts')
+    info('[VK] Started scanning for new posts in {0}'.format(group))
     try:
         with open(FILENAME_VK, 'rt'):
             pass
@@ -272,7 +273,7 @@ def check_new_posts_vk(group, FILENAME_VK, CHAT_ID):
                 except KeyError:
                     file.write(str(entries[0]['id']))
                     info('New last_id (VK) is {!s}'.format((entries[0]['id'])))
-    info('[VK] Finished scanning')
+    info('[VK] Finished scanning\n')
     return
 
 
