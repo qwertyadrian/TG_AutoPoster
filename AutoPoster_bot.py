@@ -59,6 +59,8 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             info('New posts not detected. Switching to waiting...')
             # Если новые посты не обнаружены пропускаем итерацию
             break
+        if item['marked_as_ads']:
+            continue
         try:
             if item['attachments'][0]['type'] == 'album':
                 send_post_with_album(item, group, CHAT_ID)
