@@ -39,8 +39,8 @@ def get_data(group):
     try:
         feed = api_vk.wall.get(domain=group, count=11)
         return feed
-    except Exception:
-        warning('Got Timeout while retrieving VK JSON data. Cancelling...')
+    except Exception as e:
+        warning('Got Timeout while retrieving VK JSON data. Cancelling... Error info: ' + e)
         return None
 
 
