@@ -16,15 +16,19 @@ from time import sleep
 from os.path import getsize
 from fleep import get
 
-bot = Bot(TOKEN)
-session = VkApi(LOGIN, PASSWORD, auth_handler=auth_handler, captcha_handler=captcha_handler)
-session.auth()
-audio = VkAudio(session)
-api_vk = session.get_api()
-# Если нужно прокси, раскоментируйте следующие 3 строки ниже
-# proxy_url = "https://144.76.62.29:3128" # Переменная с HTTPS прокси
-# api._pools = { 'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
-# api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
+
+def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
+    global bot, session, audio, api_vk
+    bot = Bot(TOKEN)
+    session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler, captcha_handler=captcha_handler)
+    if LOGIN and PASSWORD:
+        session.auth()
+    audio = VkAudio(session)
+    api_vk = session.get_api()
+    # Если нужно прокси, раскоментируйте следующие 3 строки ниже
+    # proxy_url = "https://54.36.65.224:3128" # Переменная с HTTPS прокси
+    # api._pools = { 'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
+    # api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
 
 
 def get_data(group):
@@ -54,6 +58,7 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
+    items.reverse()
     for item in items:
         if item['id'] <= last_id:
             info('New posts not detected. Switching to waiting...')
@@ -283,6 +288,7 @@ if __name__ == '__main__':
     getLogger('AutoPoster').setLevel(CRITICAL)
     basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
                 filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
+    setting(TOKEN, LOGIN, PASSWORD, ACCESS_TOKEN)
     try:
         mkdir('data')
         chdir('data')
