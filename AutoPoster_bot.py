@@ -23,7 +23,7 @@ def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
     session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler, captcha_handler=captcha_handler)
     if LOGIN and PASSWORD:
         session.auth()
-    audio = VkAudio(session)
+        audio = VkAudio(session)
     api_vk = session.get_api()
     # Если нужно прокси, раскоментируйте следующие 3 строки ниже
     # proxy_url = "https://54.36.65.224:3128" # Переменная с HTTPS прокси
@@ -58,7 +58,6 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
-    items.reverse()
     for item in items:
         if item['id'] <= last_id:
             info('New posts not detected. Switching to waiting...')
@@ -96,7 +95,7 @@ def send_post(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
                 track_list = audio.search(q=track)
-            except TypeError:
+            except Exception:
                 continue
             for k in track_list:
                 k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
