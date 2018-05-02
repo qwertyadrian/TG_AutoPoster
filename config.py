@@ -1,3 +1,9 @@
+import configparser
+
+
+config = configparser.ConfigParser()
+config.read_file(open('config.ini', 'r', encoding='utf-8'))
+
 TOKEN = ''  # Токен Telegram бота
 GROUP_1 = ''  # Ссыка на группу ВК (Например, https://vk.com/test123, значит GROUP_1 = 'test123')
 CHAT_ID_1 = ''  # Ссылка на канал/супергруппу или ID пользователя Telegram
