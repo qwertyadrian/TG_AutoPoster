@@ -13,7 +13,7 @@ from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
 from config import *
 from time import sleep
-from os.path import getsize
+from os.path import getsize, exists
 from fleep import get
 
 
@@ -21,6 +21,7 @@ def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
     global bot, session, audio, api_vk
     bot = Bot(TOKEN)
     session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler, captcha_handler=captcha_handler)
+    audio = None
     if LOGIN and PASSWORD:
         session.auth()
         audio = VkAudio(session)
@@ -91,7 +92,7 @@ def send_post(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     for i in post['attachments']:
-        if i['type'] == 'audio':
+        if i['type'] == 'audio' and audio:
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
                 track_list = audio.search(q=track)
@@ -288,10 +289,10 @@ if __name__ == '__main__':
     basicConfig(format='[%(asctime)s] %(filename)s:%(lineno)d %(levelname)s - %(message)s', level=INFO,
                 filename='bot_log.log', datefmt='%d.%m.%Y %H:%M:%S')
     setting(TOKEN, LOGIN, PASSWORD, ACCESS_TOKEN)
-    try:
-        mkdir('data')
+    if exists('./data'):
         chdir('data')
-    except FileExistsError:
+    else:
+        mkdir('data')
         chdir('data')
     if SINGLE_RUN:
         for (key, value) in URLS.items():
