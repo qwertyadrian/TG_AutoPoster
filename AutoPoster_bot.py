@@ -8,6 +8,7 @@ from wget import download
 from os import remove, listdir, mkdir, chdir, rename
 from re import sub
 from mutagen import id3, File
+from urllib3 import exceptions
 from urllib3 import *
 from mutagen.easyid3 import EasyID3
 from vk_api.audio import VkAudio
@@ -20,7 +21,8 @@ from fleep import get
 def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
     global bot, session, audio, api_vk
     bot = Bot(TOKEN)
-    session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler, captcha_handler=captcha_handler)
+    session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler,
+                    captcha_handler=captcha_handler)
     audio = None
     if LOGIN and PASSWORD:
         session.auth()
@@ -28,7 +30,7 @@ def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
     api_vk = session.get_api()
     # Если нужно прокси, раскоментируйте следующие 3 строки ниже
     # proxy_url = "https://54.36.65.224:3128" # Переменная с HTTPS прокси
-    # api._pools = { 'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
+    # api._pools = {'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
     # api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
 
 
@@ -45,6 +47,7 @@ def get_data(group):
         feed = api_vk.wall.get(domain=group, count=11)
         return feed
     except Exception as e:
+        # noinspection PyTypeChecker
         warning('Got Timeout while retrieving VK JSON data. Cancelling... Error info: ' + e)
         return None
 
@@ -83,6 +86,8 @@ def send_new_posts(items, last_id, group, CHAT_ID):
 
 
 def send_post(post, group, CHAT_ID):
+    for file in listdir('.'):
+        remove(file)
     photos = []
     tracks = []
     docs = []
@@ -96,7 +101,7 @@ def send_post(post, group, CHAT_ID):
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
             try:
                 track_list = audio.search(q=track)
-            except Exception:
+            except TypeError:
                 continue
             for k in track_list:
                 k_artist = sub(r"[^A-Za-zА-Яа-я()'-]", '', k['artist']).lower()
@@ -160,15 +165,15 @@ def send_post(post, group, CHAT_ID):
             if len(caption_formatted) < 200:
                 bot.sendPhoto(CHAT_ID, photos.pop(0)['media'], caption_formatted)
             else:
-                bot.sendMessage(CHAT_ID, caption_formatted)
-                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
+                if INVERT:
+                    bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
+                    bot.sendMessage(CHAT_ID, caption_formatted)
+                else:
+                    bot.sendMessage(CHAT_ID, caption_formatted)
+                    bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
         else:
-            if len(caption_formatted) < 200:
-                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'], caption_formatted)
-                bot.sendMediaGroup(CHAT_ID, photos)
-            else:
-                bot.sendMessage(CHAT_ID, caption_formatted)
-                bot.sendMediaGroup(CHAT_ID, photos)
+            bot.sendMediaGroup(CHAT_ID, photos)
+            bot.sendMessage(CHAT_ID, caption_formatted)
     elif caption_formatted:
         bot.sendMessage(CHAT_ID, caption_formatted)
     elif photos:
@@ -205,8 +210,8 @@ def send_post_with_album(post, group, CHAT_ID):
     pattern = '@' + group
     caption_formatted = sub(pattern, '', caption)
     bot.sendMessage(CHAT_ID, caption_formatted)
-    album = api_vk.photos.get(owner_id=post['attachments'][0]['album']['owner_id'],
-                           album_id=int(post['attachments'][0]['album']['id']), count=1000)['items']
+    album = api_vk.photos.get(album_id=int(post['attachments'][0]['album']['id']),
+                              owner_id=post['attachments'][0]['album']['owner_id'], count=1000)['items']
     for i in album:
         photo = i['photo_75']
         try:
