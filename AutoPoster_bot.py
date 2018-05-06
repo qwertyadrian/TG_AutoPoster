@@ -29,7 +29,7 @@ def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
         audio = VkAudio(session)
     api_vk = session.get_api()
     # Если нужно прокси, раскоментируйте следующие 3 строки ниже
-    # proxy_url = "https://54.36.65.224:3128" # Переменная с HTTPS прокси
+    # proxy_url = "https://89.236.17.106:3128" # Переменная с HTTPS прокси
     # api._pools = {'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
     # api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
 
@@ -62,24 +62,28 @@ def send_new_posts(items, last_id, group, CHAT_ID):
     :param CHAT_ID: ID чата, канала или ваш Telegram ID
     :return: None
     """
-    for item in items:
-        if item['id'] <= last_id:
-            info('New posts not detected. Switching to waiting...')
-            # Если новые посты не обнаружены пропускаем итерацию
-            break
-        if item['marked_as_ads']:
-            continue
-        try:
-            if item['attachments'][0]['type'] == 'album':
-                send_post_with_album(item, group, CHAT_ID)
-            else:
-                send_post(item, group, CHAT_ID)
-        except KeyError:
-            warning('In the post, no text, photos, videos, links and documents not found.')
-            if item['text'] != '':
-                bot.sendMessage(CHAT_ID, item['text'])
-            else:
-                pass
+    for item in reversed(items):
+        if item['id'] > last_id:
+            info("New post found with %s symbols." % len(item['text']))
+            if item['marked_as_ads']:
+                continue
+            try:
+                if item['attachments'][0]['type'] == 'album':
+                    send_post_with_album(item, group, CHAT_ID)
+                else:
+                    send_post(item, group, CHAT_ID)
+            except KeyError:
+                warning('In the post, no text, photos, videos, links and documents not found.')
+                if item['text'] != '':
+                    text = item['text']
+                    if SIGN:
+                        if 'signer_id' in item:
+                            text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)'  % api_vk.users.get(user_ids=item['signer_id'], fields='domain')[0]
+                        text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % item
+                    bot.sendMessage(CHAT_ID, text, parse_mode='Markdown', disable_web_page_preview=True)
+                else:
+                    pass
+    info('Switching to waiting...')
     sleep(1)
     # Спим секунду, чтобы избежать разного рода ошибок и ограничений (на всякий случай!)
     return
@@ -160,22 +164,27 @@ def send_post(post, group, CHAT_ID):
             # Если тип вложения не определен, он не будет обработан
             # Поддержка других  вложений будет реализована в будущем
             pass
+    if SIGN:
+        if 'signer_id' in post:
+            caption_formatted += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)'  % api_vk.users.get(user_ids=post['signer_id'], fields='domain')[0]
+        caption_formatted += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % post
     if photos and caption_formatted:
         if len(photos) == 1:
-            if len(caption_formatted) < 200:
-                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'], caption_formatted)
+            if INVERT:
+                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
+                bot.sendMessage(CHAT_ID, caption_formatted, parse_mode='Markdown', disable_web_page_preview=True)
             else:
-                if INVERT:
-                    bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
-                    bot.sendMessage(CHAT_ID, caption_formatted)
-                else:
-                    bot.sendMessage(CHAT_ID, caption_formatted)
-                    bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
+                bot.sendMessage(CHAT_ID, caption_formatted, parse_mode='Markdown', disable_web_page_preview=True)
+                bot.sendPhoto(CHAT_ID, photos.pop(0)['media'])
         else:
-            bot.sendMediaGroup(CHAT_ID, photos)
-            bot.sendMessage(CHAT_ID, caption_formatted)
+            if INVERT:
+                bot.sendMediaGroup(CHAT_ID, photos)
+                bot.sendMessage(CHAT_ID, caption_formatted, parse_mode='Markdown', disable_web_page_preview=True)
+            else:
+                bot.sendMessage(CHAT_ID, caption_formatted, parse_mode='Markdown', disable_web_page_preview=True)
+                bot.sendMediaGroup(CHAT_ID, photos)
     elif caption_formatted:
-        bot.sendMessage(CHAT_ID, caption_formatted)
+        bot.sendMessage(CHAT_ID, caption_formatted, parse_mode='Markdown', disable_web_page_preview=True)
     elif photos:
         info('Text in post not found. Skipping sending text message')
         bot.sendMediaGroup(CHAT_ID, photos)
