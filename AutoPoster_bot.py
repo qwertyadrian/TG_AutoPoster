@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from telepot import *
+from telepot import Bot, api
 from eventlet import Timeout
 from logging import basicConfig, warning, getLogger, error, INFO, CRITICAL, info
 from vk_api import VkApi
@@ -18,18 +18,17 @@ from os.path import getsize, exists
 from fleep import get
 
 
-def setting(TOKEN, LOGIN=None, PASSWORD=None, ACCESS_TOKEN=None):
+def setting(token, login=None, password=None, access_token=None):
     global bot, session, audio, api_vk
-    bot = Bot(TOKEN)
-    session = VkApi(login=LOGIN, password=PASSWORD, token=ACCESS_TOKEN, auth_handler=auth_handler,
+    bot = Bot(token)
+    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler,
                     captcha_handler=captcha_handler)
     audio = None
-    if LOGIN and PASSWORD:
+    if login and password:
         session.auth()
         audio = VkAudio(session)
     api_vk = session.get_api()
-    # Если нужно прокси, раскоментируйте следующие 3 строки ниже
-    # proxy_url = "https://89.236.17.106:3128" # Переменная с HTTPS прокси
+    # Если нужно прокси, раскоментируйте следующие 2 строки ниже и введите значение переменной proxy_url в файле config.py
     # api._pools = {'default': ProxyManager(proxy_url=proxy_url, num_pools=3, maxsize=10, retries=False, timeout=30)}
     # api._onetime_pool_spec = (ProxyManager, dict(proxy_url=proxy_url, num_pools=1, maxsize=1, retries=False, timeout=30))
 
@@ -75,10 +74,12 @@ def send_new_posts(items, last_id, group, CHAT_ID):
             except KeyError:
                 warning('In the post, no text, photos, videos, links and documents not found.')
                 if item['text'] != '':
-                    text = item['text']
+                    text = item['text'].replace('@' + group, '').replace('_', '\_').replace('`', '\`').replace('*',
+                                                                                                               '\*')
                     if SIGN:
                         if 'signer_id' in item:
-                            text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)'  % api_vk.users.get(user_ids=item['signer_id'], fields='domain')[0]
+                            text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % \
+                                    api_vk.users.get(user_ids=item['signer_id'], fields='domain')[0]
                         text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % item
                     bot.sendMessage(CHAT_ID, text, parse_mode='Markdown', disable_web_page_preview=True)
                 else:
@@ -97,9 +98,7 @@ def send_post(post, group, CHAT_ID):
     docs = []
     links = ''
     videos = []
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
+    caption_formatted = post['text'].replace('@' + group, '').replace('_', '\_').replace('`', '\`').replace('*', '\*')
     for i in post['attachments']:
         if i['type'] == 'audio' and audio:
             track = i['audio']['artist'] + ' - ' + i['audio']['title']
@@ -129,9 +128,10 @@ def send_post(post, group, CHAT_ID):
         elif i['type'] == 'link':
             link = i['link']['url']
             title = i['link']['title']
-            text = '[{0}]({1})'.format(title, link)
-            links += text + '\n'
-            # bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
+            if link and title:
+                text = '[{0}]({1})'.format(title, link)
+                links += text + '\n'
+                # bot.sendMessage(CHAT_ID, text, parse_mode='Markdown')
         elif i['type'] == 'doc':
             doc = download(i['doc']['url'], out='file')
             with open(doc, 'rb') as file:
@@ -158,15 +158,14 @@ def send_post(post, group, CHAT_ID):
         elif i['type'] == 'video':
             link = '{!s}{!s}{!s}{!s}'.format(BASE_VIDEO_URL, i['video']['owner_id'], '_', i['video']['id'])
             videos.append(link)
-            # text = text + '\n' + link
-            # bot.sendMessage(CHAT_ID, text)
         else:
             # Если тип вложения не определен, он не будет обработан
             # Поддержка других  вложений будет реализована в будущем
             pass
     if SIGN:
         if 'signer_id' in post:
-            caption_formatted += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)'  % api_vk.users.get(user_ids=post['signer_id'], fields='domain')[0]
+            caption_formatted += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % \
+                                 api_vk.users.get(user_ids=post['signer_id'], fields='domain')[0]
         caption_formatted += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % post
     if photos and caption_formatted:
         if len(photos) == 1:
@@ -203,7 +202,7 @@ def send_post(post, group, CHAT_ID):
             remove(m)
         except FileNotFoundError:
             continue
-        
+
 
 def send_post_with_album(post, group, CHAT_ID):
     """
@@ -215,9 +214,7 @@ def send_post_with_album(post, group, CHAT_ID):
     :return: None
     """
     media = []
-    caption = post['text']
-    pattern = '@' + group
-    caption_formatted = sub(pattern, '', caption)
+    caption_formatted = post['text'].replace('@' + group, '').replace('_', '\_').replace('`', '\`').replace('*', '\*')
     bot.sendMessage(CHAT_ID, caption_formatted)
     album = api_vk.photos.get(album_id=int(post['attachments'][0]['album']['id']),
                               owner_id=post['attachments'][0]['album']['owner_id'], count=1000)['items']
