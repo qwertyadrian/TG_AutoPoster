@@ -14,6 +14,7 @@ git clone https://github.com/qwertyadrian/TG_AutoPoster
 pip install -r requirements.txt
 ```
 1. Выполните настройку файла [config.py](..blob/master/config.py)
+
 | Переменная      | Тип           | Описание  |
 | :------------- |:-------------:| :-----:|
 | TOKEN    | str | Токен Telegram бота |
@@ -26,7 +27,10 @@ pip install -r requirements.txt
 | ACCESS_TOKEN | str | Ключ доступа к VK API (не рекомендуется для использования) |
 | proxy_url | str | HTTPS Прокси (использовать, если Telegram не доступен в вашей стране) |
 **Дополнительные переменные указаны в файле.**
-1. Активириуйте бота командой /start
-1. Готово!
+## Запуск
+
+4. Активириуйте бота командой /start
+2. Запустите файл [AutoPoster_bot.py](../blob/mater/AutoPoster_bot.py)
+5. Готово!
 
 Вопрсы и предложения: [@QwertyAdrian](https://t.me/QwertyAdrian)
