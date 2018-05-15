@@ -9,11 +9,11 @@
 ```bash
 git clone https://github.com/qwertyadrian/TG_AutoPoster
 ```
-1. Установите требуемые зависимости
+2. Установите требуемые зависимости
 ```bash
 pip install -r requirements.txt
 ```
-1. Выполните настройку файла [config.py](..blob/master/config.py)
+3. Выполните настройку файла [config.py](..blob/master/config.py)
 
 | Переменная      | Тип           | Описание  |
 | :------------- |:-------------:| :-----:|
@@ -26,6 +26,7 @@ pip install -r requirements.txt
 | PASSWORD| str | Пароль ВК |
 | ACCESS_TOKEN | str | Ключ доступа к VK API (не рекомендуется для использования) |
 | proxy_url | str | HTTPS Прокси (использовать, если Telegram не доступен в вашей стране) |
+
 **Дополнительные переменные указаны в файле.**
 ## Запуск
 
