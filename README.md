@@ -1,18 +1,32 @@
-## **TG_AutoPoster - бот, который пересылает записи из групп ВК в канал/чат/ЛС в Telegram.** 
+# TG_AutoPoster 
+Бот, пересылающий записи из групп ВК в канал/чат/ЛС в Telegram.
 
-Чтобы им воспользоваться, нужно скачать на компьютер файлы AutoPoster_bot.py, config.py или просто полностью клонировать репозиторий.
-Затем в файле cofig.py вы должны задать значения переменных указанных в файле.
+![Linecce MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![PyPI - Python Version](https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6-orange.svg)
+![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
+***
+## Установка
+1. Клонируйте репозиторий
+```bash
+git clone https://github.com/qwertyadrian/TG_AutoPoster
+```
+1. Установите требуемые зависимости
+```bash
+pip install -r requirements.txt
+```
+1. Выполните настройку файла [config.py](..blob/master/config.py)
+| Переменная      | Тип           | Описание  |
+| :------------- |:-------------:| :-----:|
+| TOKEN    | str | Токен Telegram бота |
+| GROUP    | str      |   Домен группы ВК (Например, https://vk.com/test123, значит GROUP = 'test123') |
+| CHAT_ID | str      |    Ссылка на канал/супергруппу или ID пользователя Telegram |
+| FILENAME_VK | str | Файл для сохранения ID последнего отправленного поста. Перед названием файла должно быть ../ Для каждой группы используется отдельный файл. |
+| URLS | dict | Словарь со значинями выше. Может быть расширен для работы несколькими группами ВК. |
+| LOGIN | str | Логин ВК |
+| PASSWORD| str | Пароль ВК |
+| ACCESS_TOKEN | str | Ключ доступа к VK API (не рекомендуется для использования) |
+| proxy_url | str | HTTPS Прокси (использовать, если Telegram не доступен в вашей стране) |
+**Дополнительные переменные указаны в файле.**
+1. Активириуйте бота командой /start
+1. Готово!
 
-Переменная TOKEN - это токен бота в телеграмме, который создан с помощью BotFather. 
-
-Переменная GROUP - краткое название группы в ВК(то, что указывается в ссылке, например, https://vk.com/test_group123 значит GROUP = 'test_group123')
-
-Переменная CHAT_ID - это ссылка на канал/чат Telegram(например, CHAT_ID = '@channel') или это ваш ID Telegram (его можно узнать у @my_id_bot). 
-
-Переменные LOGIN, PASSWORD - ваш логин, пароль от ВК
-
-Переменная FILENAME_VK - название файла в котором сохраняется ID последнего отправленного поста
-
-Переменная URLS - словарь со значинями выше (кроме значений логина и пароля). Может быть расширен для работы несколькими группами ВК и каналов Telegram
-
-Затем просто сохраните файл config.py и запустите файл AutoPoster_bot.py Но чтобы бот отправлял сообщения в канал он должен быть администратором канала, а чтобы он отправлял вам сообщения в ЛС нужно его активировать, то есть отправить ему команду /start
+Вопрсы и предложения: [@QwertyAdrian](https://t.me/QwertyAdrian)
