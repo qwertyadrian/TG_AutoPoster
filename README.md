@@ -13,7 +13,7 @@ git clone https://github.com/qwertyadrian/TG_AutoPoster
 ```bash
 pip install -r requirements.txt
 ```
-3. Выполните настройку файла [config.py](..blob/master/config.py)
+3. Выполните настройку файла [config.py](/config.py)
 
 | Переменная      | Тип           | Описание  |
 | :------------- |:-------------:| :-----:|
@@ -31,7 +31,7 @@ pip install -r requirements.txt
 ## Запуск
 
 4. Активириуйте бота командой /start
-2. Запустите файл [AutoPoster_bot.py](../blob/mater/AutoPoster_bot.py)
+2. Запустите файл [AutoPoster_bot.py](/AutoPoster_bot.py)
 5. Готово!
 
 Вопрсы и предложения: [@QwertyAdrian](https://t.me/QwertyAdrian)
