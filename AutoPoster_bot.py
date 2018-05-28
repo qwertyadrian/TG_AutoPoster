@@ -15,6 +15,7 @@ from vk_api.audio import VkAudio
 from config import *
 from time import sleep
 from os.path import getsize, exists
+import sys
 from fleep import get
 
 
@@ -47,7 +48,7 @@ def get_data(group):
         return feed
     except Exception as e:
         # noinspection PyTypeChecker
-        warning('Got Timeout while retrieving VK JSON data. Cancelling... Error info: ' + e)
+        warning('Got Timeout while retrieving VK JSON data. Cancelling... Error info: ' + sys.exc_info()[0])
         return None
 
 
