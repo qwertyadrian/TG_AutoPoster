@@ -19,6 +19,7 @@ class Post:
         self.tracks = []
 
     def generate_post(self):
+        self.generate_user()
         self.generate_text()
         self.generate_photos()
         self.generate_docs()

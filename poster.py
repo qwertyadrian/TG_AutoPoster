@@ -20,25 +20,26 @@ def get_data(group):
         feed = api_vk.wall.get(domain=group, count=11)
         return feed['items']
     except Exception:
-        log.warning('Got Timeout while retrieving VK JSON data. Cancelling...')
+        log.error('Ошибка получения информации о новых постах: {0}'.format(sys.exc_info()[0]))
         return None
 
 
 def updater(bot, domain, last_id):
+    log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain)
     for post in reversed(posts):
         if post['id'] > last_id:
-            log.info("New post found with id = %s and %s symbols." % (post['id'], len(post['text'])))
+            log.info("[VK] Обнаружен новый пост с ID {0}".format(post['id']))
             new_post = Post(post, domain)
             new_post.generate_post()
             send_post(bot, domain, new_post)
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
-    log.info('Finished updater, last_id = %s.' % last_id)
+    log.info('[VK] Проверка завершена, last_id = {0}.'.format(last_id))
 
 
 def send_post(bot, domain, post):
-    log.info("Sending post...")
+    log.info("[TG] Отправка поста...")
     if post.text:
         if not (len(post.photos) == 1 and len(post.text) < 200):
             bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='Markdown',
@@ -54,7 +55,7 @@ def send_post(bot, domain, post):
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
         except Exception:
-            log.warning('Could not send photos: %s.' % sys.exc_info()[0])
+            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[0]))
     for m in post.videos:
         bot.sendMessage(config.get(domain, 'channel'), m)
     for m in post.docs:
