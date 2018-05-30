@@ -1,4 +1,5 @@
 import configparser
+from botlogs import log
 from vk_api import VkApi
 from vk_api.audio import VkAudio
 
@@ -23,7 +24,7 @@ def auth_handler():
     При двухфакторной аутентификации вызывается эта функция.
     :return: key, remember_device
     """
-    num = input('Введите код авторизации')
+    num = input('Введите код авторизации: ')
     remember_device = True
     return num, remember_device
 
@@ -42,4 +43,6 @@ def update_parameter(section, name, num):
     return num
 
 
+log.info('Запуск')
+log.info('Авторизация на сервере ВК')
 setting(config.get('global', 'login'), config.get('global', 'pass'))
