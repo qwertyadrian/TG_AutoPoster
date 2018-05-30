@@ -53,12 +53,12 @@ def send_post(bot, domain, post):
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
-        except SyntaxError:
+        except Exception:
             log.warning('Could not send photos: %s.' % sys.exc_info()[0])
     for m in post.videos:
-        bot.sendMessage(chat_id=config.get(domain, 'channel'), text=m)
+        bot.sendMessage(config.get(domain, 'channel'), m)
     for m in post.docs:
-        bot.sendDocument(chat_id=config.get(domain, 'channel'), text=m)
+        bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'))
     for m in post.tracks:
         try:
             if getsize(m) > 52428800:

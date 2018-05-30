@@ -1,3 +1,4 @@
+import urllib
 from settings import config, audio, api_vk
 from wget import download
 from re import sub
@@ -7,7 +8,7 @@ from mutagen import id3, File
 
 class Post:
     def __init__(self, post, group):
-        self.pattern = '@' + config.get(group, 'domain')
+        self.pattern = '@' + group
         self.post = post
         self.text = None
         self.user = None
@@ -54,10 +55,9 @@ class Post:
     def generate_docs(self):
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
-                if attachment['type'] == 'doc':
-                    if attachment['doc']['size'] < 52428800:
-                        doc = (download('%(url)s', out='file') + '.%(ext)s') % attachment['doc']
-                        self.docs.append(doc)
+                if attachment['type'] == 'doc' and attachment['doc']['size'] < 52428800:
+                    doc = download(attachment['doc']['url'], out='file' + '.' + attachment['doc']['ext'])
+                    self.docs.append(doc)
     
     def generate_videos(self):
         if 'attachments' in self.post:
@@ -82,7 +82,10 @@ class Post:
                         i_title = sub(r"[^A-Za-zА-Яа-я()'-]", '', attachment['audio']['title']).lower()
                         if k_artist == i_artist and k_title == i_title:
                             name = sub(r"[/\"?:|<>*]", '', k['artist'] + ' - ' + k['title'] + '.mp3')
-                            file = download(k['url'], out=name)
+                            try:
+                                file = download(k['url'], out=name)
+                            except urllib.error.URLError:
+                                continue
                             try:
                                 music = EasyID3(file)
                             except id3.ID3NoHeaderError:
