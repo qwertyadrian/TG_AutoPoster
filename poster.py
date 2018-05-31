@@ -49,13 +49,13 @@ def send_post(bot, domain, post):
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 200:
                     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                                  caption=post.text)
+                                  caption=post.text, parse_mode='Markdown')
                 else:
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
         except Exception:
-            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[0]))
+            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
     for m in post.videos:
         bot.sendMessage(config.get(domain, 'channel'), m)
     for m in post.docs:

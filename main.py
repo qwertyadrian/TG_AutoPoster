@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-from os import mkdir, chdir, listdir, remove
+import sys
+from os import mkdir, chdir
 
 try:
     mkdir('data')
@@ -8,30 +7,42 @@ try:
 except FileExistsError:
     chdir('data')
 
-import poster
-from time import sleep
-from telepot import Bot, api
+from telegram.ext import *
 from settings import config
-from urllib3 import ProxyManager
+import starter
 from botlogs import log
 
 
+def error(bot, update, error):
+    log.warning('[TG] Update "%s" caused error "%s"' % (update, error))
+
+
 if __name__ == '__main__':
-    bot = Bot(config.get('global', 'bot_token'))
+    def job_repeated(bot, job):
+        starter.starter(bot)
+
+
+    def update(request_kwargs=None):
+        global updater, dp, job_queue
+        updater = Updater(config.get('global', 'bot_token'), request_kwargs=request_kwargs)
+        dp = updater.dispatcher
+        job_queue = updater.job_queue
+        dp.add_handler(CommandHandler('start', starter.start))
+        dp.add_handler(CommandHandler('help', starter.help))
+        dp.add_handler(MessageHandler(callback=starter.is_admin, filters=Filters.text))
+        job = job_queue.run_repeating(job_repeated, interval=5 * 60, first=0)
+
+
     if config.get('global', 'proxy_url'):
-        log.warning('[TG] Настройка прокси. Это отрицально влияет на работу бота')
-        api._pools = {'default': ProxyManager(proxy_url=config.get('global', 'proxy_url'), num_pools=3, maxsize=10,
-                                              retries=False, timeout=30)}
-        api._onetime_pool_spec = (ProxyManager, dict(proxy_url=config.get('global', 'proxy_url'), num_pools=1,
-                                                     maxsize=1, retries=False, timeout=30))
-    while True:
-        for group in config.sections()[1:]:
-            poster.updater(bot, group, config.getint(group, 'last_id'))
-        for data in listdir('.'):
-            log.info('Очистка кэша')
-            remove(data)
-        if config.getboolean('global', 'single_run'):
-            log.info('Выход')
-            break
-        log.info('Переход в режим сна')
-        sleep(5*60)
+        REQUEST_KWARGS = {'proxy_url': config.get('global', 'proxy_url')}
+        update(REQUEST_KWARGS)
+    else:
+        update()
+
+    dp.add_error_handler(error)
+    # noinspection PyBroadException
+    try:
+        updater.start_polling()
+        updater.idle()
+    except Exception:
+        log.warning('Critical error occured: ' + sys.exc_info()[0] + '. Please restart a bot.')
