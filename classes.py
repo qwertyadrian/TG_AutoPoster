@@ -4,6 +4,7 @@ from wget import download
 from re import sub
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
+from telegram.files.inputmediaphoto import *
 
 
 class Post:
@@ -51,7 +52,8 @@ class Post:
                         photo = attachment['photo']['photo_2560']
                     except KeyError:
                         pass
-                    self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
+                    # self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
+                    self.photos.append(InputMediaPhoto(photo))
     
     def generate_docs(self):
         if 'attachments' in self.post:
