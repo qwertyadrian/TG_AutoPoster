@@ -1,0 +1,48 @@
+import configparser
+from botlogs import log
+from vk_api import VkApi
+from vk_api.audio import VkAudio
+
+config = configparser.ConfigParser()
+config.read_file(open('../config.ini', 'r', encoding='utf-8'))
+login = config.get('global', 'login')
+password = config.get('global', 'pass')
+
+
+def setting(login=None, password=None, access_token=None):
+    global session, audio, api_vk
+    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler, captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
+    audio = None
+    if login and password:
+        session.auth()
+        audio = VkAudio(session)
+    api_vk = session.get_api()
+
+
+def auth_handler():
+    """
+    При двухфакторной аутентификации вызывается эта функция.
+    :return: key, remember_device
+    """
+    num = input('Введите код авторизации: ')
+    remember_device = True
+    return num, remember_device
+
+
+def captcha_handler(captcha):
+    key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
+    return captcha.try_again(key)
+
+
+def update_parameter(section, name, num):
+    config.set(section, name, str(num))
+
+    with open('../config.ini', 'w', encoding='utf-8') as f:
+        config.write(f)
+
+    return num
+
+
+log.info('Запуск')
+log.info('Авторизация на сервере ВК')
+setting(config.get('global', 'login'), config.get('global', 'pass'))
