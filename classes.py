@@ -37,7 +37,7 @@ class Post:
             if config.getboolean('global', 'sign') and self.user:
                 self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
                 self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
-            if config.getboolean('global', 'sign') and not self.uset:
+            if config.getboolean('global', 'sign') and not self.user:
                 self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
     
     def generate_photos(self):
