@@ -35,6 +35,8 @@ def updater(bot, domain, last_id):
             send_post(bot, domain, new_post)
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
+    if post['id'] == last_id:
+        log.info('[VK] Новых постов не обнаружено')
     log.info('[VK] Проверка завершена, last_id = {0}.'.format(last_id))
 
 
@@ -48,8 +50,15 @@ def send_post(bot, domain, post):
         try:
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 200:
-                    bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                                  caption=post.text, parse_mode='Markdown')
+                    # bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                    #               caption=post.text, parse_mode='HTML')
+                    if config.getboolean('global', 'sign'):
+                        bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='Markdown',
+                                        disable_web_page_preview=True)
+                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
+                    else:
+                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                                      caption=post.text, parse_mode='Markdown')
                 else:
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:

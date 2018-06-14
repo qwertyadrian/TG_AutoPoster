@@ -45,4 +45,4 @@ if __name__ == '__main__':
         updater.start_polling()
         updater.idle()
     except Exception:
-        log.warning('Critical error occured: ' + sys.exc_info()[0] + '. Please restart a bot.')
+        log.warning('Critical error occured: {0} {1}. Please restart a bot.'.format(sys.exc_info()[0], sys.exc_info()[1]))
