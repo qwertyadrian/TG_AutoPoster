@@ -10,11 +10,9 @@ import messages
 def starter(bot):
     for group in config.sections()[1:]:
         poster.updater(bot, group, config.getint(group, 'last_id'))
+    log.info('Очистка кэша')
     for data in listdir('.'):
-        log.info('Очистка кэша')
         remove(data)
-    if config.getboolean('global', 'single_run'):
-        log.info('Выход')
     log.info('Переход в режим сна')
 
 
