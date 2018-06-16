@@ -35,10 +35,17 @@ class Post:
                     if attachment['type'] == 'link':
                         self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if config.getboolean('global', 'sign') and self.user:
-                self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
-                self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
-            if config.getboolean('global', 'sign') and not self.user:
-                self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
+                # Markdown Parsing
+                # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
+                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
+                # HTML Parsing
+                self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
+                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
+            elif config.getboolean('global', 'sign') and not self.user:
+                # Markdown Parsing
+                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
+                # HTML Parsing
+                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
     
     def generate_photos(self):
         if 'attachments' in self.post:
