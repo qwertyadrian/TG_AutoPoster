@@ -61,8 +61,8 @@ class Post:
                         photo = attachment['photo']['photo_2560']
                     except KeyError:
                         pass
-                    self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-                    # self.photos.append(InputMediaPhoto(photo, caption=self.text, parse_mode='Markdown'))
+                    # self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
+                    self.photos.append(InputMediaPhoto(photo, caption=self.text))
     
     def generate_docs(self):
         if 'attachments' in self.post:
