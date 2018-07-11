@@ -39,7 +39,7 @@ def is_admin(bot, update):
 
 def help(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
-        update.message.reply_text(messages.HELP, parse_mode='Markdown')
+        update.message.reply_text(messages.HELP, parse_mode='HTML')
     else:
         update.message.reply_text('Вы не имеете доступа к этой команде')
 
@@ -53,10 +53,10 @@ def run(bot, update):
                     return 0
             job = job_queue.run_repeating(job_repeated, interval=5 * 60, first=0)
             log.info('Running a job...')
-            update.message.reply_text('Бот запущен')
+            update.message.reply_text('Бот запущен', quote=True)
         except Exception:
             log.info('Got an error while running a job: %s.' % sys.exc_info()[0])
-            update.message.reply_text('Не удалось запустить бота: {}'.format(sys.exc_info()[1]))
+            update.message.reply_text('Не удалось запустить бота: {}'.format(sys.exc_info()[1]), quote=True)
 
 
 def stop(bot, update):
@@ -67,5 +67,44 @@ def stop(bot, update):
             if job.enabled:
                 print('Test')
                 job.enabled = False
-                update.message.reply_text('Бот остановлен.')
+                update.message.reply_text('Бот остановлен.', quote=True)
                 log.info('Stopping a job...')
+
+
+def get_full_logs(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        update.message.reply_text('Логи отправлены.', quote=True)
+        update.message.reply_document(open('../bot_log.log', 'rb'))
+
+
+def get_last_logs(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        with open('../bot_log.log', 'r', encoding='utf-8') as f:
+            last_logs = ''.join(f.readlines()[-15:])
+        update.message.reply_text('Последние 15 строк логов:\n\n' + last_logs, quote=True)
+
+
+def status(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        stat = 'Автопостинг остановлен'
+        if job:
+            if job.enabled:
+                stat = 'Автопостинг запущен'
+        update.message.reply_text(stat, quote=True)
+
+
+def send_post(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        global chat
+        chat = update.message['text'][11:]
+        print(chat)
+        print(update.message)
+        update.message.reply_text('Чтобы отправить ваш пост в канал/группу, ответьте на это сообщение.')
+
+
+def sending(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        bot.send_message(chat_id=chat, text=update.message.text, parse_mode='Markdown')
+        # print(update.message.sticker)
+        global chat
+        chat = None
