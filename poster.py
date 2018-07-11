@@ -43,23 +43,27 @@ def updater(bot, domain, last_id):
 def send_post(bot, domain, post):
     log.info("[TG] Отправка поста...")
     if post.text:
-        if not (len(post.photos) == 1 and len(post.text) < 200):
-            bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='Markdown',
+        if post.photos:
+            pass
+        else:
+            bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
                             disable_web_page_preview=True)
     if post.photos:
         try:
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 200:
-                    # bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                    #               caption=post.text, parse_mode='HTML')
-                    if config.getboolean('global', 'sign'):
-                        bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='Markdown',
-                                        disable_web_page_preview=True)
-                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
-                    else:
-                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                                      caption=post.text, parse_mode='Markdown')
+                    bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                                  caption=post.text, parse_mode='HTML')
+                    # if config.getboolean('global', 'sign'):
+                    #     bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
+                    #                     disable_web_page_preview=True)
+                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
+                    # else:
+                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                    #                   caption=post.text, parse_mode='HTML')
                 else:
+                    bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
+                                    disable_web_page_preview=True)
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)

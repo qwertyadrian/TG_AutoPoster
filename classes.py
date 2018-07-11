@@ -37,16 +37,16 @@ class Post:
                         self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if config.getboolean('global', 'sign') and self.user:
                 # Markdown Parsing
-                self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
-                self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
+                # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
+                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
                 # HTML Parsing
-                # self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
-                # self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
+                self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
+                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
             elif config.getboolean('global', 'sign') and not self.user:
                 # Markdown Parsing
-                self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
+                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
                 # HTML Parsing
-                # self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
+                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
     
     def generate_photos(self):
         if 'attachments' in self.post:
@@ -62,7 +62,7 @@ class Post:
                     except KeyError:
                         pass
                     # self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-                    self.photos.append(InputMediaPhoto(photo, caption=self.text))
+                    self.photos.append(InputMediaPhoto(photo))
     
     def generate_docs(self):
         if 'attachments' in self.post:
