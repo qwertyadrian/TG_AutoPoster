@@ -97,14 +97,22 @@ def send_post(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
         global chat
         chat = update.message['text'][11:]
-        print(chat)
-        print(update.message)
         update.message.reply_text('Чтобы отправить ваш пост в канал/группу, ответьте на это сообщение.')
 
 
 def sending(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
-        bot.send_message(chat_id=chat, text=update.message.text, parse_mode='Markdown')
-        # print(update.message.sticker)
         global chat
+        if update.message.text:
+            bot.send_message(chat_id=chat, text=update.message.text, parse_mode='Markdown')
+        elif update.message.document:
+            bot.send_document(chat_id=chat, document=update.message.document.file_id,
+                              caption=update.message.caption, parse_mode='Markdown')
+        elif update.message.photo:
+            bot.send_photo(chat_id=chat, photo=update.message.photo[0].file_id, caption=update.message.caption,
+                           parse_mode='Markdown')
+        elif update.message.video:
+            bot.send_video(chat_id=chat, video=update.message.video.file_id,
+                           caption=update.message.caption, parse_mode='Markdown')
+        bot.send_media_group(chat_id=chat, media=update.message.media_group_id)
         chat = None
