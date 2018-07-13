@@ -70,7 +70,7 @@ def send_post(bot, domain, post):
         except Exception:
             log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
     for m in post.videos:
-        bot.sendMessage(config.get(domain, 'channel'), m)
+        bot.sendVideo(config.get(domain, 'channel'), open(m, 'rb'))
     for m in post.docs:
         bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'))
     for m in post.tracks:

@@ -1,14 +1,20 @@
 import urllib
+from os.path import getsize
 from settings import config, audio, api_vk
 from wget import download
-from re import sub
+from re import sub, compile
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram.files.inputmediaphoto import *
+from bs4 import BeautifulSoup
+from pytube import YouTube
+from requests import get
 
 
 class Post:
     def __init__(self, post, group):
+        self.youtube_link = 'https://youtube.com/watch?v='
+        self.regex = compile(r'/(\S*?)\?')
         self.pattern = '@' + group
         self.post = post
         self.text = None
@@ -75,8 +81,21 @@ class Post:
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'video':
-                    video = 'https://vk.com/video%(owner_id)s_%(id)s' % attachment['video']
-                    self.videos.append(video)
+                    video = 'https://m.vk.com/video%(owner_id)s_%(id)s' % attachment['video']
+                    soup = BeautifulSoup(get(video).text, 'html.parser')
+                    if soup.find_all('source'):
+                        file = download(soup.find_all('source')[1].get('src'))
+                        if getsize(file) > 20971520:
+                            del file
+                            continue
+                    elif soup.iframe:
+                        video_id = regex.findall(soup1.iframe['src'])[0].split('/')[3]
+                        yt = YouTube(self.youtube_link + video_id)
+                        for stream in yt.streams.all():
+                            if stream.filesize <= 20971520 and ('.mp4' in stream.default_filename):
+                                file = stream.default_filename
+                                stream.download()
+                    self.videos.append(file)
 
     def generate_music(self):
         if 'attachments' in self.post:
