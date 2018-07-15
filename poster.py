@@ -70,15 +70,15 @@ def send_post(bot, domain, post):
         except Exception:
             log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
     for m in post.videos:
-        bot.sendVideo(config.get(domain, 'channel'), open(m, 'rb'))
+        bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
     for m in post.docs:
-        bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'))
+        bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'), timeout=60)
     for m in post.tracks:
         try:
             if getsize(m) > 52428800:
                 remove(m)
             else:
-                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'))
+                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), timeout=60)
             remove(m)
         except FileNotFoundError:
             continue

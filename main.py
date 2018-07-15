@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
 
     if config.get('global', 'proxy_url'):
-        REQUEST_KWARGS = {'proxy_url': config.get('global', 'proxy_url')}
+        REQUEST_KWARGS = {'proxy_url': config.get('global', 'proxy_url'), 'connect_timeout': 15.0, 'read_timeout': 15.0}
         update(REQUEST_KWARGS)
     else:
         update()
