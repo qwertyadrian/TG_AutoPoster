@@ -73,12 +73,12 @@ def send_post(bot, domain, post):
         bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
     for m in post.docs:
         bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'), timeout=60)
-    for m in post.tracks:
+    for (m, n) in post.tracks:
         try:
             if getsize(m) > 52428800:
                 remove(m)
             else:
-                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), timeout=60)
+                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), duration=int(n), timeout=60)
             remove(m)
         except FileNotFoundError:
             continue

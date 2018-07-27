@@ -41,7 +41,8 @@ class Post:
             if 'attachments' in self.post:
                 for attachment in self.post['attachments']:
                     if attachment['type'] == 'link':
-                        self.text += '\n[%(title)s](%(url)s)' % attachment['link']
+                        self.text += '\n<a href="%(url)s">%(title)s</a>' % attachment['link']
+                        # self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if config.getboolean('global', 'sign') and self.user:
                 # Markdown Parsing
                 # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
@@ -89,6 +90,7 @@ class Post:
                         if getsize(file) > 20971520:
                             del file
                             continue
+                        self.videos.append(file)
                     elif soup.iframe:
                         video_id = self.regex.findall(soup.iframe['src'])[0].split('/')[3]
                         yt = YouTube(self.youtube_link + video_id)
@@ -96,7 +98,8 @@ class Post:
                             if stream.filesize <= 20971520 and ('.mp4' in stream.default_filename):
                                 file = stream.default_filename
                                 stream.download()
-                    self.videos.append(file)
+                                self.videos.append(file)
+                                break
 
     def generate_music(self):
         if 'attachments' in self.post:
@@ -107,6 +110,7 @@ class Post:
                     post_url = 'https://m.vk.com/wall%(owner_id)s_%(id)s' % self.post
                     soup = BeautifulSoup(session.http.get(post_url).text, 'html.parser')
                     track_list = [decode_audio_url(track.get('value'), api_vk.users.get()[0]['id']) for track in soup.find_all(type='hidden') if 'mp3' in track.get('value')]
+                    dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
                     name = sub(r"[/\"?:|<>*]", '', attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
                     try:
                         file = download(track_list[n], out=name)
@@ -121,8 +125,8 @@ class Post:
                     music['artist'] = attachment['audio']['artist']
                     music.save()
                     del music
+                    self.tracks.append((name, dur_list[n]))
                     n += 1
-                    self.tracks.append(name)
 
     def generate_user(self):
         if 'signer_id' in self.post:
