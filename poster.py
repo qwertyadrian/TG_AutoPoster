@@ -35,42 +35,50 @@ def updater(bot, domain, last_id):
             send_post(bot, domain, new_post)
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
+    if post['id'] == last_id:
+        log.info('[VK] Новых постов не обнаружено')
     log.info('[VK] Проверка завершена, last_id = {0}.'.format(last_id))
 
 
 def send_post(bot, domain, post):
     log.info("[TG] Отправка поста...")
     if post.text:
-        if not (len(post.photos) == 1 and len(post.text) < 200):
+        if post.photos:
+            pass
+        else:
             bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
                             disable_web_page_preview=True)
     if post.photos:
         try:
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 200:
-                    if config.getboolean('global', 'sign'):
-                        bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
-                                        disable_web_page_preview=True)
-                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
-                    else:
-                        bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                                      caption=post.text)
+                    bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                                  caption=post.text, parse_mode='HTML')
+                    # if config.getboolean('global', 'sign'):
+                    #     bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
+                    #                     disable_web_page_preview=True)
+                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
+                    # else:
+                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
+                    #                   caption=post.text, parse_mode='HTML')
                 else:
+                    bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
+                                    disable_web_page_preview=True)
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
         except Exception:
-            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[0]))
+            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
     for m in post.videos:
-        bot.sendMessage(config.get(domain, 'channel'), m)
+        bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
     for m in post.docs:
-        bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'))
-    for m in post.tracks:
+        bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'), timeout=60)
+    for (m, n) in post.tracks:
         try:
             if getsize(m) > 52428800:
                 remove(m)
             else:
-                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'))
+                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), duration=int(n), timeout=60)
             remove(m)
         except FileNotFoundError:
             continue
