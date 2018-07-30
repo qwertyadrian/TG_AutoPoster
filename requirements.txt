@@ -5,3 +5,4 @@ vk_api
 eventlet==0.22.0
 urllib3
 bs4
+pytube
