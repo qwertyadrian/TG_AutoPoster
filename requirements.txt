@@ -1,8 +1,7 @@
-fleep
+python-telegram-bot
 wget
 mutagen
 vk_api
-telepot==12.5
 eventlet==0.22.0
 urllib3
 bs4
