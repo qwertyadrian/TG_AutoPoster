@@ -8,7 +8,7 @@ from os import listdir, remove
 import messages
 
 bot_token = None
-job = None
+job_status = None
 job_queue = None
 
 
@@ -47,28 +47,28 @@ def help(bot, update):
 def run(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
         try:
-            global job
-            if job:
-                if job.enabled:
+            global job_status
+            if job_status:
+                if job_status.enabled:
                     return 0
-            job = job_queue.run_repeating(job_repeated, interval=5 * 60, first=0)
-            log.info('Running a job...')
+            job_status = job_queue.run_repeating(job_repeated, interval=5 * 60, first=0)
+            log.info('Running a job_status...')
             update.message.reply_text('Бот запущен', quote=True)
         except Exception:
-            log.info('Got an error while running a job: %s.' % sys.exc_info()[0])
+            log.info('Got an error while running a job_status: %s.' % sys.exc_info()[0])
             update.message.reply_text('Не удалось запустить бота: {}'.format(sys.exc_info()[1]), quote=True)
 
 
 def stop(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
-        global job
-        if job:
+        global job_status
+        if job_status:
             print('Test')
-            if job.enabled:
+            if job_status.enabled:
                 print('Test')
-                job.enabled = False
+                job_status.enabled = False
                 update.message.reply_text('Бот остановлен.', quote=True)
-                log.info('Stopping a job...')
+                log.info('Stopping a job_status...')
 
 
 def get_full_logs(bot, update):
@@ -87,8 +87,8 @@ def get_last_logs(bot, update):
 def status(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
         stat = 'Автопостинг остановлен'
-        if job:
-            if job.enabled:
+        if job_status:
+            if job_status.enabled:
                 stat = 'Автопостинг запущен'
         update.message.reply_text(stat, quote=True)
 
@@ -106,13 +106,13 @@ def sending(bot, update):
         if update.message.text:
             bot.send_message(chat_id=chat, text=update.message.text, parse_mode='Markdown')
         elif update.message.document:
-            bot.send_document(chat_id=chat, document=update.message.document.file_id,
-                              caption=update.message.caption, parse_mode='Markdown')
+            bot.send_document(chat_id=chat, document=update.message.document.file_id, caption=update.message.caption,
+                              parse_mode='Markdown')
         elif update.message.photo:
             bot.send_photo(chat_id=chat, photo=update.message.photo[0].file_id, caption=update.message.caption,
                            parse_mode='Markdown')
         elif update.message.video:
-            bot.send_video(chat_id=chat, video=update.message.video.file_id,
-                           caption=update.message.caption, parse_mode='Markdown')
+            bot.send_video(chat_id=chat, video=update.message.video.file_id, caption=update.message.caption,
+                           parse_mode='Markdown')
         bot.send_media_group(chat_id=chat, media=update.message.media_group_id)
         chat = None

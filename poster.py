@@ -36,7 +36,7 @@ def updater(bot, domain, last_id):
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
     if post['id'] == last_id:
-        log.info('[VK] Новых постов не обнаружено')
+        log.info('[VK] Новых постов больше не обнаружено')
     log.info('[VK] Проверка завершена, last_id = {0}.'.format(last_id))
 
 
@@ -49,6 +49,7 @@ def send_post(bot, domain, post):
             bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
                             disable_web_page_preview=True)
     if post.photos:
+        # noinspection PyBroadException
         try:
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 200:
