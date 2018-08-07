@@ -1,6 +1,8 @@
 import urllib
+import sys
 from os.path import getsize
 from settings import config, api_vk, session
+from botlogs import log
 from wget import download
 from re import sub, compile
 from mutagen.easyid3 import EasyID3
@@ -27,6 +29,7 @@ class Post:
         self.tracks = []
 
     def generate_post(self):
+        log.info('[AP] Начало извлечения содержимого поста...')
         self.generate_user()
         self.generate_text()
         self.generate_photos()
@@ -36,6 +39,7 @@ class Post:
 
     def generate_text(self):
         if self.post['text']:
+            log.info('[AP] Обнаружен текст. Извлечение...')
             self.text = self.post['text']
             self.text = self.text.replace(self.pattern, '')
             if 'attachments' in self.post:
@@ -44,6 +48,7 @@ class Post:
                         self.text += '\n<a href="%(url)s">%(title)s</a>' % attachment['link']
                         # self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if config.getboolean('global', 'sign') and self.user:
+                log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
                 # Markdown Parsing
                 # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
                 # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
@@ -51,6 +56,7 @@ class Post:
                 self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
                 self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
             elif config.getboolean('global', 'sign') and not self.user:
+                log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
                 # Markdown Parsing
                 # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
                 # HTML Parsing
@@ -58,6 +64,7 @@ class Post:
     
     def generate_photos(self):
         if 'attachments' in self.post:
+            log.info('[AP] Извлечение фото...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'photo':
                     photo = attachment['photo']['photo_75']
@@ -74,13 +81,19 @@ class Post:
     
     def generate_docs(self):
         if 'attachments' in self.post:
+            log.info('[AP] Извлечение вложениий (файлы, гифки и т.п.)...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'doc' and attachment['doc']['size'] < 52428800:
-                    doc = download(attachment['doc']['url'], out='file' + '.' + attachment['doc']['ext'])
-                    self.docs.append(doc)
+                    try:
+                        doc = download(attachment['doc']['url'], out='file' + '.' + attachment['doc']['ext'])
+                        self.docs.append(doc)
+                    except urllib.error.URLError:
+                        log.warn('[AP] Невозможно скачать вложенный файл: {0}.'.format(sys.exc_info()[1]))
     
     def generate_videos(self):
         if 'attachments' in self.post:
+            log.info('[AP] Извлечение видео...')
+            log.info('[AP] Данная функция находится в стадии тестирования. В некоторых видео может быть только звук, а может вообще не запуститься.')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'video':
                     video = 'https://m.vk.com/video%(owner_id)s_%(id)s' % attachment['video']
@@ -103,6 +116,8 @@ class Post:
 
     def generate_music(self):
         if 'attachments' in self.post:
+            log.info('[AP] Извлечение аудио...')
+            log.info('[AP] Данная функция находится в стадии тестирования.')
             session.http.cookies.update(dict(remixmdevice=self.remixmdevice))
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'audio':

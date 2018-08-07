@@ -1,21 +1,22 @@
 import configparser
 from botlogs import log
 from vk_api import VkApi
-from vk_api.audio import VkAudio
 
 config = configparser.ConfigParser()
 config.read_file(open('../config.ini', 'r', encoding='utf-8'))
 login = config.get('global', 'login')
 password = config.get('global', 'pass')
 
+session = None
+api_vk = None
+
 
 def setting(login=None, password=None, access_token=None):
-    global session, audio, api_vk
-    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler, captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
-    audio = None
+    global session, api_vk
+    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler,
+                    captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
     if login and password:
         session.auth()
-        audio = VkAudio(session)
     api_vk = session.get_api()
 
 
