@@ -93,15 +93,15 @@ def status(bot, update):
         update.message.reply_text(stat, quote=True)
 
 
-def send_post(bot, update):
+def send_post(bot, update, args):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
         global chat
-        chat = update.message['text'][11:]
-        update.message.reply_text('Чтобы отправить ваш пост в канал/группу, ответьте на это сообщение.')
+        chat = args[0]
+        update.message.reply_text('Чтобы отправить ваш пост в канал/группу {}, ответьте на это сообщение.'.format(chat))
 
 
 def sending(bot, update):
-    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id) and chat:
         global chat
         if update.message.text:
             bot.send_message(chat_id=chat, text=update.message.text, parse_mode='Markdown')

@@ -43,7 +43,7 @@ if __name__ == '__main__':
         dp.add_handler(CommandHandler('get_last_logs', commands.get_last_logs))
         dp.add_handler(CommandHandler('status', commands.status))
         dp.add_handler(MessageHandler(callback=commands.is_admin, filters=Filters.regex(config.get('global', 'bot_token'))), group=1)
-        dp.add_handler(CommandHandler('send_post', commands.send_post))
+        dp.add_handler(CommandHandler('send_post', commands.send_post, pass_args=True))
         dp.add_handler(MessageHandler(callback=commands.sending, filters=Filters.reply))
         job = job_queue.run_repeating(commands.job_repeated, interval=5 * 60, first=0)
 
