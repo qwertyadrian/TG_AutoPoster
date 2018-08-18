@@ -1,7 +1,7 @@
 python-telegram-bot
 wget
 mutagen
-vk_api
+vk_api==9.3.2
 eventlet==0.22.0
 urllib3
 bs4

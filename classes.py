@@ -118,10 +118,10 @@ class Post:
         if 'attachments' in self.post:
             log.info('[AP] Извлечение аудио...')
             log.info('[AP] Данная функция находится в стадии тестирования.')
+            n = 0
             session.http.cookies.update(dict(remixmdevice=self.remixmdevice))
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'audio':
-                    n = 0
                     post_url = 'https://m.vk.com/wall%(owner_id)s_%(id)s' % self.post
                     soup = BeautifulSoup(session.http.get(post_url).text, 'html.parser')
                     track_list = [decode_audio_url(track.get('value'), api_vk.users.get()[0]['id']) for track in soup.find_all(type='hidden') if 'mp3' in track.get('value')]
