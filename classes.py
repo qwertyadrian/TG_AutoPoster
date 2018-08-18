@@ -20,7 +20,7 @@ class Post:
         self.remixmdevice = '1920/1080/1/!!-!!!!'
         self.pattern = '@' + group
         self.post = post
-        self.text = None
+        self.text = ''
         self.user = None
         self.links = None
         self.photos = []

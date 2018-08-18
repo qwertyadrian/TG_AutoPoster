@@ -11,7 +11,7 @@ session = None
 api_vk = None
 
 
-def setting(login=None, password=None, access_token=None):
+def setting(login: str=None, password: str=None, access_token: str=None) -> None:
     global session, api_vk
     session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler,
                     captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
@@ -35,13 +35,17 @@ def captcha_handler(captcha):
     return captcha.try_again(key)
 
 
-def update_parameter(section, name, num):
+def update_parameter(section, name, num) -> int:
     config.set(section, name, str(num))
-
     with open('../config.ini', 'w', encoding='utf-8') as f:
         config.write(f)
-
     return num
+
+
+def remove_section(section: str) -> None:
+    config.remove_section(section)
+    with open('../config.ini', 'w', encoding='utf-8') as f:
+        config.write(f)
 
 
 log.info('Запуск')
