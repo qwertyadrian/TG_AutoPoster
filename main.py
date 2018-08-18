@@ -45,10 +45,14 @@ if __name__ == '__main__':
         dp.add_handler(MessageHandler(callback=commands.is_admin, filters=Filters.regex(config.get('global', 'bot_token'))), group=1)
         dp.add_handler(CommandHandler('send_post', commands.send_post, pass_args=True))
         dp.add_handler(MessageHandler(callback=commands.sending, filters=Filters.reply))
+        dp.add_handler(CommandHandler('manage', commands.manage))
+        dp.add_handler(CallbackQueryHandler(commands.button), group=1)
+        dp.add_handler(CommandHandler('get_id', commands.get_id))
         job = job_queue.run_repeating(commands.job_repeated, interval=5 * 60, first=0)
 
 
     if config.get('global', 'proxy_url'):
+        log.warn('Настройка прокси.')
         REQUEST_KWARGS = {'proxy_url': config.get('global', 'proxy_url'), 'connect_timeout': 15.0, 'read_timeout': 15.0}
         update(REQUEST_KWARGS)
     else:
