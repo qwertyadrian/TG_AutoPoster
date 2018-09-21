@@ -42,10 +42,22 @@ def update_parameter(section, name, num) -> int:
     return num
 
 
-def remove_section(section: str) -> None:
+def remove_section(section: str) -> tuple:
+    channel = config.get(section, 'channel')
+    last_id = config.get(section, 'last_id')
     config.remove_section(section)
     with open('../config.ini', 'w', encoding='utf-8') as f:
         config.write(f)
+    return section, channel, last_id
+
+
+def add_section(domain, chat_id, last_id='0', *args):
+    config.add_section(domain)
+    config.set(domain, 'channel', chat_id)
+    config.set(domain, 'last_id', last_id)
+    with open('../config.ini', 'w', encoding='utf-8') as f:
+        config.write(f)
+    return domain, chat_id, last_id
 
 
 log.info('Запуск')

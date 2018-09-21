@@ -15,10 +15,10 @@ import commands
 from botlogs import log
 
 
-def error(bot, update, error):
-    log.error('[TG] Update "%s" caused error "%s"' % (update, error))
+def error(bot, updates, errors):
+    log.error('[TG] Update "%s" caused error "%s"' % (updates, errors))
     if config.get('global', 'admin'):
-        bot.send_message(chat_id=config.get('global', 'admin'), text='[TG] Update "%s" caused error "%s"' % (update, error))
+        bot.send_message(chat_id=config.get('global', 'admin'), text='[TG] Update "%s" caused error "%s"' % (updates, errors))
 
 
 def set_starter_settings():
@@ -40,12 +40,15 @@ if __name__ == '__main__':
         dp.add_handler(CommandHandler('run', commands.run))
         dp.add_handler(CommandHandler('stop', commands.stop))
         dp.add_handler(CommandHandler('get_full_logs', commands.get_full_logs))
-        dp.add_handler(CommandHandler('get_last_logs', commands.get_last_logs))
+        dp.add_handler(CommandHandler('get_last_logs', commands.get_last_logs, pass_args=True))
         dp.add_handler(CommandHandler('status', commands.status))
         dp.add_handler(MessageHandler(callback=commands.is_admin, filters=Filters.regex(config.get('global', 'bot_token'))), group=1)
         dp.add_handler(CommandHandler('send_post', commands.send_post, pass_args=True))
         dp.add_handler(MessageHandler(callback=commands.sending, filters=Filters.reply))
-        dp.add_handler(CommandHandler('manage', commands.manage))
+        dp.add_handler(CommandHandler('list', commands.source_list))
+        dp.add_handler(CommandHandler('add', commands.add_source, pass_args=True))
+        dp.add_handler(CommandHandler('remove', commands.remove_source, pass_args=True))
+        dp.add_handler(CommandHandler('sources_list', commands.source_list))
         dp.add_handler(CallbackQueryHandler(commands.button), group=1)
         dp.add_handler(CommandHandler('get_id', commands.get_id))
         job = job_queue.run_repeating(commands.job_repeated, interval=5 * 60, first=0)

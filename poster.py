@@ -7,7 +7,7 @@ from settings import config, api_vk, update_parameter
 from classes import Post
 
 
-def get_data(group):
+def get_data(group: str):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
@@ -35,8 +35,8 @@ def updater(bot, domain, last_id):
             send_post(bot, domain, new_post)
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
-    if post['id'] == last_id:
-        log.info('[VK] Новых постов больше не обнаружено')
+        if post['id'] == last_id:
+            log.info('[VK] Новых постов больше не обнаружено')
     log.info('[VK] Проверка завершена, last_id = {0}.'.format(last_id))
 
 
@@ -55,13 +55,6 @@ def send_post(bot, domain, post):
                 if len(post.photos) == 1 and len(post.text) < 200:
                     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
                                   caption=post.text, parse_mode='HTML')
-                    # if config.getboolean('global', 'sign'):
-                    #     bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
-                    #                     disable_web_page_preview=True)
-                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'])
-                    # else:
-                    #     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                    #                   caption=post.text, parse_mode='HTML')
                 else:
                     bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
                                     disable_web_page_preview=True)
@@ -71,7 +64,10 @@ def send_post(bot, domain, post):
         except Exception:
             log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
     for m in post.videos:
-        bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
+        try:
+            bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
+        except Exception:
+            pass
     for m in post.docs:
         bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'), timeout=60)
     for (m, n) in post.tracks:
@@ -79,7 +75,10 @@ def send_post(bot, domain, post):
             if getsize(m) > 52428800:
                 remove(m)
             else:
-                bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), duration=int(n), timeout=60)
-            remove(m)
+                try:
+                    bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), duration=int(n), timeout=60)
+                except:
+                    pass
+                remove(m)
         except FileNotFoundError:
             continue
