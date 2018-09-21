@@ -7,7 +7,7 @@ from wget import download
 from re import sub, compile
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
-from telegram.files.inputmediaphoto import *
+from telegram import InputMediaPhoto
 from bs4 import BeautifulSoup
 from pytube import YouTube
 from vk_api.audio_url_decoder import decode_audio_url
@@ -100,7 +100,7 @@ class Post:
                     soup = BeautifulSoup(session.http.get(video).text, 'html.parser')
                     if soup.find_all('source'):
                         file = download(soup.find_all('source')[1].get('src'))
-                        if getsize(file) > 20971520:
+                        if getsize(file) > 52428800:
                             del file
                             continue
                         self.videos.append(file)
@@ -108,7 +108,7 @@ class Post:
                         video_id = self.regex.findall(soup.iframe['src'])[0].split('/')[3]
                         yt = YouTube(self.youtube_link + video_id)
                         for stream in yt.streams.all():
-                            if stream.filesize <= 20971520 and ('.mp4' in stream.default_filename):
+                            if stream.filesize <= 52428800 and ('.mp4' in stream.default_filename):
                                 file = stream.default_filename
                                 stream.download()
                                 self.videos.append(file)
@@ -120,11 +120,12 @@ class Post:
             log.info('[AP] Данная функция находится в стадии тестирования.')
             n = 0
             session.http.cookies.update(dict(remixmdevice=self.remixmdevice))
+            user_id = api_vk.users.get()[0]['id']
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'audio':
                     post_url = 'https://m.vk.com/wall%(owner_id)s_%(id)s' % self.post
                     soup = BeautifulSoup(session.http.get(post_url).text, 'html.parser')
-                    track_list = [decode_audio_url(track.get('value'), api_vk.users.get()[0]['id']) for track in soup.find_all(type='hidden') if 'mp3' in track.get('value')]
+                    track_list = [decode_audio_url(track.get('value'), user_id) for track in soup.find_all(type='hidden') if 'mp3' in track.get('value')]
                     dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
                     name = sub(r"[/\"?:|<>*]", '', attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
                     try:

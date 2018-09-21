@@ -8,7 +8,7 @@ future==0.16.0
 greenlet==0.4.14
 idna==2.7
 mutagen==1.41.1
-python-telegram-bot==10.0.2
+python-telegram-bot==11.0.0
 pytube==9.2.2
 requests==2.19.1
 six==1.11.0

@@ -3,9 +3,10 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
 import poster
 import sys
-from settings import config, update_parameter, remove_section
+from settings import config, update_parameter, remove_section, add_section
 from botlogs import log
 from os import listdir, remove
+from random import randint
 import messages
 
 bot_token = None
@@ -64,9 +65,7 @@ def stop(bot, update):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
         global job_status
         if job_status:
-            print('Test')
             if job_status.enabled:
-                print('Test')
                 job_status.enabled = False
                 update.message.reply_text('Бот остановлен.', quote=True)
                 log.info('Stopping a job_status...')
@@ -78,11 +77,15 @@ def get_full_logs(bot, update):
         update.message.reply_document(open('../bot_log.log', 'rb'))
 
 
-def get_last_logs(bot, update):
+def get_last_logs(bot, update, args):
     if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        if args:
+            string = int(args[0])
+        else:
+            string = 15
         with open('../bot_log.log', 'r', encoding='utf-8') as f:
-            last_logs = ''.join(f.readlines()[-15:])
-        update.message.reply_text('Последние 15 строк логов:\n\n' + last_logs, quote=True)
+            last_logs = ''.join(f.readlines()[-string:])
+        update.message.reply_text('Последние {} строк логов:\n\n'.format(str(string)) + last_logs, quote=True)
 
 
 def status(bot, update):
@@ -137,30 +140,39 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     return menu
 
 
-def manage(bot, update):
-    button_list = [InlineKeyboardButton('Удалить источник', callback_data="1"),
-                   InlineKeyboardButton('Добавить источник', callback_data="2")]
-    reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
-    update.message.reply_text('Управление источниками. ', reply_markup=reply_markup)
+def source_list(bot, update):
+    sources_list = config.sections()[1:]
+    sources = 'Список источников:\nИсточник' + '\x20'*8 + '---->' + '\x20'*8 + 'Назначение\n\n'
+    for source in sources_list:
+        sources += 'https://vk.com/' + source + '\x20'*8 + '---->' + '\x20'*8 + config.get(source, 'channel') + '\n'
+    sources += 'Для удаления источника отправьте команду /remove <домен группы вк>\nНапример, /remove ' +\
+               sources_list[randint(0, len(sources_list) - 1)]
+    update.message.reply_text(sources, disable_web_page_preview=True)
+
+
+def remove_source(bot, update, args):
+    if args:
+        section = remove_section(args[0])
+        info = 'Источник {0[0]} был удален.\nДля его восстановления используйте команду' \
+               ' <code>/add {0[0]} {0[1]} {0[2]}</code>'.format(section)
+        update.message.reply_text(info, parse_mode='HTML')
+    else:
+        update.message.reply_text(messages.REMOVE, parse_mode='Markdown')
+
+
+def add_source(bot, update, args):
+    if args:
+        section = add_section(*args)
+        info = 'Источник {0[0]} был добавлен.'.format(section)
+        update.message.reply_text(info)
+    else:
+        update.message.reply_text(messages.ADD, parse_mode='Markdown')
 
 
 def button(bot, update):
     # TODO Доделать управление источниками через меню
     query = update.callback_query
-    if query.data == '1':
-        button_list = []
-        for section in config.sections()[1:]:
-            button_list.append(InlineKeyboardButton(section, callback_data=section))
-        reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
-        bot.edit_message_text(text='Какой источник вы хотите удалить? \nДанное действие нельзя отменить!',
-                              chat_id=query.message.chat_id, message_id=query.message.message_id, reply_markup=reply_markup)
-    elif query.data == '2':
-        bot.edit_message_text(text='Not implemented', chat_id=query.message.chat_id, message_id=query.message.message_id)
-    elif query.data in config.sections()[1:]:
-        remove_section(query.data)
-        bot.edit_message_text(text='Источник {0} был удален.'.format(query.data), chat_id=query.message.chat_id,
-                              message_id=query.message.message_id)
-    elif query.data == '3':
+    if query.data == '3':
         bot.forward_message(chat_id=config.get('global', 'main_group'), from_chat_id=message.chat.id,
                             message_id=message.message_id)
         bot.edit_message_text(text='Принято', chat_id=query.message.chat_id,
