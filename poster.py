@@ -33,6 +33,8 @@ def updater(bot, domain, last_id):
             new_post = Post(post, domain)
             new_post.generate_post()
             send_post(bot, domain, new_post)
+            if new_post.repost:
+                send_post(bot, domain, new_post.repost)
             last_id = update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
         if post['id'] == last_id:
@@ -46,13 +48,17 @@ def send_post(bot, domain, post):
         if post.photos:
             pass
         else:
-            bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
-                            disable_web_page_preview=True)
+            try:
+                bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
+                                disable_web_page_preview=True)
+            except:
+                bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text,
+                                disable_web_page_preview=True)
     if post.photos:
         # noinspection PyBroadException
         try:
             if post.text:
-                if len(post.photos) == 1 and len(post.text) < 200:
+                if len(post.photos) == 1 and len(post.text) < 1024:
                     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
                                   caption=post.text, parse_mode='HTML')
                 else:
