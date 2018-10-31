@@ -17,8 +17,8 @@ from botlogs import log
 
 def error(bot, updates, errors):
     log.error('[TG] Update "%s" caused error "%s"' % (updates, errors))
-    if config.get('global', 'admin'):
-        bot.send_message(chat_id=config.get('global', 'admin'), text='[TG] Update "%s" caused error "%s"' % (updates, errors))
+    # if config.get('global', 'admin'):
+    #     bot.send_message(chat_id=config.get('global', 'admin'), text='[TG] Update "%s" caused error "%s"' % (updates, errors))
 
 
 def set_starter_settings():

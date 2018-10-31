@@ -19,10 +19,13 @@ class Post:
         self.regex = compile(r'/(\S*?)\?')
         self.remixmdevice = '1920/1080/1/!!-!!!!'
         self.pattern = '@' + group
+        self.group = group
         self.post = post
         self.text = ''
         self.user = None
         self.links = None
+        self.repost = None
+        self.repost_source = None
         self.photos = []
         self.videos = []
         self.docs = []
@@ -36,18 +39,19 @@ class Post:
         self.generate_docs()
         self.generate_videos()
         self.generate_music()
+        self.generate_repost()
 
     def generate_text(self):
         if self.post['text']:
             log.info('[AP] Обнаружен текст. Извлечение...')
-            self.text = self.post['text']
+            self.text += self.post['text']
             self.text = self.text.replace(self.pattern, '')
             if 'attachments' in self.post:
                 for attachment in self.post['attachments']:
                     if attachment['type'] == 'link':
                         self.text += '\n<a href="%(url)s">%(title)s</a>' % attachment['link']
                         # self.text += '\n[%(title)s](%(url)s)' % attachment['link']
-            if config.getboolean('global', 'sign') and self.user:
+            if config.getboolean('global', 'sign_posts') and self.user:
                 log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
                 # Markdown Parsing
                 # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
@@ -55,7 +59,7 @@ class Post:
                 # HTML Parsing
                 self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
                 self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
-            elif config.getboolean('global', 'sign') and not self.user:
+            elif config.getboolean('global', 'sign_posts') and not self.user:
                 log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
                 # Markdown Parsing
                 # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
@@ -99,14 +103,18 @@ class Post:
                     video = 'https://m.vk.com/video%(owner_id)s_%(id)s' % attachment['video']
                     soup = BeautifulSoup(session.http.get(video).text, 'html.parser')
                     if soup.find_all('source'):
-                        file = download(soup.find_all('source')[1].get('src'))
+                        video_link = soup.find_all('source')[1].get('src')
+                        file = download(video_link)
                         if getsize(file) > 52428800:
                             del file
                             continue
                         self.videos.append(file)
                     elif soup.iframe:
-                        video_id = self.regex.findall(soup.iframe['src'])[0].split('/')[3]
-                        yt = YouTube(self.youtube_link + video_id)
+                        try:
+                            video_id = self.regex.findall(soup.iframe['src'])[0].split('/')[3]
+                            yt = YouTube(self.youtube_link + video_id)
+                        except:
+                            continue
                         for stream in yt.streams.all():
                             if stream.filesize <= 52428800 and ('.mp4' in stream.default_filename):
                                 file = stream.default_filename
@@ -147,3 +155,13 @@ class Post:
     def generate_user(self):
         if 'signer_id' in self.post:
             self.user = api_vk.users.get(user_ids=self.post['signer_id'], fields='domain')[0]
+
+    def generate_repost(self):
+        if config.getboolean('global', 'send_reposts'):
+            if 'copy_history' in self.post:
+                source_id = int(self.post['copy_history'][0]['from_id'])
+                source_info = api_vk.groups.getById(group_id=-source_id)[0]
+                repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
+                self.repost = Post(self.post['copy_history'][0], source_info['screen_name'])
+                self.repost.text = repost_source
+                self.repost.generate_post()
