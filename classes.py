@@ -4,7 +4,7 @@ from os.path import getsize
 from settings import config, api_vk, session
 from botlogs import log
 from wget import download
-from re import sub, compile
+from re import sub, compile, finditer, MULTILINE
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram import InputMediaPhoto
@@ -65,7 +65,19 @@ class Post:
                 # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
                 # HTML Parsing
                 self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
-    
+            matches = finditer(r'\[(.*?)\]', self.text, MULTILINE)
+            result = {}
+            for matchNum, match in enumerate(matches):
+                for group_num in range(0, len(match.groups())):
+                    group_num = group_num + 1
+                    result[match.group()] = match.group(group_num)
+            try:
+                for i in result.keys():
+                    self.text = self.text.replace(i, '<a href="https://vk.com/{}">{}</a>'.format(
+                        *result[i].split('|')))
+            except IndexError:
+                pass
+
     def generate_photos(self):
         if 'attachments' in self.post:
             log.info('[AP] Извлечение фото...')
