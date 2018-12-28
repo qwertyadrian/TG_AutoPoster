@@ -11,6 +11,7 @@ from telegram import InputMediaPhoto
 from bs4 import BeautifulSoup
 from pytube import YouTube
 from vk_api.audio_url_decoder import decode_audio_url
+from vk_api import exceptions
 
 
 class Post:
@@ -150,7 +151,7 @@ class Post:
                     name = sub(r"[/\"?:|<>*]", '', attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
                     try:
                         file = download(track_list[n], out=name)
-                    except urllib.error.URLError:
+                    except (urllib.error.URLError, IndexError):
                         continue
                     try:
                         music = EasyID3(file)
@@ -172,7 +173,10 @@ class Post:
         if config.getboolean('global', 'send_reposts'):
             if 'copy_history' in self.post:
                 source_id = int(self.post['copy_history'][0]['from_id'])
-                source_info = api_vk.groups.getById(group_id=-source_id)[0]
+                try:
+                    source_info = api_vk.groups.getById(group_id=-source_id)[0]
+                except exceptions.ApiError:
+                    source_info = api_vk.users.get(user_ids=source_id)[0]
                 repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
                 self.repost = Post(self.post['copy_history'][0], source_info['screen_name'])
                 self.repost.text = repost_source
