@@ -6,8 +6,9 @@ import sys
 from settings import config, update_parameter, remove_section, add_section
 from botlogs import log
 from os import listdir, remove
-from random import randint
+from random import choice
 import messages
+from classes import build_menu
 
 bot_token = None
 job_status = None
@@ -131,22 +132,14 @@ def sending(bot, update):
         bot.send_message(chat_id=config.get('global', 'admin'), text='Что сделать с сообщением выше?', reply_markup=reply_markup)
 
 
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
-    return menu
-
-
 def source_list(bot, update):
     sources_list = config.sections()[1:]
-    sources = 'Список источников:\nИсточник' + '\x20'*8 + '---->' + '\x20'*8 + 'Назначение\n\n'
+    sources = 'Список источников:\nИсточник        ---->        Назначение  (ID последнего отправленного поста)\n\n'
     for source in sources_list:
-        sources += 'https://vk.com/' + source + '\x20'*8 + '---->' + '\x20'*8 + config.get(source, 'channel') + '\n'
-    sources += 'Для удаления источника отправьте команду /remove <домен группы вк>\nНапример, /remove ' +\
-               sources_list[randint(0, len(sources_list) - 1)]
+        sources += 'https://vk.com/{}        ---->        {}  ({})\n'.format(source, config.get(source, 'channel'),
+                                                                             config.get(source, 'last_id'))
+    sources += '\nДля удаления источника отправьте команду /remove <домен группы вк>\nНапример, /remove ' +\
+               choice(sources_list)
     update.message.reply_text(sources, disable_web_page_preview=True)
 
 
@@ -185,3 +178,10 @@ def button(bot, update):
 def get_id(bot, update):
     # Get group or user ID
     update.message.reply_text('Group ID: {0}'.format(update.message.chat.id))
+
+
+def get_config(bot, update):
+    if str(config.get('global', 'admin')) == str(update.message.from_user.id):
+        update.message.reply_text('Конфигурация бота:\n ```{}```'.format(open('../config.ini').read()),
+                                  quote=True, parse_mode='Markdown')
+        update.message.reply_document(open('../config.ini', 'rb'), caption='Файл конфигурации бота.')

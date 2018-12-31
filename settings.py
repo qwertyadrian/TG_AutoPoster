@@ -52,6 +52,7 @@ def remove_section(section: str) -> tuple:
 
 
 def add_section(domain, chat_id, last_id='0', *args):
+    domain = domain.replace('https://vk.com/', '').replace('https://m.vk.com/', '')
     config.add_section(domain)
     config.set(domain, 'channel', chat_id)
     config.set(domain, 'last_id', last_id)
