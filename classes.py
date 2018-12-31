@@ -7,7 +7,7 @@ from wget import download
 from re import sub, compile, finditer, MULTILINE
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
-from telegram import InputMediaPhoto
+from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from bs4 import BeautifulSoup
 from pytube import YouTube
 from vk_api.audio_url_decoder import decode_audio_url
@@ -27,6 +27,7 @@ class Post:
         self.links = None
         self.repost = None
         self.repost_source = None
+        self.reply_markup = None
         self.photos = []
         self.videos = []
         self.docs = []
@@ -47,6 +48,7 @@ class Post:
             log.info('[AP] Обнаружен текст. Извлечение...')
             self.text += self.post['text']
             self.text = self.text.replace(self.pattern, '')
+            post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
             if 'attachments' in self.post:
                 for attachment in self.post['attachments']:
                     if attachment['type'] == 'link':
@@ -54,18 +56,14 @@ class Post:
                         # self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if config.getboolean('global', 'sign_posts') and self.user:
                 log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
-                # Markdown Parsing
-                # self.text += '\nАвтор поста: [%(first_name)s %(last_name)s](https://vk.com/%(domain)s)' % self.user
-                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
-                # HTML Parsing
-                self.text += '\nАвтор поста: <a href="https://vk.com/%(domain)s">%(first_name)s %(last_name)s</a>' % self.user
-                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
+                user = 'https://vk.com/%(domain)s' % self.user
+                button_list = [InlineKeyboardButton('Автор поста: %(first_name)s %(last_name)s' % self.user, url=user),
+                               InlineKeyboardButton('Оригинал поста', url=post)]
+                self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
             elif config.getboolean('global', 'sign_posts') and not self.user:
                 log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
-                # Markdown Parsing
-                # self.text += '\nОригинал поста: [ссылка](https://vk.com/wall%(owner_id)s_%(id)s)' % self.post
-                # HTML Parsing
-                self.text += '\nОригинал поста: <a href="https://vk.com/wall%(owner_id)s_%(id)s">ссылка</a>' % self.post
+                button_list = [InlineKeyboardButton('Оригинал поста', url=post)]
+                self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
             matches = finditer(r'\[(.*?)\]', self.text, MULTILINE)
             result = {}
             for matchNum, match in enumerate(matches):
@@ -74,8 +72,7 @@ class Post:
                     result[match.group()] = match.group(group_num)
             try:
                 for i in result.keys():
-                    self.text = self.text.replace(i, '<a href="https://vk.com/{}">{}</a>'.format(
-                        *result[i].split('|')))
+                    self.text = self.text.replace(i, '<a href="https://vk.com/{}">{}</a>'.format(*result[i].split('|')))
             except IndexError:
                 pass
 
@@ -181,3 +178,12 @@ class Post:
                 self.repost = Post(self.post['copy_history'][0], source_info['screen_name'])
                 self.repost.text = repost_source
                 self.repost.generate_post()
+
+
+def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, header_buttons)
+    if footer_buttons:
+        menu.append(footer_buttons)
+    return menu

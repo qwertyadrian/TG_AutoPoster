@@ -50,20 +50,20 @@ def send_post(bot, domain, post):
         else:
             try:
                 bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
-                                disable_web_page_preview=True)
+                                disable_web_page_preview=True, reply_markup=post.reply_markup)
             except:
                 bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text,
-                                disable_web_page_preview=True)
+                                disable_web_page_preview=True, reply_markup=post.reply_markup)
     if post.photos:
         # noinspection PyBroadException
         try:
             if post.text:
                 if len(post.photos) == 1 and len(post.text) < 1024:
                     bot.sendPhoto(chat_id=config.get(domain, 'channel'), photo=post.photos[0]['media'],
-                                  caption=post.text, parse_mode='HTML')
+                                  caption=post.text, parse_mode='HTML', reply_markup=post.reply_markup)
                 else:
                     bot.sendMessage(chat_id=config.get(domain, 'channel'), text=post.text, parse_mode='HTML',
-                                    disable_web_page_preview=True)
+                                    disable_web_page_preview=True, reply_markup=post.reply_markup)
                     bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)

@@ -110,3 +110,4 @@ ENV/
 .mypy_cache/
 
 tests/
+*.log.*
