@@ -104,8 +104,9 @@ def send_post(bot, update, args):
         chat = args[0]
     else:
         chat = config.get('global', 'main_group')
-    update.message.reply_text('Чтобы отправить ваш пост в канал/группу {}, ответьте на это сообщение.'.format(chat),
-                              reply_markup=ForceReply())
+    if update.message.chat.type not in ('group', 'supergroup'):
+        update.message.reply_text('Чтобы отправить ваш пост в канал/группу {}, ответьте на это сообщение.'.format(chat),
+                                  reply_markup=ForceReply())
 
 
 def sending(bot, update):
