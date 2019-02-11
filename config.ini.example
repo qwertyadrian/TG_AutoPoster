@@ -4,6 +4,7 @@ pass =
 bot_token =
 sign_posts = yes
 send_reposts = yes
+check_interval = 30
 proxy_url =
 admin =
 main_group =

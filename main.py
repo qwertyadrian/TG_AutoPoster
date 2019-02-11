@@ -52,7 +52,8 @@ if __name__ == '__main__':
         dp.add_handler(CallbackQueryHandler(commands.button), group=1)
         dp.add_handler(CommandHandler('get_id', commands.get_id))
         dp.add_handler(CommandHandler('get_config', commands.get_config))
-        job = job_queue.run_repeating(commands.job_repeated, interval=5 * 60, first=0)
+        job = job_queue.run_repeating(commands.job_repeated, interval=config.getint('global', 'check_interval') * 60,
+                                      first=0)
 
 
     if config.get('global', 'proxy_url'):
