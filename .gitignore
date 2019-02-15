@@ -111,3 +111,4 @@ ENV/
 
 tests/
 *.log.*
+config.ini

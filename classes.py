@@ -35,7 +35,8 @@ class Post:
 
     def generate_post(self):
         log.info('[AP] Начало извлечения содержимого поста...')
-        self.generate_user()
+        if config.getboolean('global', 'sign_posts'):
+            self.generate_user()
         self.generate_text()
         self.generate_photos()
         self.generate_docs()
