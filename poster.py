@@ -35,7 +35,7 @@ def updater(bot, domain, last_id):
             send_post(bot, domain, new_post)
             if new_post.repost:
                 send_post(bot, domain, new_post.repost)
-            last_id = update_parameter(domain, 'last_id', post['id'])
+            update_parameter(domain, 'last_id', post['id'])
             time.sleep(5)
         if post['id'] == last_id:
             log.info('[VK] Новых постов больше не обнаружено')
@@ -68,12 +68,12 @@ def send_post(bot, domain, post):
             else:
                 bot.sendMediaGroup(chat_id=config.get(domain, 'channel'), media=post.photos)
         except Exception:
-            log.warning('[TG] Невозможно отправить фото: {0}.'.format(sys.exc_info()[1]))
+            log.warning('[TG] Возникла ошибка при отправке фото: {0} {1}.'.format(*sys.exc_info()))
     for m in post.videos:
         try:
             bot.sendVideo(chat_id=config.get(domain, 'channel'), video=open(m, 'rb'), timeout=60)
         except Exception:
-            pass
+            log.error('[TG] Возникла ошибка при отправке видео: {0} {1}'.format(*sys.exc_info()))
     for m in post.docs:
         bot.sendDocument(chat_id=config.get(domain, 'channel'), document=open(m, 'rb'), timeout=60)
     for (m, n) in post.tracks:
@@ -83,8 +83,8 @@ def send_post(bot, domain, post):
             else:
                 try:
                     bot.sendAudio(chat_id=config.get(domain, 'channel'), audio=open(m, 'rb'), duration=int(n), timeout=60)
-                except:
-                    pass
+                except Exception:
+                    log.error('[TG] Возникла ошибка при отправке аудио: {0} {1}'.format(*sys.exc_info()))
                 remove(m)
         except FileNotFoundError:
             continue
