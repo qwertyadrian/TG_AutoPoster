@@ -32,11 +32,15 @@ class Post:
         self.videos = []
         self.docs = []
         self.tracks = []
+        self.attachments_types = []
 
     def generate_post(self):
         log.info('[AP] Начало извлечения содержимого поста...')
         if config.getboolean('global', 'sign_posts'):
             self.generate_user()
+        if 'attachments' in self.post:
+            for attachment in self.post['attachments']:
+                self.attachments_types.append(attachment['type'])
         self.generate_text()
         self.generate_photos()
         self.generate_docs()
@@ -78,7 +82,7 @@ class Post:
                 pass
 
     def generate_photos(self):
-        if 'attachments' in self.post:
+        if 'photo' in self.attachments_types:
             log.info('[AP] Извлечение фото...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'photo':
@@ -95,7 +99,7 @@ class Post:
                     self.photos.append(InputMediaPhoto(photo))
     
     def generate_docs(self):
-        if 'attachments' in self.post:
+        if 'doc' in self.attachments_types:
             log.info('[AP] Извлечение вложениий (файлы, гифки и т.п.)...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'doc' and attachment['doc']['size'] < 52428800:
@@ -106,7 +110,7 @@ class Post:
                         log.warn('[AP] Невозможно скачать вложенный файл: {0}.'.format(sys.exc_info()[1]))
     
     def generate_videos(self):
-        if 'attachments' in self.post:
+        if 'video' in self.attachments_types:
             log.info('[AP] Извлечение видео...')
             log.info('[AP] Данная функция находится в стадии тестирования. В некоторых видео может быть только звук, а может вообще не запуститься.')
             for attachment in self.post['attachments']:
@@ -134,7 +138,7 @@ class Post:
                                 break
 
     def generate_music(self):
-        if 'attachments' in self.post:
+        if 'audio' in self.attachments_types:
             log.info('[AP] Извлечение аудио...')
             log.info('[AP] Данная функция находится в стадии тестирования.')
             n = 0
