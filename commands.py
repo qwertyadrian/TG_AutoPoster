@@ -14,6 +14,21 @@ bot_token = None
 job_status = None
 job_queue = None
 
+# Символы, на которых можно разбить сообщение
+message_breakers = [':', ' ', '\n']
+max_message_length = 4091
+
+
+def split(text):
+    if len(text) >= max_message_length:
+        last_index = max(
+            map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        good_part = text[:last_index]
+        bad_part = text[last_index + 1:]
+        return [good_part] + split(bad_part)
+    else:
+        return [text]
+
 
 def job_repeated(bot, job):
     starter(bot)
@@ -86,7 +101,9 @@ def get_last_logs(bot, update, args):
             string = 15
         with open('../bot_log.log', 'r', encoding='utf-8') as f:
             last_logs = ''.join(f.readlines()[-string:])
-        update.message.reply_text('Последние {} строк логов:\n\n'.format(str(string)) + last_logs, quote=True)
+            last_logs = 'Последние {} строк логов:\n\n'.format(str(string)) + last_logs
+        for msg in split(last_logs):
+            update.message.reply_text(msg, quote=True)
 
 
 def status(bot, update):
