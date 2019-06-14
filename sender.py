@@ -31,13 +31,16 @@ class PostSender:
                     self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], text[-1], parse_mode='HTML',
                                         reply_markup=self.post.reply_markup)
         elif not self.post.text and self.post.photos:
-            if len(self.post.photos) > 1:
-                self.bot.send_media_group(self.chat_id, self.post.photos)
-            elif len(self.post.photos) == 1:
-                self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], reply_markup=self.post.reply_markup)
+            self.send_photos()
         elif self.post.text and not self.post.photos:
             send_splitted_message(self.bot, text, self.chat_id)
             self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup)
+
+    def send_photos(self):
+        if len(self.post.photos) > 1:
+            self.bot.send_media_group(self.chat_id, self.post.photos)
+        elif len(self.post.photos) == 1:
+            self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], reply_markup=self.post.reply_markup)
 
     def send_videos(self):
         for video in self.post.videos:
