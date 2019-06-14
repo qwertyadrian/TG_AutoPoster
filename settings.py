@@ -1,21 +1,22 @@
 import configparser
 from botlogs import log
 from vk_api import VkApi
-from vk_api.audio import VkAudio
 
 config = configparser.ConfigParser()
 config.read_file(open('../config.ini', 'r', encoding='utf-8'))
 login = config.get('global', 'login')
 password = config.get('global', 'pass')
 
+session = None
+api_vk = None
 
-def setting(login=None, password=None, access_token=None):
-    global session, audio, api_vk
-    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler, captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
-    audio = None
+
+def setting(login: str=None, password: str=None, access_token: str=None) -> None:
+    global session, api_vk
+    session = VkApi(login=login, password=password, token=access_token, auth_handler=auth_handler,
+                    captcha_handler=captcha_handler, config_filename='../vk_config.v2.json')
     if login and password:
         session.auth()
-        audio = VkAudio(session)
     api_vk = session.get_api()
 
 
@@ -34,13 +35,30 @@ def captcha_handler(captcha):
     return captcha.try_again(key)
 
 
-def update_parameter(section, name, num):
+def update_parameter(section, name, num) -> int:
     config.set(section, name, str(num))
-
     with open('../config.ini', 'w', encoding='utf-8') as f:
         config.write(f)
-
     return num
+
+
+def remove_section(section: str) -> tuple:
+    channel = config.get(section, 'channel')
+    last_id = config.get(section, 'last_id')
+    config.remove_section(section)
+    with open('../config.ini', 'w', encoding='utf-8') as f:
+        config.write(f)
+    return section, channel, last_id
+
+
+def add_section(domain, chat_id, last_id='0', *args):
+    domain = domain.replace('https://vk.com/', '').replace('https://m.vk.com/', '')
+    config.add_section(domain)
+    config.set(domain, 'channel', chat_id)
+    config.set(domain, 'last_id', last_id)
+    with open('../config.ini', 'w', encoding='utf-8') as f:
+        config.write(f)
+    return domain, chat_id, last_id
 
 
 log.info('Запуск')

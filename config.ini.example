@@ -2,9 +2,12 @@
 login =
 pass =
 bot_token =
-sign = 1
+sign_posts = yes
+send_reposts = yes
+check_interval = 30
 proxy_url =
 admin =
+main_group =
 
 [domain1]
 channel =
