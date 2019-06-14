@@ -2,6 +2,7 @@ import urllib
 import sys
 from os.path import getsize
 import time
+import configparser
 from wget import download
 from re import sub, compile, finditer, MULTILINE
 from mutagen.easyid3 import EasyID3
@@ -78,16 +79,25 @@ class VkPostParser:
 
     def generate_post(self):
         log.info('[AP] Парсинг поста...')
+        try:
+            what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
+        except configparser.NoOptionError:
+            what_to_parse = self.config.get('global', 'what_to_send').split(',')
         if self.config.getboolean('global', 'sign_posts'):
             self.generate_user()
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
                 self.attachments_types.append(attachment['type'])
-        self.generate_text()
-        self.generate_photos()
-        self.generate_videos()
-        self.generate_docs()
-        self.generate_music()
+        if set(what_to_parse).intersection({'text', 'all'}):
+            self.generate_text()
+        if set(what_to_parse).intersection({'photo', 'all'}):
+            self.generate_photos()
+        if set(what_to_parse).intersection({'video', 'all'}):
+            self.generate_videos()
+        if set(what_to_parse).intersection({'doc', 'all'}):
+            self.generate_docs()
+        if set(what_to_parse).intersection({'music', 'all'}):
+            self.generate_music()
         self.generate_repost()
 
     def generate_text(self):
@@ -179,17 +189,6 @@ class VkPostParser:
                         self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                             video, attachment['video'])
             self.text += '\n\n'
-                        # try:
-                        #     video_id = self.regex.findall(soup.iframe['src'])[0].split('/')[3]
-                        #     yt = YouTube(self.youtube_link + video_id)
-                        # except:
-                        #     continue
-                        # for stream in yt.streams.all():
-                        #     if stream.filesize <= 52428800 and ('.mp4' in stream.default_filename):
-                        #         file = stream.default_filename
-                        #         stream.download()
-                        #         self.videos.append(file)
-                        #         break
 
     def generate_music(self):
         if 'audio' in self.attachments_types:
