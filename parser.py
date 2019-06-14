@@ -45,9 +45,8 @@ def get_posts(domain, last_id, api_vk, config, session):
                 continue
             else:
                 yield new_post
-            # send_post(bot, domain, new_post)
             if new_post.repost:
-                yield new_post  # send_post(bot, domain, new_post.repost)
+                yield new_post
             update_parameter(config, domain, 'last_id', post['id'])
             time.sleep(5)
         if post['id'] == last_id:
@@ -106,12 +105,10 @@ class VkPostParser:
             self.text += self.post['text']
             self.text = self.text.replace(self.pattern, '')
             post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
-            # post = f'https://vk.com/wall{self.post["owner_id"]}_{self.post["id"]}'
             if 'attachments' in self.post:
                 for attachment in self.post['attachments']:
                     if attachment['type'] == 'link':
                         self.text += '\n<a href="%(url)s">%(title)s</a>' % attachment['link']
-                        # self.text += '\n[%(title)s](%(url)s)' % attachment['link']
             if self.config.getboolean('global', 'sign_posts') and self.user:
                 log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
                 user = 'https://vk.com/%(domain)s' % self.user
