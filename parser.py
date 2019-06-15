@@ -1,4 +1,4 @@
-import urllib
+import urllib.error
 import sys
 from os.path import getsize
 import time
@@ -42,6 +42,7 @@ def get_posts(domain, last_id, api_vk, config, session):
             new_post = VkPostParser(post, domain, session, api_vk, config)
             new_post.generate_post()
             if 'copy_history' in new_post.post and not config.getboolean('global', 'send_reposts'):
+                log.info('Отправка репостов отключена, поэтому пост будет пропущен.')
                 continue
             else:
                 yield new_post
@@ -192,8 +193,8 @@ class VkPostParser:
                         file = download(video_link)
                         if getsize(file) > 52428800:
                             log.info('[AP] Видео весит более 50 МиБ. Добавляем ссылку на видео в текст.')
-                            self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                                video, attachment['video'])
+                            self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)' \
+                                         ' ⏳ {1[duration]} сек'.format(video, attachment['video'])
                             del file
                             continue
                         self.videos.append(file)
