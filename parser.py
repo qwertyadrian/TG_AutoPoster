@@ -249,9 +249,11 @@ class VkPostParser:
                 source_id = int(self.post['copy_history'][0]['from_id'])
                 try:
                     source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
+                    repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
                 except exceptions.ApiError:
                     source_info = self.api_vk.users.get(user_ids=source_id)[0]
-                repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
+                    repost_source = 'Репост от <a href="https://vk.com/id%(id)s">' \
+                                    '%(first_name)s %(last_name)s</a>:\n\n' % source_info
                 self.repost = VkPostParser(self.post['copy_history'][0], source_info['screen_name'], self.session,
                                            self.api_vk, self.config, True, self.what_to_parse)
                 self.repost.text = repost_source
