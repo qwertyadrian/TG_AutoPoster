@@ -14,6 +14,7 @@ class PostSender:
         self.send_documents()
         self.send_music()
 
+    @log.catch()
     def send_text_and_photos(self):
         text = split(self.post.text)
         if self.post.text and self.post.photos:
@@ -36,6 +37,7 @@ class PostSender:
             send_splitted_message(self.bot, text, self.chat_id)
             self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup)
 
+    @log.catch()
     def send_photos(self):
         if len(self.post.photos) > 1:
             self.bot.send_media_group(self.chat_id, self.post.photos)
@@ -45,21 +47,21 @@ class PostSender:
     def send_videos(self):
         for video in self.post.videos:
             try:
-                self.bot.send_video(self.chat_id, video=open(video, 'rb'))
+                self.bot.send_video(self.chat_id, video=open(video, 'rb'), timeout=60)
             except Exception:
                 log.exception('Не удалось отправить видео. Пропускаем его...')
 
     def send_documents(self):
         for doc in self.post.docs:
             try:
-                self.bot.send_document(self.chat_id, document=open(doc, 'rb'))
+                self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60)
             except Exception:
                 log.exception('Не удалось отправить документ. Пропускаем его...')
 
     def send_music(self):
         for audio, duration in self.post.tracks:
             try:
-                self.bot.send_audio(self.chat_id, open(audio, 'rb'), duration)
+                self.bot.send_audio(self.chat_id, open(audio, 'rb'), duration, timeout=60)
             except Exception:
                 log.exception('Не удалось отправить аудио файл. Пропускаем его...')
 
