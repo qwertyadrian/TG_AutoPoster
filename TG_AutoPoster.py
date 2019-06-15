@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from telegram import Bot
+from telegram.utils.request import Request
 from vk_api import VkApi
 from handlers import *
 from parser import get_posts
@@ -17,7 +18,13 @@ config = configparser.ConfigParser()
 config.read_file(open('./config.ini', 'r', encoding='utf-8'))
 # Инициализация Telegram бота
 bot_token = config.get('global', 'bot_token')
-bot = Bot(bot_token)
+# Указан ли прокси в конфиге
+if config.get('global', 'proxy_url'):
+    log.warning('Бот будет работать через прокси. Возможны перебои в работе бота.')
+    request = Request(proxy_url=config.get('global', 'proxy_url'), connect_timeout=15.0, read_timeout=15.0)
+else:
+    request = None
+bot = Bot(bot_token, request=request)
 # Чтение из конфига логина и пароля ВК
 vk_login = config.get('global', 'login')
 vk_pass = config.get('global', 'pass')
