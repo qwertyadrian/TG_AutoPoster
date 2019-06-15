@@ -1,3 +1,3 @@
 from loguru import logger
 
-logger.add('bot_log.log', rotation='1 MB')
+logger.add('./logs/bot_log_{time}.log')

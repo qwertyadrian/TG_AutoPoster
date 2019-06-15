@@ -6,9 +6,11 @@ from vk_api import VkApi
 from handlers import *
 from parser import get_posts
 from sender import PostSender
-from os import chdir, listdir, remove
+from os import chdir, listdir, remove, mkdir
+from logger import logger as log
 import configparser
 
+cache_directory = '.cache'
 
 # Чтение конфигурации бота из файла config.ini
 config = configparser.ConfigParser()
@@ -24,17 +26,30 @@ session = VkApi(login=vk_login, password=vk_pass, auth_handler=auth_handler,
                 captcha_handler=captcha_handler)
 session.auth()
 api_vk = session.get_api()
-# print(api_vk)
-
-chdir('data')
-for group in config.sections()[1:]:
-    a = get_posts(group, config.getint(group, 'last_id'), api_vk, config, session)
-    for post in a:
-        sender = PostSender(bot, post, config.get(group, 'channel'))
-        sender.send_post()
-for data in listdir('.'):
-    remove(data)
-chdir('../')
 
 
+@log.catch(reraise=True)
+def main():
+    # Переход в папку с кэшем
+    try:
+        chdir(cache_directory)
+    except FileNotFoundError:
+        log.exception('Директории кэша не существует. Создание...')
+        mkdir(cache_directory)
+        chdir(cache_directory)
+    for group in config.sections()[1:]:
+        # Получение постов
+        a = get_posts(group, config.getint(group, 'last_id'), api_vk, config, session)
+        for post in a:
+            # Отправка постов
+            sender = PostSender(bot, post, config.get(group, 'channel'))
+            sender.send_post()
+    for data in listdir('.'):
+        remove(data)
+    chdir('../')
 
+
+if __name__ == '__main__':
+    log.info('Начало работы.')
+    main()
+    log.info('Работа завершена. Выход...')
