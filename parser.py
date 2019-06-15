@@ -46,15 +46,19 @@ def get_posts(domain, last_id, api_vk, config, session):
             else:
                 yield new_post
             if new_post.repost:
-                yield new_post
+                yield new_post.repost
             update_parameter(config, domain, 'last_id', post['id'])
+            last_id = post['id']
             time.sleep(5)
-        if post['id'] == last_id:
+        elif post['id'] == last_id:
             log.info('[VK] Новых постов больше не обнаружено')
+        else:
+            if post.get('is_pinned', False):
+                continue
 
 
 class VkPostParser:
-    def __init__(self, post, group, session, api_vk, config):
+    def __init__(self, post, group, session, api_vk, config, its_repost=False, what_to_parse=None):
         self.youtube_link = 'https://youtube.com/watch?v='
         self.regex = compile(r'/(\S*?)\?')
         self.remixmdevice = '1920/1080/1/!!-!!!!'
@@ -75,27 +79,30 @@ class VkPostParser:
         self.docs = []
         self.tracks = []
         self.attachments_types = []
+        self.its_repost = its_repost
+        self.what_to_parse = what_to_parse
 
     def generate_post(self):
         log.info('[AP] Парсинг поста...')
-        try:
-            what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
-        except configparser.NoOptionError:
-            what_to_parse = self.config.get('global', 'what_to_send').split(',')
+        if not self.its_repost:
+            try:
+                self.what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
+            except configparser.NoOptionError:
+                self.what_to_parse = self.config.get('global', 'what_to_send').split(',')
         if self.config.getboolean('global', 'sign_posts'):
             self.generate_user()
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
                 self.attachments_types.append(attachment['type'])
-        if set(what_to_parse).intersection({'text', 'all'}):
+        if set(self.what_to_parse).intersection({'text', 'all'}):
             self.generate_text()
-        if set(what_to_parse).intersection({'photo', 'all'}):
+        if set(self.what_to_parse).intersection({'photo', 'all'}):
             self.generate_photos()
-        if set(what_to_parse).intersection({'video', 'all'}):
+        if set(self.what_to_parse).intersection({'video', 'all'}):
             self.generate_videos()
-        if set(what_to_parse).intersection({'doc', 'all'}):
+        if set(self.what_to_parse).intersection({'doc', 'all'}):
             self.generate_docs()
-        if set(what_to_parse).intersection({'music', 'all'}):
+        if set(self.what_to_parse).intersection({'music', 'all'}):
             self.generate_music()
         self.generate_repost()
 
@@ -105,10 +112,7 @@ class VkPostParser:
             self.text += self.post['text']
             self.text = self.text.replace(self.pattern, '')
             post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
-            if 'attachments' in self.post:
-                for attachment in self.post['attachments']:
-                    if attachment['type'] == 'link':
-                        self.text += '\n<a href="%(url)s">%(title)s</a>' % attachment['link']
+            self.generate_links()
             if self.config.getboolean('global', 'sign_posts') and self.user:
                 log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
                 user = 'https://vk.com/%(domain)s' % self.user
@@ -130,6 +134,17 @@ class VkPostParser:
                     self.text = self.text.replace(i, '<a href="https://vk.com/{}">{}</a>'.format(*result[i].split('|')))
             except IndexError:
                 pass
+
+    def generate_links(self):
+        if 'attachments' in self.post:
+            for attachment in self.post['attachments']:
+                if attachment['type'] == 'link':
+                    self.text += '\n🔗 <a href="%(url)s">%(title)s</a>' % attachment['link']
+                elif attachment['type'] == 'page':
+                    self.text += '\n🔗 <a href="%(view_url)s">%(title)s</a>' % attachment['page']
+                elif attachment['type'] == 'album':
+                    self.text += '\n<a href="https://vk.com/wall%(owner_id)s_%(id)s">' \
+                                 'Фото альбом: %(title)s</a>' % attachment['album']
 
     def generate_photos(self):
         if 'photo' in self.attachments_types:
@@ -229,6 +244,7 @@ class VkPostParser:
     def generate_repost(self):
         if self.config.getboolean('global', 'send_reposts'):
             if 'copy_history' in self.post:
+                log.info('Включена отправка репоста. Начинаем парсинг репоста.')
                 source_id = int(self.post['copy_history'][0]['from_id'])
                 try:
                     source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
@@ -236,7 +252,7 @@ class VkPostParser:
                     source_info = self.api_vk.users.get(user_ids=source_id)[0]
                 repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
                 self.repost = VkPostParser(self.post['copy_history'][0], source_info['screen_name'], self.session,
-                                           self.api_vk, self.config)
+                                           self.api_vk, self.config, True, self.what_to_parse)
                 self.repost.text = repost_source
                 self.repost.generate_post()
 
