@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from telegram import Bot
+from telegram.utils.request import Request
+from vk_api import VkApi
+from handlers import *
+from parser import get_posts
+from sender import PostSender
+from os import chdir, listdir, remove, mkdir
+from loguru import logger as log
+from datetime import timedelta
+import configparser
+
+cache_directory = '.cache'
+log.add('./logs/bot_log_{time}.log', retention=timedelta(days=2))
+
+# Чтение конфигурации бота из файла config.ini
+config = configparser.ConfigParser()
+config.read_file(open('./config.ini', 'r', encoding='utf-8'))
+# Инициализация Telegram бота
+bot_token = config.get('global', 'bot_token')
+# Указан ли прокси в конфиге
+if config.get('global', 'proxy_url'):
+    log.warning('Бот будет работать через прокси. Возможны перебои в работе бота.')
+    request = Request(proxy_url=config.get('global', 'proxy_url'), connect_timeout=15.0, read_timeout=15.0)
+else:
+    request = None
+bot = Bot(bot_token, request=request)
+# Чтение из конфига логина и пароля ВК
+vk_login = config.get('global', 'login')
+vk_pass = config.get('global', 'pass')
+# Инициализация ВК сессии
+session = VkApi(login=vk_login, password=vk_pass, auth_handler=auth_handler,
+                captcha_handler=captcha_handler)
+session.auth()
+api_vk = session.get_api()
+
+
+@log.catch(reraise=True)
+def main():
+    # Переход в папку с кэшем
+    try:
+        chdir(cache_directory)
+    except FileNotFoundError:
+        log.exception('Директории кэша не существует. Создание...')
+        mkdir(cache_directory)
+        chdir(cache_directory)
+    for group in config.sections()[1:]:
+        # Получение постов
+        a = get_posts(group, config.getint(group, 'last_id'), api_vk, config, session)
+        for post in a:
+            # Отправка постов
+            sender = PostSender(bot, post, config.get(group, 'channel'))
+            sender.send_post()
+    for data in listdir('.'):
+        remove(data)
+    chdir('../')
+
+
+if __name__ == '__main__':
+    log.info('Начало работы.')
+    main()
+    log.info('Работа завершена. Выход...')

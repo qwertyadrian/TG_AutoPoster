@@ -110,5 +110,5 @@ ENV/
 .mypy_cache/
 
 tests/
-*.log.*
 config.ini
+*.pid
