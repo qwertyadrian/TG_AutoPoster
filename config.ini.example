@@ -5,8 +5,6 @@ bot_token =
 sign_posts = yes
 send_reposts = yes
 proxy_url =
-admin =
-main_group =
 # Какие типы вложений парсить и отправлять? all - отправлять все
 # Возможные варианты: text, photo, doc, video, music
 # Пример: what_to_send = text,photo - будет отправляться только текст и фото, все остальное будет игнорироваться
