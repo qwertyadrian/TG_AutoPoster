@@ -110,7 +110,7 @@ class VkPostParser:
     def generate_text(self):
         if self.post['text']:
             log.info('[AP] Обнаружен текст. Извлечение...')
-            self.text += self.post['text']
+            self.text += self.post['text'] + '\n'
             self.text = self.text.replace(self.pattern, '')
             post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
             self.generate_links()
