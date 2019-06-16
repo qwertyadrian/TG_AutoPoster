@@ -1,5 +1,5 @@
 from tools import split
-from logger import logger as log
+from loguru import logger as log
 
 
 class PostSender:

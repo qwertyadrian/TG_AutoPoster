@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from vk_api.audio_url_decoder import decode_audio_url
 from vk_api import exceptions
 from tools import update_parameter
-from logger import logger as log
+from loguru import logger as log
 
 
 def get_data(group, api_vk):
