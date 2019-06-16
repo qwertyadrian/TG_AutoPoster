@@ -201,7 +201,6 @@ class VkPostParser:
                     elif soup.iframe:
                         self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                             video, attachment['video'])
-            self.text += '\n\n'
 
     def generate_music(self):
         if 'audio' in self.attachments_types:
