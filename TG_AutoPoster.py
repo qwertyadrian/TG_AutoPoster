@@ -8,10 +8,12 @@ from handlers import *
 from parser import get_posts
 from sender import PostSender
 from os import chdir, listdir, remove, mkdir
-from logger import logger as log
+from loguru import logger as log
+from datetime import timedelta
 import configparser
 
 cache_directory = '.cache'
+log.add('./logs/bot_log_{time}.log', retention=timedelta(days=2))
 
 # Чтение конфигурации бота из файла config.ini
 config = configparser.ConfigParser()

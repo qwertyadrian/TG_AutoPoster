@@ -4,5 +4,3 @@ loguru
 wget
 mutagen
 bs4
-pyTelegramBotAPI
-python-daemon
