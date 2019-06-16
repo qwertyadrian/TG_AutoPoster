@@ -4,10 +4,14 @@ from tools import split
 from random import choice
 import configparser
 import os
+import subprocess
+from loguru import logger
 
 
 def setup(bot, admin_id, bot_config_path, bot_logs_folder_path):
     def admin_check(message):
+        logger.info('Пользователь {message.from_user.first_name} {message.from_user.last_name} '
+                    'c ID {message.from_user.id} использовал команду {message.text}', message=message)
         return message.from_user.id == admin_id
 
     @bot.message_handler(func=admin_check, commands=['start', 'help'])
@@ -86,6 +90,17 @@ def setup(bot, admin_id, bot_config_path, bot_logs_folder_path):
                      parse_mode='Markdown')
         bot.send_document(chat_id=message.from_user.id, data=open(bot_config_path, 'rb'),
                           caption='Файл конфигурации бота.')
+
+    @bot.message_handler(commands=['kill'])
+    def kill(message):
+        bot.reply_to(message, 'Бот сейчас будет остановлен (процессу бота будет отправлен сигнал о завершении). ')
+        try:
+            bot_pid = open('TG_AutoConfigurator.pid', 'r').read().strip()
+            logger.info('Отправка боту сигнала SIGTERM')
+            subprocess.call(['kill', bot_pid])
+        except FileNotFoundError:
+            bot.reply_to(message, 'Невозможно завершить процесс бота. '
+                                  'Возможно, бот запущен в Windows или бот запущен не в режиме демона.')
 
 
 def extract_arg(arg):
