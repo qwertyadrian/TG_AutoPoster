@@ -1,11 +1,14 @@
 import messages
 from config_tools import remove_section, add_section
-from tools import split
 from random import choice
 import configparser
 import os
 import subprocess
 from loguru import logger
+
+# Символы, на которых можно разбить сообщение
+message_breakers = [':', ' ', '\n']
+max_message_length = 4091
 
 
 def setup(bot, admin_id, bot_config_path, bot_logs_folder_path):
@@ -105,3 +108,14 @@ def setup(bot, admin_id, bot_config_path, bot_logs_folder_path):
 
 def extract_arg(arg):
     return arg.split()[1:]
+
+
+def split(text):
+    if len(text) >= max_message_length:
+        last_index = max(
+            map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        good_part = text[:last_index]
+        bad_part = text[last_index + 1:]
+        return [good_part] + split(bad_part)
+    else:
+        return [text]
