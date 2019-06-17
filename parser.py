@@ -170,9 +170,8 @@ class VkPostParser:
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'doc' and attachment['doc']['size'] < 52428800:
                     try:
-                        doc = download(attachment['doc']['url'],
-                                       out=attachment['doc']['title'] + '.' + attachment['doc']['ext'])
-                        self.docs.append(doc)
+                        doc = download(attachment['doc']['url'], out='file' + '.' + attachment['doc']['ext'])
+                        self.docs.append([doc, attachment['doc']['title'] + '.' + attachment['doc']['ext']])
                     except urllib.error.URLError:
                         log.exception('[AP] Невозможно скачать вложенный файл: {0}.'.format(sys.exc_info()[1]))
                         self.text += '\n📃 <a href="%(url)s">%(title)s</a>' % attachment['doc']
