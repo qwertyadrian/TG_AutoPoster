@@ -56,9 +56,9 @@ class PostSender:
                 log.exception('Не удалось отправить видео. Пропускаем его...')
 
     def send_documents(self):
-        for doc in self.post.docs:
+        for doc, filename in self.post.docs:
             try:
-                self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60)
+                self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60, filename=filename)
             except Exception:
                 log.exception('Не удалось отправить документ. Пропускаем его...')
 
