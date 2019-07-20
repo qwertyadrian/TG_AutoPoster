@@ -1,4 +1,4 @@
-vk-api==9.3.2
+vk-api==11.5.0
 python-telegram-bot
 loguru
 wget

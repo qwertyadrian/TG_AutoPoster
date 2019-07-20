@@ -22,7 +22,8 @@ class PostSender:
                 send_splitted_message(self.bot, text, self.chat_id)
                 self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
                                       disable_web_page_preview=True)
-                self.bot.send_media_group(self.chat_id, self.post.photos)
+                for i in splitter(self.post.photos, 10):
+                    self.bot.send_media_group(self.chat_id, i)
             elif len(self.post.photos) == 1:
                 if len(self.post.text) > 1024:
                     send_splitted_message(self.bot, text, self.chat_id)
@@ -43,7 +44,8 @@ class PostSender:
     @log.catch()
     def send_photos(self):
         if len(self.post.photos) > 1:
-            self.bot.send_media_group(self.chat_id, self.post.photos)
+            for i in splitter(self.post.photos, 10):
+                self.bot.send_media_group(self.chat_id, i)
         elif len(self.post.photos) == 1:
             self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], reply_markup=self.post.reply_markup,
                                 disable_web_page_preview=True)
@@ -74,3 +76,6 @@ def send_splitted_message(bot, text, chat_id):
     for i in range(len(text) - 1):
         bot.send_message(chat_id, text[i], parse_mode='HTML')
 
+
+def splitter(lst, n):
+    return [lst[i:i + n] for i in range(0, len(lst), n)]
