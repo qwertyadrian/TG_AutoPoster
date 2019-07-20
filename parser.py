@@ -139,7 +139,7 @@ class VkPostParser:
     def generate_links(self):
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
-                if attachment['type'] == 'link':
+                if attachment['type'] == 'link' and attachment['link']['title']:
                     self.text += '\n🔗 <a href="%(url)s">%(title)s</a>' % attachment['link']
                 elif attachment['type'] == 'page':
                     self.text += '\n🔗 <a href="%(view_url)s">%(title)s</a>' % attachment['page']
