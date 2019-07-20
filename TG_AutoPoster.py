@@ -10,7 +10,9 @@ from sender import PostSender
 from os import chdir, listdir, remove, mkdir
 from loguru import logger as log
 from datetime import timedelta
+from time import sleep
 import configparser
+import sys
 
 cache_directory = '.cache'
 log.add('./logs/bot_log_{time}.log', retention=timedelta(days=2))
@@ -60,5 +62,12 @@ def main():
 
 if __name__ == '__main__':
     log.info('Начало работы.')
-    main()
+    if '--loop' in sys.argv or '-l' in sys.argv:
+        log.info('Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.')
+        while True:
+            main()
+            log.info('Работа завершена. Отправка в сон на 1 час.')
+            sleep(60*60)
+    else:
+        main()
     log.info('Работа завершена. Выход...')
