@@ -149,20 +149,15 @@ class VkPostParser:
 
     def generate_photos(self):
         if 'photo' in self.attachments_types:
+            photo = None
             log.info('[AP] Извлечение фото...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'photo':
-                    photo = attachment['photo']['photo_75']
-                    try:
-                        photo = attachment['photo']['photo_130']
-                        photo = attachment['photo']['photo_604']
-                        photo = attachment['photo']['photo_807']
-                        photo = attachment['photo']['photo_1280']
-                        photo = attachment['photo']['photo_2560']
-                    except KeyError:
-                        pass
+                    for i in attachment['photo']['sizes']:
+                        photo = i['url']
                     # self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-                    self.photos.append(InputMediaPhoto(photo))
+                    if photo:
+                        self.photos.append(InputMediaPhoto(photo))
 
     def generate_docs(self):
         if 'doc' in self.attachments_types:
