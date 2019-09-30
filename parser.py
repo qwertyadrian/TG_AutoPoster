@@ -209,7 +209,7 @@ class VkPostParser:
                     track_list = [decode_audio_url(track.get('value'), user_id) for track in
                                   soup.find_all(type='hidden') if 'mp3' in track.get('value')]
                     dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
-                    name = sub(r"[/\"?:|<>*]", '',
+                    name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
                                attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
                     try:
                         file = download(track_list[n], out=name)
