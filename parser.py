@@ -111,7 +111,8 @@ class VkPostParser:
         if self.post['text']:
             log.info('[AP] Обнаружен текст. Извлечение...')
             self.text += self.post['text'] + '\n'
-            self.text = self.text.replace(self.pattern, '')
+            if self.pattern != '@':
+                self.text = self.text.replace(self.pattern, '')
             post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
             self.generate_links()
             if self.config.getboolean('global', 'sign_posts') and self.user:
@@ -176,8 +177,8 @@ class VkPostParser:
     def generate_videos(self):
         if 'video' in self.attachments_types:
             log.info('[AP] Извлечение видео...')
-            log.info('[AP] Данная функция находится в стадии тестирования. '
-                     'В некоторых видео может быть только звук, а может вообще не запуститься.')
+            # log.info('[AP] Данная функция находится в стадии тестирования. '
+            #          'В некоторых видео может быть только звук, а может вообще не запуститься.')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'video':
                     video = 'https://m.vk.com/video%(owner_id)s_%(id)s' % attachment['video']
@@ -247,6 +248,10 @@ class VkPostParser:
                     source_info = self.api_vk.users.get(user_ids=source_id)[0]
                     repost_source = 'Репост от <a href="https://vk.com/id%(id)s">' \
                                     '%(first_name)s %(last_name)s</a>:\n\n' % source_info
+                try:
+                    source_info['screen_name']
+                except KeyError:
+                    source_info['screen_name'] = ''
                 self.repost = VkPostParser(self.post['copy_history'][0], source_info['screen_name'], self.session,
                                            self.api_vk, self.config, True, self.what_to_parse)
                 self.repost.text = repost_source
