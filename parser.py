@@ -207,8 +207,12 @@ class VkPostParser:
                 if attachment['type'] == 'audio':
                     post_url = 'https://m.vk.com/wall%(owner_id)s_%(id)s' % self.post
                     soup = BeautifulSoup(self.session.http.get(post_url).text, 'html.parser')
-                    track_list = [decode_audio_url(track.get('value'), user_id) for track in
-                                  soup.find_all(type='hidden') if 'mp3' in track.get('value')]
+                    try:
+                        track_list = [decode_audio_url(track.get('value'), user_id) for track in
+                                      soup.find_all(type='hidden') if 'mp3' in track.get('value')]
+                    except IndexError:
+                        log.error("Невозможно получить аудиозаписи. Возможно, они заблокированы в вашей стране")
+                        break
                     dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
                     name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
                                attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
