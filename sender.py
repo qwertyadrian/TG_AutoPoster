@@ -7,6 +7,7 @@ class PostSender:
         self.bot = bot
         self.post = post
         self.chat_id = chat_id
+        self.text = split(self.post.text)
 
     def send_post(self):
         self.send_text_and_photos()
@@ -16,44 +17,55 @@ class PostSender:
 
     @log.catch()
     def send_text_and_photos(self):
-        text = split(self.post.text)
-        if self.post.text and self.post.photos:
-            if len(self.post.photos) > 1:
-                send_splitted_message(self.bot, text, self.chat_id)
-                self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
-                                      disable_web_page_preview=True)
-                for i in splitter(self.post.photos, 10):
-                    self.bot.send_media_group(self.chat_id, i)
-            elif len(self.post.photos) == 1:
+        if self.post.photos:
+            if len(self.post.photos) == 1:
                 if len(self.post.text) > 1024:
-                    send_splitted_message(self.bot, text, self.chat_id)
-                    self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
-                                          disable_web_page_preview=True)
+                    send_splitted_message(self.bot, self.text, self.chat_id)
+                    self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML',
+                                          reply_markup=self.post.reply_markup, disable_web_page_preview=True)
                     self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], parse_mode='HTML')
                 else:
-                    send_splitted_message(self.bot, text, self.chat_id)
-                    self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], text[-1], parse_mode='HTML',
-                                        reply_markup=self.post.reply_markup, disable_web_page_preview=True)
-        elif not self.post.text and self.post.photos:
-            self.send_photos()
-        elif self.post.text and not self.post.photos:
-            send_splitted_message(self.bot, text, self.chat_id)
-            self.bot.send_message(self.chat_id, text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
+                    self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], caption=self.text[-1],
+                                        reply_markup=self.post.reply_markup, parse_mode='HTML',
+                                        disable_web_page_preview=True)
+            else:
+                if len(self.post.text) > 1024:
+                    send_splitted_message(self.bot, self.text, self.chat_id)
+                    self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML',
+                                          reply_markup=self.post.reply_markup,
+                                          disable_web_page_preview=True)
+                    for i in splitter(self.post.photos, 10):
+                        self.bot.send_media_group(self.chat_id, i)
+                else:
+                    for i in splitter(self.post.photos, 10):
+                        self.bot.send_media_group(self.chat_id, i, reply_markup=self.post.reply_markup)
+        elif self.post.text and not self.post.photos and not self.post.videos:
+            send_splitted_message(self.bot, self.text, self.chat_id)
+            self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
                                   disable_web_page_preview=True)
 
-    @log.catch()
-    def send_photos(self):
-        if len(self.post.photos) > 1:
-            for i in splitter(self.post.photos, 10):
-                self.bot.send_media_group(self.chat_id, i)
-        elif len(self.post.photos) == 1:
-            self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], reply_markup=self.post.reply_markup,
-                                disable_web_page_preview=True)
-
     def send_videos(self):
-        for video in self.post.videos:
+        for i in range(len(self.post.videos)):
             try:
-                self.bot.send_video(self.chat_id, video=open(video, 'rb'), timeout=60)
+                if i == 0:
+                    if not self.post.photos:
+                        if len(self.post.text) < 1024:
+                            self.bot.send_video(self.chat_id, video=open(self.post.videos[i], 'rb'),
+                                                timeout=60,
+                                                parse_mode='HTML',
+                                                caption=self.text[-1],
+                                                reply_markup=self.post.reply_markup)
+                        else:
+                            send_splitted_message(self.bot, self.text, self.chat_id)
+                            self.bot.send_message(self.chat_id, self.text[-1],
+                                                  parse_mode='HTML',
+                                                  reply_markup=self.post.reply_markup,
+                                                  disable_web_page_preview=True)
+                            self.bot.send_video(self.chat_id, video=open(self.post.videos[i], 'rb'), timeout=60)
+                    else:
+                        self.bot.send_video(self.chat_id, video=open(self.post.videos[i], 'rb'), timeout=60)
+                else:
+                    self.bot.send_video(self.chat_id, video=open(self.post.videos[i], 'rb'), timeout=60)
             except Exception:
                 log.exception('Не удалось отправить видео. Пропускаем его...')
 
