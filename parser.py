@@ -4,7 +4,7 @@ from os.path import getsize
 import time
 import configparser
 from wget import download
-from re import sub, compile, finditer, MULTILINE
+from re import sub, finditer, MULTILINE
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
@@ -60,8 +60,6 @@ def get_posts(domain, last_id, api_vk, config, session):
 
 class VkPostParser:
     def __init__(self, post, group, session, api_vk, config, its_repost=False, what_to_parse=None):
-        self.youtube_link = 'https://youtube.com/watch?v='
-        self.regex = compile(r'/(\S*?)\?')
         self.remixmdevice = '1920/1080/1/!!-!!!!'
         self.session = session
         self.api_vk = api_vk
@@ -71,7 +69,6 @@ class VkPostParser:
         self.post = post
         self.text = ''
         self.user = None
-        self.links = None
         self.repost = None
         self.repost_source = None
         self.reply_markup = None
@@ -97,6 +94,8 @@ class VkPostParser:
                 self.attachments_types.append(attachment['type'])
         if set(self.what_to_parse).intersection({'text', 'all'}):
             self.generate_text()
+        if self.config.getboolean('global', 'sign_posts'):
+            self.sign_post()
         if set(self.what_to_parse).intersection({'photo', 'all'}):
             self.generate_photos()
         if set(self.what_to_parse).intersection({'video', 'all'}):
@@ -113,18 +112,7 @@ class VkPostParser:
             self.text += self.post['text'] + '\n'
             if self.pattern != '@':
                 self.text = self.text.replace(self.pattern, '')
-            post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
             self.generate_links()
-            if self.config.getboolean('global', 'sign_posts') and self.user:
-                log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
-                user = 'https://vk.com/%(domain)s' % self.user
-                button_list = [InlineKeyboardButton('Автор поста: %(first_name)s %(last_name)s' % self.user, url=user),
-                               InlineKeyboardButton('Оригинал поста', url=post)]
-                self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
-            elif self.config.getboolean('global', 'sign_posts') and not self.user:
-                log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
-                button_list = [InlineKeyboardButton('Оригинал поста', url=post)]
-                self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
             matches = finditer(r'\[(.*?)\]', self.text, MULTILINE)
             result = {}
             for matchNum, match in enumerate(matches):
@@ -151,14 +139,20 @@ class VkPostParser:
     def generate_photos(self):
         if 'photo' in self.attachments_types:
             photo = None
+            counter = 1
             log.info('[AP] Извлечение фото...')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'photo':
                     for i in attachment['photo']['sizes']:
                         photo = i['url']
-                    # self.photos.append({'media': open(download(photo), 'rb'), 'type': 'photo'})
-                    if photo:
+                    if photo and counter == 1:
+                        if len(self.text) < 1024:
+                            self.photos.append(InputMediaPhoto(photo, caption=self.text, parse_mode='HTML'))
+                        else:
+                            self.photos.append(InputMediaPhoto(photo))
+                    elif photo:
                         self.photos.append(InputMediaPhoto(photo))
+                    counter += 1
 
     def generate_docs(self):
         if 'doc' in self.attachments_types:
@@ -235,6 +229,29 @@ class VkPostParser:
                     del music
                     self.tracks.append((name, dur_list[n]))
                     n += 1
+
+    def sign_post(self):
+        post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
+        photos = 0
+        if 'photo' in self.attachments_types:
+            for attachment in self.post['attachments']:
+                if attachment['type'] == 'photo':
+                    photos += 1
+        if self.user:
+            log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
+            user = 'https://vk.com/%(domain)s' % self.user
+            button_list = [InlineKeyboardButton('Автор поста: {first_name} {last_name}'.format(**self.user), url=user),
+                           InlineKeyboardButton('Оригинал поста', url=post)]
+            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
+            if photos > 1:
+                self.text += '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(user, **self.user)
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post)
+        else:
+            if photos > 1:
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post)
+            log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
+            button_list = [InlineKeyboardButton('Оригинал поста', url=post)]
+            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
 
     def generate_user(self):
         if 'signer_id' in self.post:
