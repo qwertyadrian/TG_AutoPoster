@@ -19,7 +19,7 @@ log.add('./logs/bot_log_{time}.log', retention=timedelta(days=2))
 
 # Чтение конфигурации бота из файла config.ini
 config = configparser.ConfigParser()
-config.read_file(open('./config.ini', 'r', encoding='utf-8'))
+config.read('config.ini')
 # Инициализация Telegram бота
 bot_token = config.get('global', 'bot_token')
 # Указан ли прокси в конфиге
@@ -49,8 +49,10 @@ def main():
         mkdir(cache_directory)
         chdir(cache_directory)
     for group in config.sections()[1:]:
+        last_id = config.getint(group, 'last_id', fallback=0)
+        pinned_id = config.getint(group, 'pinned_id', fallback=0)
         # Получение постов
-        a = get_posts(group, config.getint(group, 'last_id'), api_vk, config, session)
+        a = get_posts(group, last_id, pinned_id, api_vk, config, session)
         for post in a:
             # Отправка постов
             sender = PostSender(bot, post, config.get(group, 'channel'))
