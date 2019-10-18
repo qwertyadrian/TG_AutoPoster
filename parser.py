@@ -87,7 +87,7 @@ class VkPostParser:
         if not self.its_repost:
             try:
                 self.what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
-            except configparser.NoOptionError:
+            except (configparser.NoOptionError, configparser.NoSectionError):
                 self.what_to_parse = self.config.get('global', 'what_to_send', fallback='all').split(',')
         if self.config.getboolean('global', 'sign_posts'):
             self.generate_user()
