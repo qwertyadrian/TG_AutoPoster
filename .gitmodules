@@ -1,0 +1,3 @@
+[submodule "TG_AutoConfigurator"]
+	path = TG_AutoConfigurator
+	url = https://github.com/qwertyadrian/TG_AutoConfigurator
