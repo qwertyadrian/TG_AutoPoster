@@ -33,11 +33,12 @@ def get_data(group, api_vk):
         return None
 
 
-def get_posts(domain, last_id, api_vk, config, session):
+def get_posts(domain, last_id, pinned_id, api_vk, config, session):
     log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain, api_vk)
     for post in reversed(posts):
-        if post['id'] > last_id:
+        is_pinned = post.get('is_pinned', False)
+        if post['id'] > last_id or (is_pinned and post['id'] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post['id']))
             new_post = VkPostParser(post, domain, session, api_vk, config)
             new_post.generate_post()
@@ -48,14 +49,14 @@ def get_posts(domain, last_id, api_vk, config, session):
                 yield new_post
             if new_post.repost:
                 yield new_post.repost
-            update_parameter(config, domain, 'last_id', post['id'])
-            last_id = post['id']
+            if is_pinned:
+                update_parameter(config, domain, 'pinned_id', post['id'])
+            else:
+                update_parameter(config, domain, 'last_id', post['id'])
+                last_id = post['id']
             time.sleep(5)
         elif post['id'] == last_id:
             log.info('[VK] Новых постов больше не обнаружено')
-        else:
-            if post.get('is_pinned', False):
-                continue
 
 
 class VkPostParser:
@@ -67,6 +68,7 @@ class VkPostParser:
         self.pattern = '@' + group
         self.group = group
         self.post = post
+        self.post_url = 'https://m.vk.com/wall{owner_id}_{id}'.format(**self.post)
         self.text = ''
         self.user = None
         self.repost = None
@@ -129,12 +131,12 @@ class VkPostParser:
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'link' and attachment['link']['title']:
-                    self.text += '\n🔗 <a href="%(url)s">%(title)s</a>' % attachment['link']
+                    self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment['link'])
                 elif attachment['type'] == 'page':
-                    self.text += '\n🔗 <a href="%(view_url)s">%(title)s</a>' % attachment['page']
+                    self.text += '\n🔗 <a href="{view_url}">{title}</a>'.format(**attachment['page'])
                 elif attachment['type'] == 'album':
-                    self.text += '\n<a href="https://vk.com/wall%(owner_id)s_%(id)s">' \
-                                 'Фото альбом: %(title)s</a>' % attachment['album']
+                    self.text += '\n<a href="https://vk.com/wall{owner_id}_{id}">' \
+                                 'Фото альбом: {title}</a>'.format(**attachment['album'])
 
     def generate_photos(self):
         if 'photo' in self.attachments_types:
@@ -164,9 +166,9 @@ class VkPostParser:
                         self.docs.append([doc, attachment['doc']['title'] + '.' + attachment['doc']['ext']])
                     except urllib.error.URLError:
                         log.exception('[AP] Невозможно скачать вложенный файл: {0}.'.format(sys.exc_info()[1]))
-                        self.text += '\n📃 <a href="%(url)s">%(title)s</a>' % attachment['doc']
+                        self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment['doc'])
                 elif attachment['type'] == 'doc' and attachment['doc']['size'] >= 52428800:
-                    self.text += '\n📃 <a href="%(url)s">%(title)s</a>' % attachment['doc']
+                    self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment['doc'])
 
     def generate_videos(self):
         if 'video' in self.attachments_types:
@@ -175,7 +177,7 @@ class VkPostParser:
             #          'В некоторых видео может быть только звук, а может вообще не запуститься.')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'video':
-                    video = 'https://m.vk.com/video%(owner_id)s_%(id)s' % attachment['video']
+                    video = 'https://m.vk.com/video{owner_id}_{id}'.format(**attachment['video'])
                     soup = BeautifulSoup(self.session.http.get(video).text, 'html.parser')
                     if soup.find_all('source'):
                         video_link = soup.find_all('source')[1].get('src')
@@ -199,8 +201,7 @@ class VkPostParser:
             user_id = self.api_vk.users.get()[0]['id']
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'audio':
-                    post_url = 'https://m.vk.com/wall%(owner_id)s_%(id)s' % self.post
-                    soup = BeautifulSoup(self.session.http.get(post_url).text, 'html.parser')
+                    soup = BeautifulSoup(self.session.http.get(self.post_url).text, 'html.parser')
                     try:
                         track_list = [decode_audio_url(track.get('value'), user_id) for track in
                                       soup.find_all(type='hidden') if 'mp3' in track.get('value')]
@@ -231,26 +232,26 @@ class VkPostParser:
                     n += 1
 
     def sign_post(self):
-        post = 'https://vk.com/wall%(owner_id)s_%(id)s' % self.post
         photos = 0
         if 'photo' in self.attachments_types:
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'photo':
                     photos += 1
+        post_url = self.post_url.replace('m.', '')
         if self.user:
             log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
-            user = 'https://vk.com/%(domain)s' % self.user
+            user = 'https://vk.com/{0[domain]}'.format(self.user)
             button_list = [InlineKeyboardButton('Автор поста: {first_name} {last_name}'.format(**self.user), url=user),
-                           InlineKeyboardButton('Оригинал поста', url=post)]
+                           InlineKeyboardButton('Оригинал поста', url=post_url)]
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
             if photos > 1:
                 self.text += '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(user, **self.user)
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post)
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
         else:
             if photos > 1:
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post)
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
             log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
-            button_list = [InlineKeyboardButton('Оригинал поста', url=post)]
+            button_list = [InlineKeyboardButton('Оригинал поста', url=post_url)]
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
 
     def generate_user(self):
@@ -258,25 +259,20 @@ class VkPostParser:
             self.user = self.api_vk.users.get(user_ids=self.post['signer_id'], fields='domain')[0]
 
     def generate_repost(self):
-        if self.config.getboolean('global', 'send_reposts'):
-            if 'copy_history' in self.post:
-                log.info('Включена отправка репоста. Начинаем парсинг репоста.')
-                source_id = int(self.post['copy_history'][0]['from_id'])
-                try:
-                    source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
-                    repost_source = 'Репост из <a href="https://vk.com/%(screen_name)s">%(name)s</a>:\n\n' % source_info
-                except exceptions.ApiError:
-                    source_info = self.api_vk.users.get(user_ids=source_id)[0]
-                    repost_source = 'Репост от <a href="https://vk.com/id%(id)s">' \
-                                    '%(first_name)s %(last_name)s</a>:\n\n' % source_info
-                try:
-                    source_info['screen_name']
-                except KeyError:
-                    source_info['screen_name'] = ''
-                self.repost = VkPostParser(self.post['copy_history'][0], source_info['screen_name'], self.session,
-                                           self.api_vk, self.config, True, self.what_to_parse)
-                self.repost.text = repost_source
-                self.repost.generate_post()
+        if self.config.getboolean('global', 'send_reposts') and 'copy_history' in self.post:
+            log.info('Включена отправка репоста. Начинаем парсинг репоста.')
+            source_id = int(self.post['copy_history'][0]['from_id'])
+            try:
+                source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
+                repost_source = 'Репост из <a href="https://vk.com/{screen_name}">{name}</a>:\n\n'.format(**source_info)
+            except exceptions.ApiError:
+                source_info = self.api_vk.users.get(user_ids=source_id)[0]
+                repost_source = 'Репост от <a href="https://vk.com/id{id}">' \
+                                '{first_name} {last_name}</a>:\n\n'.format(**source_info)
+            self.repost = VkPostParser(self.post['copy_history'][0], source_info.get('screen_name', ''), self.session,
+                                       self.api_vk, self.config, True, self.what_to_parse)
+            self.repost.text = repost_source
+            self.repost.generate_post()
 
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
