@@ -32,9 +32,14 @@ bot = Bot(bot_token, request=request)
 # Чтение из конфига логина и пароля ВК
 vk_login = config.get('global', 'login')
 vk_pass = config.get('global', 'pass')
+# Чтение из конфига пути к файлу со стоп-словами
+stop_list = config.get('global', 'stop_list', fallback=[])
+if stop_list:
+    # Инициализация списка стоп-слов
+    with open(stop_list, 'r', encoding='utf-8') as f:
+        stop_list = [i.strip() for i in f.readlines()]
 # Инициализация ВК сессии
-session = VkApi(login=vk_login, password=vk_pass, auth_handler=auth_handler,
-                captcha_handler=captcha_handler)
+session = VkApi(login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler)
 session.auth()
 api_vk = session.get_api()
 
@@ -54,9 +59,14 @@ def main():
         # Получение постов
         a = get_posts(group, last_id, pinned_id, api_vk, config, session)
         for post in a:
+            skip_post = False
+            for word in stop_list:
+                if word.lower() in post.text.lower():
+                    skip_post = True  # Если пост содержит стоп-слово, то пропускаем его.
             # Отправка постов
-            sender = PostSender(bot, post, config.get(group, 'channel'))
-            sender.send_post()
+            if not skip_post:
+                sender = PostSender(bot, post, config.get(group, 'channel'))
+                sender.send_post()
     for data in listdir('.'):
         remove(data)
     chdir('../')
@@ -69,7 +79,7 @@ if __name__ == '__main__':
         while True:
             main()
             log.info('Работа завершена. Отправка в сон на 1 час.')
-            sleep(60*60)
+            sleep(60 * 60)
     else:
         main()
     log.info('Работа завершена. Выход...')
