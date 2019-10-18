@@ -11,7 +11,7 @@ git clone https://github.com/qwertyadrian/TG_AutoPoster
 ```
 2. Инициализуруйте подмодули 
 ```bash
-git submodule init
+git submodule update --init --recursive
 ```
 3. Установите требуемые зависимости (желательно использовать виртуальное окружние)
 ```bash
