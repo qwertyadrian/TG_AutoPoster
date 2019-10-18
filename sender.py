@@ -39,7 +39,7 @@ class PostSender:
                 else:
                     for i in splitter(self.post.photos, 10):
                         self.bot.send_media_group(self.chat_id, i, reply_markup=self.post.reply_markup)
-        elif self.post.text and not self.post.photos and not self.post.videos:
+        elif self.post.text and not self.post.photos and not self.post.videos and not self.post.docs:
             send_splitted_message(self.bot, self.text, self.chat_id)
             self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML', reply_markup=self.post.reply_markup,
                                   disable_web_page_preview=True)
@@ -70,9 +70,25 @@ class PostSender:
                 log.exception('Не удалось отправить видео. Пропускаем его...')
 
     def send_documents(self):
-        for doc, filename in self.post.docs:
+        for i in range(len(self.post.docs)):
+            doc, filename = self.post.docs[i]
+            # for doc, filename in self.post.docs:
             try:
-                self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60, filename=filename)
+                if i == 0:
+                    if not self.post.photos and not self.post.videos:
+                        if len(self.post.text) < 1024:
+                            self.bot.send_document(self.chat_id, document=open(doc, 'rb'),
+                                                   caption=self.text[-1], parse_mode='HTML', timeout=60,
+                                                   filename=filename, reply_markup=self.post.reply_markup)
+                        else:
+                            send_splitted_message(self.bot, self.text, self.chat_id)
+                            self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML',
+                                                  reply_markup=self.post.reply_markup, disable_web_page_preview=True)
+                            self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60)
+                    else:
+                        self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60)
+                else:
+                    self.bot.send_document(self.chat_id, document=open(doc, 'rb'), timeout=60)
             except Exception:
                 log.exception('Не удалось отправить документ. Пропускаем его...')
 
