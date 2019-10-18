@@ -88,7 +88,7 @@ class VkPostParser:
             try:
                 self.what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
             except configparser.NoOptionError:
-                self.what_to_parse = self.config.get('global', 'what_to_send').split(',')
+                self.what_to_parse = self.config.get('global', 'what_to_send', fallback='all').split(',')
         if self.config.getboolean('global', 'sign_posts'):
             self.generate_user()
         if 'attachments' in self.post:
