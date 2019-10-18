@@ -26,8 +26,7 @@ class PostSender:
                     self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], parse_mode='HTML')
                 else:
                     self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], caption=self.text[-1],
-                                        reply_markup=self.post.reply_markup, parse_mode='HTML',
-                                        disable_web_page_preview=True)
+                                        reply_markup=self.post.reply_markup, parse_mode='HTML')
             else:
                 if len(self.post.text) > 1024:
                     send_splitted_message(self.bot, self.text, self.chat_id)
@@ -72,7 +71,6 @@ class PostSender:
     def send_documents(self):
         for i in range(len(self.post.docs)):
             doc, filename = self.post.docs[i]
-            # for doc, filename in self.post.docs:
             try:
                 if i == 0:
                     if not self.post.photos and not self.post.videos:
