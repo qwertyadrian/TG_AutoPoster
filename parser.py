@@ -1,3 +1,4 @@
+import subprocess
 import urllib.error
 import sys
 from os.path import getsize
@@ -212,17 +213,21 @@ class VkPostParser:
                     name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
                                attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
                     try:
-                        file = download(track_list[n], out=name)
-                    except (urllib.error.URLError, IndexError):
+                        # file = download(track_list[n], out=name)
+                        subprocess.call(['ffmpeg', '-i', track_list[n], '-c', 'copy', name])
+                    except IndexError:
                         log.exception('[AP] Не удалось скачать аудиозапись. Пропускаем ее...')
                         continue
-                    if getsize(file) > 52428800:
-                        log.warning('[AP] Файл весит более 50 МиБ. Пропускаем его...')
+                    try:
+                        if getsize(name) > 52428800:
+                            log.warning('[AP] Файл весит более 50 МиБ. Пропускаем его...')
+                            continue
+                    except FileNotFoundError:
                         continue
                     try:
-                        music = EasyID3(file)
+                        music = EasyID3(name)
                     except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
+                        music = File(name, easy=True)
                         music.add_tags()
                     music['title'] = attachment['audio']['title']
                     music['artist'] = attachment['audio']['artist']
