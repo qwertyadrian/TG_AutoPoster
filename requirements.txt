@@ -1,4 +1,4 @@
-vk-api==11.5.1
+vk-api==11.6.1
 python-telegram-bot[socks]
 loguru
 wget
