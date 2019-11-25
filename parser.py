@@ -4,7 +4,7 @@ from os.path import getsize
 import time
 import configparser
 from wget import download
-from re import sub, finditer, MULTILINE
+from re import sub, finditer, MULTILINE, compile
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
@@ -13,6 +13,8 @@ from vk_api.audio_url_decoder import decode_audio_url
 from vk_api import exceptions
 from tools import update_parameter
 from loguru import logger as log
+
+RE_M3U8_TO_MP3 = compile(r'/[0-9a-f]+(/audios)?/([0-9a-f]+)/index.m3u8')
 
 
 def get_data(group, api_vk):
@@ -211,6 +213,8 @@ class VkPostParser:
                     dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
                     name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
                                attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
+                    if 'm3u8' in track_list[n]:
+                        track_list[n] = RE_M3U8_TO_MP3.sub(r'\1/\2.mp3', track_list[n])
                     try:
                         file = download(track_list[n], out=name)
                     except (urllib.error.URLError, IndexError):
