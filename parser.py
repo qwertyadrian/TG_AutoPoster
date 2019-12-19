@@ -28,7 +28,11 @@ def get_data(group, api_vk):
     """
     # noinspection PyBroadException
     try:
-        feed = api_vk.wall.get(domain=group, count=11)
+        if group.startswith('club') or group.startswith('public') or '-' in group:
+            group = group.replace('club', '-').replace('public', '-')
+            feed = api_vk.wall.get(owner_id=group, count=11)
+        else:
+            feed = api_vk.wall.get(domain=group, count=11)
         return feed['items']
     except Exception:
         log.exception('Ошибка получения информации о новых постах: {0}'.format(sys.exc_info()[0]))
@@ -242,20 +246,23 @@ class VkPostParser:
                 if attachment['type'] == 'photo':
                     photos += 1
         post_url = self.post_url.replace('m.', '')
+        button_list = []
         if self.user:
             log.info('[AP] Подписывание поста и добавление ссылки на его оригинал.')
             user = 'https://vk.com/{0[domain]}'.format(self.user)
-            button_list = [InlineKeyboardButton('Автор поста: {first_name} {last_name}'.format(**self.user), url=user),
-                           InlineKeyboardButton('Оригинал поста', url=post_url)]
+            button_list.append(InlineKeyboardButton('Автор поста: {first_name} {last_name}'.format(**self.user), url=user))
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
             if photos > 1:
                 self.text += '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(user, **self.user)
                 self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
+            else:
+                button_list.append(InlineKeyboardButton('Оригинал поста', url=post_url))
         else:
             if photos > 1:
                 self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
+            else:
+                button_list.append(InlineKeyboardButton('Оригинал поста', url=post_url))
             log.info('[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.')
-            button_list = [InlineKeyboardButton('Оригинал поста', url=post_url)]
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
 
     def generate_user(self):

@@ -6,24 +6,29 @@
 ENV_PATH="venv" # Путь к папке с виртуальным окружением
 PYTHON_EXECUTABLE="python3" # Имя файла интерпретатора Python
 
-if [[ -d ${ENV_PATH} ]]
+if [[ $1 = 'edit' ]]
 then
-    echo "Активация виртуального окружения."
-    source ${ENV_PATH}/bin/activate
-    echo "Запуск бота."
-    if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
-    then
-        echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
-    fi
-    echo "Бот завершил свою работу. Деактивация виртуального окружения."
-    echo "Выход."
-    deactivate
+    nano ./config.ini
 else
-    echo "Папка с виртуальным окружением не найдена или задана не правильно."
-    echo "Попытка запуска бота без виртуального окружения."
-    if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
+    if [[ -d ${ENV_PATH} ]]
     then
-        echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
+        echo "Активация виртуального окружения."
+        source ${ENV_PATH}/bin/activate
+        echo "Запуск бота."
+        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
+        then
+            echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
+        fi
+        echo "Бот завершил свою работу. Деактивация виртуального окружения."
+        echo "Выход."
+        deactivate
+    else
+        echo "Папка с виртуальным окружением не найдена или задана не правильно."
+        echo "Попытка запуска бота без виртуального окружения."
+        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
+        then
+            echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
+        fi
+        echo "Бот завершил свою работу. Выход."
     fi
-    echo "Бот завершил свою работу. Выход."
 fi
