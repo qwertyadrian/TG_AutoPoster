@@ -3,13 +3,14 @@
 
 ![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![Python Version](https://img.shields.io/badge/python-3.5%2B-orange.svg)
 ![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
+![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)
 ***
 ## Установка
 1. Клонируйте репозиторий
 ```bash
 git clone https://github.com/qwertyadrian/TG_AutoPoster
 ```
-2. Инициализуруйте подмодули 
+2. Инициализуруйте подмодули (необходимо, если вам нужен TG_AutoConfigurator)
 ```bash
 git submodule update --init --recursive
 ```
@@ -50,6 +51,32 @@ pip install -r TG_AutoConfigurator/requirements.txt
 Сейчас он умеет: смотреть логи, удалять/добавлять/просматривать источники постов  
 Запланировано для него следующее: настройка отправляемых вложений (в том числе отдельно для каждой группы), управление несколькими ботами  
 ***
+
+## NEW Docker контейнер
+Теперь бот доступен в виде Docker контейнера
+### Порядок установки
+1. Установите Docker
+2. Получите образ контейнера с помощью команды:
+```bash
+docker pull qwertyadrian/tg_autoposter
+```
+3. Запустите docker контейнер командой (должно завершиться с ошибкой)
+```bash
+docker run -it --name <имя_контейнера> tg_autoposter
+```
+4. Скопируйте файл конфигурации config.ini в созданный контейнер командой:
+```bash
+docker cp <путь_до_файла_конфигурации> <имя_контейнера>:/TG_AutoPoster/config.ini
+```
+5. Повторно запустите контейнер командой (параметр `-i` необходим только для интерактивного режима, для запуска в фоне можно опустить):
+```bash
+docker start -i <имя_контейнера>
+```
+
 Вопросы и предложения:
 1. Telegram: [@QwertyAdrian](https://tlg.name/QwertyAdrian)
 2. Вконтакте: [Адриан Поляков](https://vk.com/qwertyadrian) (отвечаю там редко)
+
+Для пожертвований на развитие проекта:
+1. Qiwi: [QwertyAdrian](https://qiwi.com/n/QWERTYADRIAN)
+2. Яндекс.Деньги: 410012914796910

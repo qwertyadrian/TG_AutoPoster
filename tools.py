@@ -1,5 +1,5 @@
 # Символы, на которых можно разбить сообщение
-message_breakers = [':', ' ', '\n']
+message_breakers = ['\n', ', ']
 
 
 def update_parameter(config, section, name, num) -> int:
