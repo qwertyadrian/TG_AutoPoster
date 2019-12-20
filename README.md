@@ -3,7 +3,7 @@
 
 ![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![Python Version](https://img.shields.io/badge/python-3.5%2B-orange.svg)
 ![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
-![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)
+[![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/repository/docker/qwertyadrian/tg_autoposter)
 ***
 ## Установка
 1. Клонируйте репозиторий
