@@ -9,7 +9,7 @@ from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from bs4 import BeautifulSoup
-from vk_api.audio_url_decoder import decode_audio_url
+from vk_api.audio import VkAudio, scrap_data
 from vk_api import exceptions
 from tools import update_parameter
 from loguru import logger as log
@@ -69,6 +69,8 @@ class VkPostParser:
     def __init__(self, post, group, session, api_vk, config, its_repost=False, what_to_parse=None):
         self.remixmdevice = '1920/1080/1/!!-!!!!'
         self.session = session
+        self.audio_session = VkAudio(session)
+        self.audio_session._vk.http.cookies.update(dict(remixmdevice=self.remixmdevice))
         self.api_vk = api_vk
         self.config = config
         self.pattern = '@' + group
@@ -84,7 +86,7 @@ class VkPostParser:
         self.videos = []
         self.docs = []
         self.tracks = []
-        self.attachments_types = []
+        self.attachments_types = set()
         self.its_repost = its_repost
         self.what_to_parse = what_to_parse
 
@@ -99,7 +101,7 @@ class VkPostParser:
             self.generate_user()
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
-                self.attachments_types.append(attachment['type'])
+                self.attachments_types.add(attachment['type'])
         if set(self.what_to_parse).intersection({'text', 'all'}):
             self.generate_text()
         if self.config.getboolean('global', 'sign_posts'):
@@ -179,8 +181,6 @@ class VkPostParser:
     def generate_videos(self):
         if 'video' in self.attachments_types:
             log.info('[AP] Извлечение видео...')
-            # log.info('[AP] Данная функция находится в стадии тестирования. '
-            #          'В некоторых видео может быть только звук, а может вообще не запуститься.')
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'video':
                     video = 'https://m.vk.com/video{owner_id}_{id}'.format(**attachment['video'])
@@ -202,42 +202,30 @@ class VkPostParser:
     def generate_music(self):
         if 'audio' in self.attachments_types:
             log.info('[AP] Извлечение аудио...')
-            n = 0
-            self.session.http.cookies.update(dict(remixmdevice=self.remixmdevice))
             user_id = self.api_vk.users.get()[0]['id']
-            for attachment in self.post['attachments']:
-                if attachment['type'] == 'audio':
-                    soup = BeautifulSoup(self.session.http.get(self.post_url).text, 'html.parser')
-                    try:
-                        track_list = [decode_audio_url(track.get('value'), user_id) for track in
-                                      soup.find_all(type='hidden') if 'mp3' in track.get('value')]
-                    except IndexError:
-                        log.error("Невозможно получить аудиозаписи. Возможно, они заблокированы в вашей стране")
-                        break
-                    dur_list = [dur.get('data-dur') for dur in soup.find_all('div') if dur.get('data-dur')]
-                    name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
-                               attachment['audio']['artist'] + ' - ' + attachment['audio']['title'] + '.mp3')
-                    if 'm3u8' in track_list[n]:
-                        track_list[n] = RE_M3U8_TO_MP3.sub(r'\1/\2.mp3', track_list[n])
-                    try:
-                        file = download(track_list[n], out=name)
-                    except (urllib.error.URLError, IndexError):
-                        log.exception('[AP] Не удалось скачать аудиозапись. Пропускаем ее...')
-                        continue
-                    if getsize(file) > 52428800:
-                        log.warning('[AP] Файл весит более 50 МиБ. Пропускаем его...')
-                        continue
-                    try:
-                        music = EasyID3(file)
-                    except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
-                        music.add_tags()
-                    music['title'] = attachment['audio']['title']
-                    music['artist'] = attachment['audio']['artist']
-                    music.save()
-                    del music
-                    self.tracks.append((name, dur_list[n]))
-                    n += 1
+            response = self.audio_session._vk.http.get(self.post_url)
+            tracks = scrap_data(response.text, user_id, filter_root_el={'class': 'audios_list'})
+            for track in tracks:
+                name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", '',
+                           track['artist'] + ' - ' + track['title'] + '.mp3')
+                try:
+                    file = download(track['url'], out=name)
+                except (urllib.error.URLError, IndexError):
+                    log.exception('[AP] Не удалось скачать аудиозапись. Пропускаем ее...')
+                    continue
+                if getsize(file) > 52428800:
+                    log.warning('[AP] Файл весит более 50 МиБ. Пропускаем его...')
+                    continue
+                try:
+                    music = EasyID3(file)
+                except id3.ID3NoHeaderError:
+                    music = File(file, easy=True)
+                    music.add_tags()
+                music['title'] = track['title']
+                music['artist'] = track['artist']
+                music.save()
+                del music
+                self.tracks.append((name, track['duration']))
 
     def sign_post(self):
         photos = 0

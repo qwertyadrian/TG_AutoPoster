@@ -1,4 +1,4 @@
-from tools import split
+from tools import split, list_splitter
 from loguru import logger as log
 
 
@@ -11,14 +11,18 @@ class PostSender:
 
     def send_post(self):
         self.send_text_and_photos()
-        self.send_videos()
-        self.send_documents()
-        self.send_music()
+        if len(self.post.videos) != 0:
+            self.send_videos()
+        if len(self.post.docs) != 0:
+            self.send_documents()
+        if len(self.post.tracks) != 0:
+            self.send_music()
 
     @log.catch()
     def send_text_and_photos(self):
         if self.post.photos:
             if len(self.post.photos) == 1:
+                log.info('Отправка текста и фото')
                 if len(self.post.text) > 1024:
                     send_splitted_message(self.bot, self.text, self.chat_id)
                     self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML',
@@ -28,15 +32,16 @@ class PostSender:
                     self.bot.send_photo(self.chat_id, self.post.photos[0]['media'], caption=self.text[-1],
                                         reply_markup=self.post.reply_markup, parse_mode='HTML')
             else:
+                log.info('Отправка текста')
                 if len(self.post.text) > 1024:
                     send_splitted_message(self.bot, self.text, self.chat_id)
                     self.bot.send_message(self.chat_id, self.text[-1], parse_mode='HTML',
                                           reply_markup=self.post.reply_markup,
                                           disable_web_page_preview=True)
-                    for i in splitter(self.post.photos, 10):
+                    for i in list_splitter(self.post.photos, 10):
                         self.bot.send_media_group(self.chat_id, i)
                 else:
-                    for i in splitter(self.post.photos, 10):
+                    for i in list_splitter(self.post.photos, 10):
                         self.bot.send_media_group(self.chat_id, i, reply_markup=self.post.reply_markup)
         elif self.post.text and not self.post.photos and not self.post.videos and not self.post.docs:
             send_splitted_message(self.bot, self.text, self.chat_id)
@@ -44,6 +49,7 @@ class PostSender:
                                   disable_web_page_preview=True)
 
     def send_videos(self):
+        log.info('Отправка видео')
         for i in range(len(self.post.videos)):
             try:
                 if i == 0:
@@ -69,6 +75,7 @@ class PostSender:
                 log.exception('Не удалось отправить видео. Пропускаем его...')
 
     def send_documents(self):
+        log.info('Отправка прочих вложений')
         for i in range(len(self.post.docs)):
             doc, filename = self.post.docs[i]
             try:
@@ -91,6 +98,7 @@ class PostSender:
                 log.exception('Не удалось отправить документ. Пропускаем его...')
 
     def send_music(self):
+        log.info('Отправка аудио')
         for audio, duration in self.post.tracks:
             try:
                 self.bot.send_audio(self.chat_id, open(audio, 'rb'), duration, timeout=60)
@@ -102,6 +110,3 @@ def send_splitted_message(bot, text, chat_id):
     for i in range(len(text) - 1):
         bot.send_message(chat_id, text[i], parse_mode='HTML')
 
-
-def splitter(lst, n):
-    return [lst[i:i + n] for i in range(0, len(lst), n)]
