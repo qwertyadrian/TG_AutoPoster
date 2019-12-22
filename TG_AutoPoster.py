@@ -56,6 +56,7 @@ def main():
     for group in config.sections()[1:]:
         last_id = config.getint(group, 'last_id', fallback=0)
         pinned_id = config.getint(group, 'pinned_id', fallback=0)
+        # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
         # Получение постов
         a = get_posts(group, last_id, pinned_id, api_vk, config, session)
         for post in a:
@@ -63,6 +64,7 @@ def main():
             for word in stop_list:
                 if word.lower() in post.text.lower():
                     skip_post = True  # Если пост содержит стоп-слово, то пропускаем его.
+                    log.info('Пост содержит стоп-слово, поэтому он не будет отправлен.')
             # Отправка постов
             if not skip_post:
                 sender = PostSender(bot, post, config.get(group, 'channel'))

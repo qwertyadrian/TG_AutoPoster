@@ -7,15 +7,15 @@
 ***
 ## Установка
 1. Клонируйте репозиторий
-```bash
+```shell script
 git clone https://github.com/qwertyadrian/TG_AutoPoster
 ```
 2. Инициализуруйте подмодули (необходимо, если вам нужен TG_AutoConfigurator)
-```bash
+```shell script
 git submodule update --init --recursive
 ```
 3. Установите требуемые зависимости (желательно использовать виртуальное окружние)
-```bash
+```shell script
 pip install -r requirements.txt
 pip install -r TG_AutoConfigurator/requirements.txt
 ```
@@ -57,19 +57,23 @@ pip install -r TG_AutoConfigurator/requirements.txt
 ### Порядок установки
 1. Установите Docker
 2. Получите образ контейнера с помощью команды:
-```bash
+```shell script
 docker pull qwertyadrian/tg_autoposter
 ```
 3. Запустите docker контейнер командой (должно завершиться с ошибкой)
-```bash
+```shell script
 docker run -it --name <имя_контейнера> tg_autoposter
 ```
 4. Скопируйте файл конфигурации config.ini в созданный контейнер командой:
-```bash
+```shell script
 docker cp <путь_до_файла_конфигурации> <имя_контейнера>:/TG_AutoPoster/config.ini
 ```
-5. Повторно запустите контейнер командой (параметр `-i` необходим только для интерактивного режима, для запуска в фоне можно опустить):
-```bash
+5. Если необходимо, скопируйте файл со стоп-словами в созданный контейнер командой:
+```shell script
+docker cp <путь_до_файла_со_стоп_словами> <имя_контейнера>:/TG_AutoPoster/<имя_файла_со_стоп_словами>
+```
+6. Повторно запустите контейнер командой (параметр `-i` необходим только для интерактивного режима, для запуска в фоне можно опустить):
+```shell script
 docker start -i <имя_контейнера>
 ```
 
