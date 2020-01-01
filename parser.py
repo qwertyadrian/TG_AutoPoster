@@ -4,7 +4,7 @@ from os.path import getsize
 import time
 import configparser
 from wget import download
-from re import sub, finditer, MULTILINE, compile
+from re import sub, finditer, MULTILINE
 from mutagen.easyid3 import EasyID3
 from mutagen import id3, File
 from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
@@ -14,8 +14,6 @@ from vk_api import exceptions
 from tools import update_parameter
 from loguru import logger as log
 
-RE_M3U8_TO_MP3 = compile(r'/[0-9a-f]+(/audios)?/([0-9a-f]+)/index.m3u8')
-
 
 def get_data(group, api_vk):
     """
@@ -24,7 +22,7 @@ def get_data(group, api_vk):
 
     :param api_vk: Экземпляр класса VkApiMethod
     :param group: ID группы ВК
-    :return: Возвращает словарь с постами
+    :return: Возвращает список словарей с постами
     """
     # noinspection PyBroadException
     try:
@@ -36,20 +34,22 @@ def get_data(group, api_vk):
         return feed['items']
     except Exception:
         log.exception('Ошибка получения информации о новых постах: {0}'.format(sys.exc_info()[0]))
-        return None
+        return list()
 
 
 def get_posts(domain, last_id, pinned_id, api_vk, config, session):
     log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain, api_vk)
+    send_reposts = config.getboolean(domain, 'send_reposts', fallback=config.getboolean('global', 'send_reposts'))
     for post in reversed(posts):
         is_pinned = post.get('is_pinned', False)
         if post['id'] > last_id or (is_pinned and post['id'] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post['id']))
             new_post = VkPostParser(post, domain, session, api_vk, config)
             new_post.generate_post()
-            if 'copy_history' in new_post.post and not config.getboolean('global', 'send_reposts'):
+            if 'copy_history' in new_post.post and not send_reposts:
                 log.info('Отправка репостов отключена, поэтому пост будет пропущен.')
+                update_parameter(config, domain, 'last_id', post['id'])
                 continue
             else:
                 yield new_post
@@ -57,7 +57,7 @@ def get_posts(domain, last_id, pinned_id, api_vk, config, session):
                 yield new_post.repost
             if is_pinned:
                 update_parameter(config, domain, 'pinned_id', post['id'])
-            else:
+            if post['id'] > last_id:
                 update_parameter(config, domain, 'last_id', post['id'])
                 last_id = post['id']
             time.sleep(5)
@@ -92,6 +92,8 @@ class VkPostParser:
 
     def generate_post(self):
         log.info('[AP] Парсинг поста...')
+        send_repost = self.config.getboolean(self.group, 'send_reposts',
+                                             fallback=self.config.getboolean('global', 'send_reposts'))
         if not self.its_repost:
             try:
                 self.what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
@@ -102,8 +104,9 @@ class VkPostParser:
         if 'attachments' in self.post:
             for attachment in self.post['attachments']:
                 self.attachments_types.add(attachment['type'])
-        if set(self.what_to_parse).intersection({'text', 'all'}):
+        if set(self.what_to_parse).intersection({'link', 'text', 'all'}):
             self.generate_text()
+            self.generate_links()
         if self.config.getboolean('global', 'sign_posts'):
             self.sign_post()
         if set(self.what_to_parse).intersection({'photo', 'all'}):
@@ -114,7 +117,8 @@ class VkPostParser:
             self.generate_docs()
         if set(self.what_to_parse).intersection({'music', 'all'}):
             self.generate_music()
-        self.generate_repost()
+        if send_repost and 'copy_history' in self.post:
+            self.generate_repost()
 
     def generate_text(self):
         if self.post['text']:
@@ -122,7 +126,7 @@ class VkPostParser:
             self.text += self.post['text'] + '\n'
             if self.pattern != '@':
                 self.text = self.text.replace(self.pattern, '')
-            self.generate_links()
+            # self.generate_links()
             matches = finditer(r'\[(.*?)\]', self.text, MULTILINE)
             result = {}
             for matchNum, match in enumerate(matches):
@@ -258,20 +262,19 @@ class VkPostParser:
             self.user = self.api_vk.users.get(user_ids=self.post['signer_id'], fields='domain')[0]
 
     def generate_repost(self):
-        if self.config.getboolean('global', 'send_reposts') and 'copy_history' in self.post:
-            log.info('Включена отправка репоста. Начинаем парсинг репоста.')
-            source_id = int(self.post['copy_history'][0]['from_id'])
-            try:
-                source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
-                repost_source = 'Репост из <a href="https://vk.com/{screen_name}">{name}</a>:\n\n'.format(**source_info)
-            except exceptions.ApiError:
-                source_info = self.api_vk.users.get(user_ids=source_id)[0]
-                repost_source = 'Репост от <a href="https://vk.com/id{id}">' \
-                                '{first_name} {last_name}</a>:\n\n'.format(**source_info)
-            self.repost = VkPostParser(self.post['copy_history'][0], source_info.get('screen_name', ''), self.session,
-                                       self.api_vk, self.config, True, self.what_to_parse)
-            self.repost.text = repost_source
-            self.repost.generate_post()
+        log.info('Включена отправка репоста. Начинаем парсинг репоста.')
+        source_id = int(self.post['copy_history'][0]['from_id'])
+        try:
+            source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
+            repost_source = 'Репост из <a href="https://vk.com/{screen_name}">{name}</a>:\n\n'.format(**source_info)
+        except exceptions.ApiError:
+            source_info = self.api_vk.users.get(user_ids=source_id)[0]
+            repost_source = 'Репост от <a href="https://vk.com/id{id}">' \
+                            '{first_name} {last_name}</a>:\n\n'.format(**source_info)
+        self.repost = VkPostParser(self.post['copy_history'][0], source_info.get('screen_name', ''), self.session,
+                                   self.api_vk, self.config, True, self.what_to_parse)
+        self.repost.text = repost_source
+        self.repost.generate_post()
 
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):

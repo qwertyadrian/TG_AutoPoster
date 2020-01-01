@@ -3,7 +3,7 @@ login =
 pass =
 bot_token =
 sign_posts = yes
-send_reposts = yes
+send_reposts = yes # Нужно ли отправлять репосты (данный параметр можно указать отдельно для каждого источника)
 proxy_url =
 # Какие типы вложений парсить и отправлять? all - отправлять все
 # Возможные варианты: text, photo, doc, video, music

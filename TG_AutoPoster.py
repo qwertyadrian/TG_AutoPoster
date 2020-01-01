@@ -33,7 +33,7 @@ bot = Bot(bot_token, request=request)
 vk_login = config.get('global', 'login')
 vk_pass = config.get('global', 'pass')
 # Чтение из конфига пути к файлу со стоп-словами
-stop_list = config.get('global', 'stop_list', fallback=[])
+stop_list = config.get('global', 'stop_list', fallback=None)
 if stop_list:
     # Инициализация списка стоп-слов
     with open(stop_list, 'r', encoding='utf-8') as f:
