@@ -2,9 +2,9 @@
 message_breakers = ['\n', ', ']
 
 
-def update_parameter(config, section, name, num) -> int:
+def update_parameter(config, section, name, num, config_path='../config.ini') -> int:
     config.set(section, name, str(num))
-    with open('../config.ini', 'w', encoding='utf-8') as f:
+    with open(config_path, 'w', encoding='utf-8') as f:
         config.write(f)
     return num
 

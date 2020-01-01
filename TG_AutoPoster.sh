@@ -15,7 +15,7 @@ else
         echo "Активация виртуального окружения."
         source ${ENV_PATH}/bin/activate
         echo "Запуск бота."
-        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
+        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1 $2 $3 $4"
         then
             echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
         fi

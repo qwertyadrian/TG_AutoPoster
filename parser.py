@@ -37,7 +37,7 @@ def get_data(group, api_vk):
         return list()
 
 
-def get_posts(domain, last_id, pinned_id, api_vk, config, session):
+def get_posts(domain, last_id, pinned_id, api_vk, config, session, config_path='../config.ini'):
     log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain, api_vk)
     send_reposts = config.getboolean(domain, 'send_reposts', fallback=config.getboolean('global', 'send_reposts'))
@@ -49,16 +49,16 @@ def get_posts(domain, last_id, pinned_id, api_vk, config, session):
             new_post.generate_post()
             if 'copy_history' in new_post.post and not send_reposts:
                 log.info('Отправка репостов отключена, поэтому пост будет пропущен.')
-                update_parameter(config, domain, 'last_id', post['id'])
+                update_parameter(config, domain, 'last_id', post['id'], config_path)
                 continue
             else:
                 yield new_post
             if new_post.repost:
                 yield new_post.repost
             if is_pinned:
-                update_parameter(config, domain, 'pinned_id', post['id'])
+                update_parameter(config, domain, 'pinned_id', post['id'], config_path)
             if post['id'] > last_id:
-                update_parameter(config, domain, 'last_id', post['id'])
+                update_parameter(config, domain, 'last_id', post['id'], config_path)
                 last_id = post['id']
             time.sleep(5)
         elif post['id'] == last_id:
