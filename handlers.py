@@ -17,6 +17,7 @@ def auth_handler():
         sleep(1)
         if user_input[0] is not None:
             num = user_input[0]
+            user_input[0] = None
             break
     if not num:
         raise TimeoutError('Время ожидания ввода истекло.')
@@ -33,6 +34,7 @@ def captcha_handler(captcha):
         sleep(1)
         if user_input[0] is not None:
             key = user_input[1]
+            user_input[0] = None
             break
     if not key:
         raise TimeoutError('Время ожидания ввода истекло.')

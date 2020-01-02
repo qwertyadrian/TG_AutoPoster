@@ -40,21 +40,24 @@ def get_data(group, api_vk):
 def get_posts(domain, last_id, pinned_id, api_vk, config, session, config_path='../config.ini'):
     log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain, api_vk)
-    send_reposts = config.getboolean(domain, 'send_reposts', fallback=config.getboolean('global', 'send_reposts'))
+    send_reposts = config.get(domain, 'send_reposts', fallback=config.get('global', 'send_reposts'))
     for post in reversed(posts):
         is_pinned = post.get('is_pinned', False)
         if post['id'] > last_id or (is_pinned and post['id'] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post['id']))
-            new_post = VkPostParser(post, domain, session, api_vk, config)
-            new_post.generate_post()
-            if 'copy_history' in new_post.post and not send_reposts:
-                log.info('Отправка репостов отключена, поэтому пост будет пропущен.')
-                update_parameter(config, domain, 'last_id', post['id'], config_path)
-                continue
+            parsed_post = VkPostParser(post, domain, session, api_vk, config)
+            parsed_post.generate_post()
+            if 'copy_history' in parsed_post.post:
+                if send_reposts in ('no', 0):
+                    log.info('Отправка репостов полностью отключена, поэтому пост будет пропущен.')
+                elif send_reposts in ('post_only', 1):
+                    yield parsed_post
+                elif send_reposts in ('yes', 'all', 2):
+                    yield parsed_post
+                    parsed_post.generate_repost()
+                    yield parsed_post.repost
             else:
-                yield new_post
-            if new_post.repost:
-                yield new_post.repost
+                yield parsed_post
             if is_pinned:
                 update_parameter(config, domain, 'pinned_id', post['id'], config_path)
             if post['id'] > last_id:
@@ -92,8 +95,6 @@ class VkPostParser:
 
     def generate_post(self):
         log.info('[AP] Парсинг поста...')
-        send_repost = self.config.getboolean(self.group, 'send_reposts',
-                                             fallback=self.config.getboolean('global', 'send_reposts'))
         if not self.its_repost:
             try:
                 self.what_to_parse = self.config.get(self.group, 'what_to_send').split(',')
@@ -117,8 +118,6 @@ class VkPostParser:
             self.generate_docs()
         if set(self.what_to_parse).intersection({'music', 'all'}):
             self.generate_music()
-        if send_repost and 'copy_history' in self.post:
-            self.generate_repost()
 
     def generate_text(self):
         if self.post['text']:

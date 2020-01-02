@@ -27,7 +27,7 @@ pip install -r TG_AutoConfigurator/requirements.txt
 | pass | Пароль ВК |
 | bot_token | Токен Telegram бота |
 | sign_posts | Указывать ли автора поста (если это возможно) и ссылку на оригинальный пост. Возмжные значения: yes, no |
-| send_reposts | Отправлять ли репосты? Возможные значения: yes, no |
+| send_reposts | Отправлять ли репосты? Возможные значения: 0 (no), 1 (post_only), 2 (yes, all). Подробнее в [config.ini.example](/config.ini.example) |
 | proxy_url | HTTPS (SOCKS) Прокси (использовать, если Telegram не доступен в вашей стране) |
 | what_to_send | Какие типы вложений отправлять. Подробнее в [config.ini.example](/config.ini.example) |
 | stop_list (необязательно)| Путь к файлу, содержащий стоп-слова (в файле должно быть по одному слову на каждой строке). Если вы не хотите использовать стоп-слова удалите этот параметр из файла конфигурации |
