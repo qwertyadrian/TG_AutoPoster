@@ -23,7 +23,7 @@ def create_parser():
     parser.add_argument('-l', '--loop', action='store_const', const=True,
                         help='Запустить бота в бесконечном цикле с проверкой постов раз в час (по умолчанию)')
     parser.add_argument('-s', '--sleep', type=int, default=0,
-                        help='Проверять новые посты каждые N секунд)', metavar='N')
+                        help='Проверять новые посты каждые N секунд', metavar='N')
     parser.add_argument('-c', '--config', default='config.ini',
                         help='Путь к конфиг файлу бота (по умолчанию ./config.ini)')
     return parser
@@ -104,8 +104,8 @@ if __name__ == '__main__':
     if namespace.loop or namespace.sleep:
         sleep_time = namespace.sleep if namespace.sleep else 3600
         log.info('Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.')
+        init(config_path=namespace.config)
         while True:
-            init(config_path=namespace.config)
             main()
             log.info('Работа завершена. Отправка в сон на {} секунд.'.format(sleep_time))
             sleep(sleep_time)
