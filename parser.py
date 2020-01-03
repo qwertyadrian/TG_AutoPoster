@@ -11,7 +11,6 @@ from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from bs4 import BeautifulSoup
 from vk_api.audio import VkAudio, scrap_data
 from vk_api import exceptions
-from tools import update_parameter
 from loguru import logger as log
 
 
@@ -37,7 +36,7 @@ def get_data(group, api_vk):
         return list()
 
 
-def get_posts(domain, last_id, pinned_id, api_vk, config, session, config_path='../config.ini'):
+def get_posts(domain, last_id, pinned_id, api_vk, config, session):
     log.info('[VK] Проверка на наличие новых постов в {0} с последним ID {1}'.format(domain, last_id))
     posts = get_data(domain, api_vk)
     send_reposts = config.get(domain, 'send_reposts', fallback=config.get('global', 'send_reposts'))
@@ -59,9 +58,9 @@ def get_posts(domain, last_id, pinned_id, api_vk, config, session, config_path='
             else:
                 yield parsed_post
             if is_pinned:
-                update_parameter(config, domain, 'pinned_id', post['id'], config_path)
+                config.set(domain, 'pinned_id', str(post['id']))
             if post['id'] > last_id:
-                update_parameter(config, domain, 'last_id', post['id'], config_path)
+                config.set(domain, 'last_id', str(post['id']))
                 last_id = post['id']
             time.sleep(5)
         elif post['id'] == last_id:
@@ -173,8 +172,8 @@ class VkPostParser:
             for attachment in self.post['attachments']:
                 if attachment['type'] == 'doc' and attachment['doc']['size'] < 52428800:
                     try:
-                        doc = download(attachment['doc']['url'], out='file' + '.' + attachment['doc']['ext'])
-                        self.docs.append([doc, attachment['doc']['title'] + '.' + attachment['doc']['ext']])
+                        doc = download(attachment['doc']['url'], out='file.{ext}'.format(**attachment['doc']))
+                        self.docs.append([doc, '{title}.{ext}'.format(**attachment['doc'])])
                     except urllib.error.URLError:
                         log.exception('[AP] Невозможно скачать вложенный файл: {0}.'.format(sys.exc_info()[1]))
                         self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment['doc'])
