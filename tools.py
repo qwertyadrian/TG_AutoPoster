@@ -27,4 +27,3 @@ def split(text: str, max_message_length=4091) -> list:
 
 def list_splitter(lst: list, n: int) -> list:
     return [lst[i:i + n] for i in range(0, len(lst), n)]
-
