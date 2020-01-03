@@ -1,17 +1,19 @@
-import urllib.error
-import sys
-from os.path import getsize
-import time
 import configparser
-from wget import download
-from re import sub, finditer, MULTILINE
-from mutagen.easyid3 import EasyID3
-from mutagen import id3, File
-from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
+import sys
+import time
+import urllib.error
+from os.path import getsize
+from re import MULTILINE, finditer, sub
+
 from bs4 import BeautifulSoup
-from vk_api.audio import VkAudio, scrap_data
-from vk_api import exceptions
 from loguru import logger as log
+from mutagen import File, id3
+from mutagen.easyid3 import EasyID3
+from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
+                      InputMediaPhoto)
+from vk_api import exceptions
+from vk_api.audio import VkAudio, scrap_data
+from wget import download
 
 
 def get_data(group, api_vk):

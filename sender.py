@@ -1,5 +1,6 @@
-from tools import split, list_splitter
 from loguru import logger as log
+
+from tools import list_splitter, split
 
 
 class PostSender:
@@ -109,4 +110,3 @@ class PostSender:
 def send_splitted_message(bot, text, chat_id):
     for i in range(len(text) - 1):
         bot.send_message(chat_id, text[i], parse_mode='HTML')
-

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import argparse
+import configparser
+import os.path
+from datetime import timedelta
+from parser import get_posts
+from tempfile import TemporaryDirectory
+from time import sleep
+
+from loguru import logger as log
 from telegram import Bot
 from telegram.utils.request import Request
 from vk_api import VkApi
+
 from handlers import *
-from parser import get_posts
 from sender import PostSender
-from loguru import logger as log
-from datetime import timedelta
-from time import sleep
-from tempfile import TemporaryDirectory
-import os.path
-import configparser
-import argparse
 
 CACHE_DIR = TemporaryDirectory(prefix='TG_AutoPoster')
 CONFIG_PATH = os.path.join(os.getcwd(), 'config.ini')
