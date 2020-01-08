@@ -1,9 +1,10 @@
-# TG_AutoPoster 
+TG_AutoPoster 
+=============
 Бот, пересылающий записи из групп ВК в канал/чат/ЛС в Telegram.
 
 ![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![Python Version](https://img.shields.io/badge/python-3.5%2B-orange.svg)
 ![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
-[![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/repository/docker/qwertyadrian/tg_autoposter)
+[![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***
 ## Установка
 1. Клонируйте репозиторий
@@ -74,7 +75,7 @@ docker cp <путь_до_файла_конфигурации> <имя_конте
 ```shell script
 docker cp <путь_до_файла_со_стоп_словами> <имя_контейнера>:/TG_AutoPoster/<имя_файла_со_стоп_словами>
 ```
-6. Повторно запустите контейнер командой (параметр `-i` необходим только для интерактивного режима, для запуска в фоне можно опустить):
+6. Повторно запустите контейнер командой (параметр `-ai` необходим только для интерактивного режима, для запуска в фоне можно опустить):
 ```shell script
 docker start -ai <имя_контейнера>
 ```
