@@ -129,7 +129,7 @@ class VkPostParser:
             # self.generate_links()
             matches = finditer(r'\[(.*?)\]', self.text, MULTILINE)
             result = {}
-            for matchNum, match in enumerate(matches):
+            for _, match in enumerate(matches):
                 for group_num in range(0, len(match.groups())):
                     group_num = group_num + 1
                     result[match.group()] = match.group(group_num)

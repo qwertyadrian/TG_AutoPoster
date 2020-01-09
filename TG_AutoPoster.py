@@ -14,7 +14,7 @@ from telegram import Bot
 from telegram.utils.request import Request
 from vk_api import VkApi
 
-from handlers import *
+from handlers import auth_handler, captcha_handler
 from sender import PostSender
 
 CACHE_DIR = TemporaryDirectory(prefix='TG_AutoPoster')
@@ -75,10 +75,13 @@ class AutoPoster:
         for group in self.config.sections()[1:]:
             last_id = self.config.getint(group, 'last_id', fallback=0)
             pinned_id = self.config.getint(group, 'pinned_id', fallback=0)
+            disable_notification = self.config.getboolean(group, 'disable_notification',
+                                                          fallback=self.config.get('global', 'disable_notification',
+                                                                                   fallback=False))
             # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
-            a = get_posts(group, last_id, pinned_id, self.api_vk, self.config, self.session)
-            for post in a:
+            posts = get_posts(group, last_id, pinned_id, self.api_vk, self.config, self.session)
+            for post in posts:
                 skip_post = False
                 for word in self.stop_list:
                     if word.lower() in post.text.lower():
@@ -86,27 +89,30 @@ class AutoPoster:
                         log.info('Пост содержит стоп-слово, поэтому он не будет отправлен.')
                 # Отправка постов
                 if not skip_post:
-                    sender = PostSender(self.bot, post, self.config.get(group, 'channel'))
+                    sender = PostSender(self.bot, post, self.config.get(group, 'channel'), disable_notification)
                     sender.send_post()
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            self.config.write(f)
+                self._save_config()
+        self._save_config()
         for data in os.listdir('.'):
             os.remove(data)
 
     def get_infinity_updates(self, interval=3600):
         while True:
             self.get_updates()
-            log.info('Работа завершена. Отправка в сон на {} секунд.'.format(sleep_time))
+            log.info('Работа завершена. Отправка в сон на {} секунд.'.format(interval))
             sleep(interval)
+
+    def _save_config(self):
+        with open(self.config_path, 'w', encoding='utf-8') as f:
+            self.config.write(f)
 
 
 if __name__ == '__main__':
     log.info('Начало работы.')
-    cmd_parser = create_parser()
-    namespace = cmd_parser.parse_args()
-    autoposter = AutoPoster(config_path=namespace.config, cache_dir=namespace.cache_dir)
-    if namespace.loop or namespace.sleep:
-        sleep_time = namespace.sleep if namespace.sleep else 3600
+    args = create_parser().parse_args()
+    autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir)
+    if args.loop or args.sleep:
+        sleep_time = args.sleep if args.sleep else 3600
         log.info('Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.')
         autoposter.get_infinity_updates(interval=sleep_time)
     else:
