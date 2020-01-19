@@ -110,9 +110,9 @@ class AutoPoster:
                     sender = PostSender(self.bot, post, self.config.get(group, "channel"), disable_notification)
                     sender.send_post()
                 self._save_config()
+            for data in os.listdir("."):
+                os.remove(data)
         self._save_config()
-        for data in os.listdir("."):
-            os.remove(data)
 
     def get_infinity_updates(self, interval=3600):
         while True:
