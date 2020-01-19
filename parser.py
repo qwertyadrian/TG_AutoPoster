@@ -14,6 +14,8 @@ from vk_api import exceptions
 from vk_api.audio import VkAudio, scrap_data
 from wget import download
 
+from tools import build_menu
+
 
 def get_data(group, api_vk):
     """
@@ -287,12 +289,3 @@ class VkPostParser:
         )
         self.repost.text = repost_source
         self.repost.generate_post()
-
-
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
-    return menu

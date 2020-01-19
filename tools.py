@@ -9,7 +9,7 @@ def update_parameter(config, section, name, num, config_path="../config.ini") ->
     return num
 
 
-def split(text: str, max_message_length=4091) -> list:
+def split(text: str, max_message_length: int = 4091) -> list:
     """ Разделение текста на части
 
     :param text: Рабиваемый текст
@@ -26,3 +26,12 @@ def split(text: str, max_message_length=4091) -> list:
 
 def list_splitter(lst: list, n: int) -> list:
     return [lst[i:i + n] for i in range(0, len(lst), n)]
+
+
+def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, header_buttons)
+    if footer_buttons:
+        menu.append(footer_buttons)
+    return menu
