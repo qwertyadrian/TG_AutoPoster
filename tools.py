@@ -1,10 +1,10 @@
 # Символы, на которых можно разбить сообщение
-message_breakers = ['\n', ', ']
+message_breakers = ["\n", ", "]
 
 
-def update_parameter(config, section, name, num, config_path='../config.ini') -> int:
+def update_parameter(config, section, name, num, config_path="../config.ini") -> int:
     config.set(section, name, str(num))
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         config.write(f)
     return num
 
@@ -16,8 +16,7 @@ def split(text: str, max_message_length=4091) -> list:
     :param max_message_length: Максимальная длина рабитой части текста
     """
     if len(text) >= max_message_length:
-        last_index = max(
-            map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        last_index = max(map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
         good_part = text[:last_index]
         bad_part = text[last_index + 1:]
         return [good_part] + split(bad_part, max_message_length)

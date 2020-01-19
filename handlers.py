@@ -20,7 +20,7 @@ def auth_handler():
             user_input[0] = None
             break
     if not num:
-        raise TimeoutError('Время ожидания ввода истекло.')
+        raise TimeoutError("Время ожидания ввода истекло.")
     remember_device = True
     return num, remember_device
 
@@ -37,12 +37,12 @@ def captcha_handler(captcha):
             user_input[0] = None
             break
     if not key:
-        raise TimeoutError('Время ожидания ввода истекло.')
+        raise TimeoutError("Время ожидания ввода истекло.")
     return captcha.try_again(key)
 
 
 def get_auth_code(user_input_ref):
-    user_input_ref[0] = input('Введите код авторизации: ')
+    user_input_ref[0] = input("Введите код авторизации: ")
 
 
 def get_captcha_code(user_input_ref, captcha):
