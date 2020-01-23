@@ -126,6 +126,7 @@ class VkPostParser:
         self.videos = []
         self.docs = []
         self.tracks = []
+        self.poll = None
         self.attachments_types = set()
         self.its_repost = its_repost
         self.what_to_parse = what_to_parse
@@ -154,6 +155,8 @@ class VkPostParser:
             self.generate_docs()
         if set(self.what_to_parse).intersection({"music", "all"}):
             self.generate_music()
+        if set(self.what_to_parse).intersection({"polls", "all"}):
+            self.generate_poll()
 
     def generate_text(self):
         if self.post["text"]:
@@ -271,6 +274,16 @@ class VkPostParser:
                 music.save()
                 del music
                 self.tracks.append((name, track["duration"]))
+
+    def generate_poll(self):
+        if "poll" in self.attachments_types:
+            for attachment in self.post["attachments"]:
+                if attachment["type"] == "poll":
+                    self.poll = {
+                        "question": attachment["poll"]["question"],
+                        "options": [answer["text"] for answer in attachment["poll"]["answers"]],
+                        "allows_multiple_answers": attachment["poll"]["multiple"],
+                    }
 
     def sign_post(self):
         photos = 0
