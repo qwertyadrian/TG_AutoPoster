@@ -174,7 +174,7 @@ class VkPostParser:
         if "doc" in self.attachments_types:
             log.info("[AP] Извлечение вложениий (файлы, гифки и т.п.)...")
             for attachment in self.post["attachments"]:
-                if attachment["type"] == "doc" and attachment["doc"]["size"] < 52428800:
+                if attachment["type"] == "doc" and attachment["doc"]["size"] <= 52428800:
                     try:
                         doc = download(attachment["doc"]["url"], out="file.{ext}".format(**attachment["doc"]))
                         self.docs.append([doc, "{title}.{ext}".format(**attachment["doc"])])
@@ -189,23 +189,24 @@ class VkPostParser:
             log.info("[AP] Извлечение видео...")
             for attachment in self.post["attachments"]:
                 if attachment["type"] == "video":
-                    video = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
-                    soup = BeautifulSoup(self.session.http.get(video).text, "html.parser")
-                    if soup.find_all("source"):
-                        video_link = soup.find_all("source")[1].get("src")
-                        file = download(video_link)
-                        if getsize(file) > 52428800:
-                            log.info("[AP] Видео весит более 50 МиБ. Добавляем ссылку на видео в текст.")
-                            self.text += (
-                                '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)'
-                                " ⏳ {1[duration]} сек".format(video, attachment["video"])
-                            )
-                            del file
-                            continue
-                        self.videos.append(file)
-                    elif soup.iframe:
+                    video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
+                    if not attachment["video"].get("platform"):
+                        soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
+                        if len(soup.find_all("source")) >= 2:
+                            video_link = soup.find_all("source")[1].get("src")
+                            file = download(video_link)
+                            if getsize(file) >= 52428800:
+                                log.info("[AP] Видео весит более 50 МиБ. Добавляем ссылку на видео в текст.")
+                                self.text += (
+                                    '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)'
+                                    " ⏳ {1[duration]} сек".format(video_link.replace("m.", ""), attachment["video"])
+                                )
+                                del file
+                                continue
+                            self.videos.append(file)
+                    else:
                         self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                            video, attachment["video"]
+                            video_link.replace("m.", ""), attachment["video"]
                         )
 
     def generate_music(self):
@@ -221,7 +222,7 @@ class VkPostParser:
                 except (urllib.error.URLError, IndexError):
                     log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                     continue
-                if getsize(file) > 52428800:
+                if getsize(file) >= 52428800:
                     log.warning("[AP] Файл весит более 50 МиБ. Пропускаем его...")
                     continue
                 try:
