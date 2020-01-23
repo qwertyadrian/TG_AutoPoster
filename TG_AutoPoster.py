@@ -97,9 +97,7 @@ class AutoPoster:
                 fallback=self.config.get("global", "disable_notification", fallback=False),
             )
             send_stories = self.config.getboolean(
-                group,
-                "send_stories",
-                fallback=self.config.get("global", "send_stories", fallback=False)
+                group, "send_stories", fallback=self.config.get("global", "send_stories", fallback=False)
             )
             # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
