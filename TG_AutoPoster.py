@@ -5,7 +5,7 @@ import argparse
 import configparser
 import os.path
 from datetime import timedelta
-from parser import get_posts
+from parser import get_new_posts, get_new_stories
 from tempfile import TemporaryDirectory
 from time import sleep
 
@@ -96,9 +96,14 @@ class AutoPoster:
                 "disable_notification",
                 fallback=self.config.get("global", "disable_notification", fallback=False),
             )
+            send_stories = self.config.getboolean(
+                group,
+                "send_stories",
+                fallback=self.config.get("global", "send_stories", fallback=False)
+            )
             # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
-            posts = get_posts(group, last_id, pinned_id, self.api_vk, self.config, self.session)
+            posts = get_new_posts(group, last_id, pinned_id, self.api_vk, self.config, self.session)
             for post in posts:
                 skip_post = False
                 for word in self.stop_list:
@@ -110,6 +115,12 @@ class AutoPoster:
                     sender = PostSender(self.bot, post, self.config.get(group, "channel"), disable_notification)
                     sender.send_post()
                 self._save_config()
+            if send_stories:
+                last_story_id = self.config.getint(group, "last_story_id", fallback=0)
+                stories = get_new_stories(group, last_story_id, self.api_vk, self.config)
+                for story in stories:
+                    sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
+                    sender.send_post()
             for data in os.listdir("."):
                 os.remove(data)
         self._save_config()
