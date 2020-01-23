@@ -283,6 +283,7 @@ class VkPostParser:
                         "question": attachment["poll"]["question"],
                         "options": [answer["text"] for answer in attachment["poll"]["answers"]],
                         "allows_multiple_answers": attachment["poll"]["multiple"],
+                        "is_anonymous": attachment["poll"]["anonymous"],
                     }
 
     def sign_post(self):
