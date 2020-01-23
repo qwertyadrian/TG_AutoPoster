@@ -52,9 +52,9 @@ def get_stories(group, api_vk):
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
         else:
-            group = api_vk.groups.getById(group_ids=group)[0]["id"]
-        stories = api_vk.stories.get(owner_id=-group)
-        return stories["items"][0]
+            group = -api_vk.groups.getById(group_ids=group)[0]["id"]
+        stories = api_vk.stories.get(owner_id=group)
+        return stories["items"][0] if stories["count"] >= 1 else list()
     except Exception:
         log.exception("Ошибка получения историй: {0}".format(sys.exc_info()[0]))
         return list()
@@ -346,6 +346,7 @@ class VkStoryParser:
             self.generate_link()
 
     def generate_photo(self):
+        log.info("[AP] Извлечение фото...")
         photo = None
         for i in self.story["photo"]["sizes"]:
             photo = i["url"]
@@ -353,6 +354,7 @@ class VkStoryParser:
             self.photos.append(InputMediaPhoto(photo))
 
     def generate_video(self):
+        log.info("[AP] Извлечение видео...")
         video_link = None
         video_file = None
         for k, v in self.story["video"]["files"].items():
@@ -363,6 +365,6 @@ class VkStoryParser:
             self.videos.append(video_file)
 
     def generate_link(self):
+        log.info("[AP] Обнаружена ссылка, создание кнопки...")
         button_list = [InlineKeyboardButton(**self.story["link"])]
-        # self.text = '<a href="{url}">{text}</a>'.format(**self.story["link"])
         self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))

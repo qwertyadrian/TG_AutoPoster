@@ -116,6 +116,7 @@ class AutoPoster:
                     sender.send_post()
                 self._save_config()
             if send_stories:
+                # Получение историй, если включено
                 last_story_id = self.config.getint(group, "last_story_id", fallback=0)
                 stories = get_new_stories(group, last_story_id, self.api_vk, self.config)
                 for story in stories:
