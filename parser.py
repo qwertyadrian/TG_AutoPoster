@@ -1,4 +1,3 @@
-import configparser
 import sys
 import time
 import urllib.error
