@@ -180,10 +180,12 @@ class VkPostParser:
                 if attachment["type"] == "link" and attachment["link"]["title"]:
                     self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
                 elif attachment["type"] == "page":
-                    self.text += '\n🔗 <a href="{view_url}">{title}</a>'.format(**attachment["page"])
+                    self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(**attachment["page"])
                 elif attachment["type"] == "album":
-                    self.text += '\n<a href="https://vk.com/wall{owner_id}_{id}">' "Фото альбом: {title}</a>".format(
-                        **attachment["album"]
+                    self.text += (
+                        '\n🖼 <a href="https://vk.com/wall{owner_id}_{id}">'
+                        "Альбом с фотографиями: {title}</a>\n"
+                        "Описание: {description}".format(**attachment["album"])
                     )
 
     def generate_photos(self):
