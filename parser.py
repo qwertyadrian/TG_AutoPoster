@@ -17,7 +17,7 @@ from wget import download
 from tools import build_menu
 
 
-def get_data(group, api_vk):
+def get_posts(group, api_vk):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
@@ -35,13 +35,34 @@ def get_data(group, api_vk):
             feed = api_vk.wall.get(domain=group, count=11)
         return feed["items"]
     except Exception:
-        log.exception("Ошибка получения информации о новых постах: {0}".format(sys.exc_info()[0]))
+        log.exception("Ошибка получения постов: {0}".format(sys.exc_info()[0]))
         return list()
 
 
-def get_posts(domain, last_id, pinned_id, api_vk, config, session):
+def get_stories(group, api_vk):
+    """
+    Функция получения новых историй с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
+    ничего
+
+    :param api_vk: Экземпляр класса VkApiMethod
+    :param group: ID группы ВК
+    :return: Возвращает список словарей с историями
+    """
+    try:
+        if group.startswith("club") or group.startswith("public") or "-" in group:
+            group = group.replace("club", "-").replace("public", "-")
+        else:
+            group = -api_vk.groups.getById(group_ids=group)[0]["id"]
+        stories = api_vk.stories.get(owner_id=group)
+        return stories["items"][0] if stories["count"] >= 1 else list()
+    except Exception:
+        log.exception("Ошибка получения историй: {0}".format(sys.exc_info()[0]))
+        return list()
+
+
+def get_new_posts(domain, last_id, pinned_id, api_vk, config, session):
     log.info("[VK] Проверка на наличие новых постов в {0} с последним ID {1}".format(domain, last_id))
-    posts = get_data(domain, api_vk)
+    posts = get_posts(domain, api_vk)
     send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts"))
     for post in reversed(posts):
         is_pinned = post.get("is_pinned", False)
@@ -68,6 +89,20 @@ def get_posts(domain, last_id, pinned_id, api_vk, config, session):
             time.sleep(5)
         elif post["id"] == last_id:
             log.info("[VK] Новых постов больше не обнаружено")
+
+
+def get_new_stories(domain, last_story_id, api_vk, config):
+    log.info("[VK] Проверка на наличие новых историй в {0} с последним ID {1}".format(domain, last_story_id))
+    stories = get_stories(domain, api_vk)
+    for story in reversed(stories):
+        if story["id"] > last_story_id:
+            log.info("[VK] Обнаружен новая история с ID {0}".format(story["id"]))
+            parsed_story = VkStoryParser(story)
+            parsed_story.generate_story()
+            if not story.get("is_expired") and not story.get("is_deleted") and story.get("can_see"):
+                yield parsed_story
+            config.set(domain, "last_story_id", str(story["id"]))
+            last_story_id = story["id"]
 
 
 class VkPostParser:
@@ -98,10 +133,9 @@ class VkPostParser:
     def generate_post(self):
         log.info("[AP] Парсинг поста...")
         if not self.its_repost:
-            try:
-                self.what_to_parse = self.config.get(self.group, "what_to_send").split(",")
-            except (configparser.NoOptionError, configparser.NoSectionError):
-                self.what_to_parse = self.config.get("global", "what_to_send", fallback="all").split(",")
+            self.what_to_parse = self.config.get(
+                self.group, "what_to_send", fallback=self.config.get("global", "what_to_send", fallback="all")
+            ).split(",")
         if self.config.getboolean("global", "sign_posts"):
             self.generate_user()
         if "attachments" in self.post:
@@ -290,3 +324,46 @@ class VkPostParser:
         )
         self.repost.text = repost_source
         self.repost.generate_post()
+
+
+class VkStoryParser:
+    def __init__(self, story):
+        self.story = story
+        self.text = ""
+        self.photos = []
+        self.videos = []
+        self.reply_markup = None
+        self.docs = []
+        self.tracks = []
+
+    def generate_story(self):
+        if self.story["type"] == "photo":
+            self.generate_photo()
+        elif self.story["type"] == "video":
+            self.generate_video()
+        if self.story.get("link"):
+            self.generate_link()
+
+    def generate_photo(self):
+        log.info("[AP] Извлечение фото...")
+        photo = None
+        for i in self.story["photo"]["sizes"]:
+            photo = i["url"]
+        if photo is not None:
+            self.photos.append(InputMediaPhoto(photo))
+
+    def generate_video(self):
+        log.info("[AP] Извлечение видео...")
+        video_link = None
+        video_file = None
+        for k, v in self.story["video"]["files"].items():
+            video_link = v
+        if video_link is not None:
+            video_file = download(video_link)
+        if video_file is not None:
+            self.videos.append(video_file)
+
+    def generate_link(self):
+        log.info("[AP] Обнаружена ссылка, создание кнопки...")
+        button_list = [InlineKeyboardButton(**self.story["link"])]
+        self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
