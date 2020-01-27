@@ -1,6 +1,6 @@
-vk-api==11.6.1
+vk-api==11.7.0
 python-telegram-bot[socks]==12.3.0
-loguru==0.4.0
+loguru==0.4.1
 wget==3.2
 mutagen==1.43.0
 beautifulsoup4==4.8.2
