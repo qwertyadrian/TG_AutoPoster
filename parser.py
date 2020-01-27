@@ -106,16 +106,14 @@ def get_new_stories(domain, last_story_id, api_vk, config):
 
 class VkPostParser:
     def __init__(self, post, group, session, api_vk, config, its_repost=False, what_to_parse=None):
-        self.remixmdevice = "1920/1080/1/!!-!!!!"
         self.session = session
         self.audio_session = VkAudio(session)
-        self.audio_session._vk.http.cookies.update(dict(remixmdevice=self.remixmdevice))
         self.api_vk = api_vk
         self.config = config
         self.pattern = "@" + group
         self.group = group
         self.post = post
-        self.post_url = "https://m.vk.com/wall{owner_id}_{id}".format(**self.post)
+        self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.post)
         self.text = ""
         self.user = None
         self.repost = None
@@ -163,7 +161,6 @@ class VkPostParser:
             self.text += self.post["text"] + "\n"
             if self.pattern != "@":
                 self.text = self.text.replace(self.pattern, "")
-            # self.generate_links()
             matches = finditer(r"\[(.*?)\]", self.text, MULTILINE)
             result = {}
             for _, match in enumerate(matches):
@@ -250,9 +247,7 @@ class VkPostParser:
     def generate_music(self):
         if "audio" in self.attachments_types:
             log.info("[AP] Извлечение аудио...")
-            user_id = self.api_vk.users.get()[0]["id"]
-            response = self.audio_session._vk.http.get(self.post_url)
-            tracks = scrap_data(response.text, user_id, filter_root_el={"class": "audios_list"})
+            tracks = self.audio_session.get_post_audio(self.post["owner_id"], self.post["id"])
             for track in tracks:
                 name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"] + ".mp3")
                 try:
@@ -291,7 +286,6 @@ class VkPostParser:
             for attachment in self.post["attachments"]:
                 if attachment["type"] == "photo":
                     photos += 1
-        post_url = self.post_url.replace("m.", "")
         button_list = []
         if self.user:
             log.info("[AP] Подписывание поста и добавление ссылки на его оригинал.")
@@ -299,17 +293,17 @@ class VkPostParser:
             button_list.append(
                 InlineKeyboardButton("Автор поста: {first_name} {last_name}".format(**self.user), url=user)
             )
-            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
             if photos > 1:
                 self.text += '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(user, **self.user)
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
             else:
-                button_list.append(InlineKeyboardButton("Оригинал поста", url=post_url))
+                button_list.append(InlineKeyboardButton("Оригинал поста", url=self.post_url))
+            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
         else:
             if photos > 1:
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(post_url)
+                self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
             else:
-                button_list.append(InlineKeyboardButton("Оригинал поста", url=post_url))
+                button_list.append(InlineKeyboardButton("Оригинал поста", url=self.post_url))
             log.info("[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.")
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
 
@@ -348,8 +342,6 @@ class VkStoryParser:
         self.photos = []
         self.videos = []
         self.reply_markup = None
-        self.docs = []
-        self.tracks = []
 
     def generate_story(self):
         if self.story["type"] == "photo":

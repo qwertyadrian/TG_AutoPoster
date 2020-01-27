@@ -16,13 +16,13 @@ class PostSender:
     def send_post(self):
         try:
             self.send_text_and_photos()
-            if len(self.post.videos) != 0:
+            if hasattr(self.post, "videos") and len(self.post.videos) != 0:
                 self.send_videos()
-            if len(self.post.docs) != 0:
+            if hasattr(self.post, "docs") and len(self.post.docs) != 0:
                 self.send_documents()
-            if len(self.post.tracks) != 0:
+            if hasattr(self.post, "tracks") and len(self.post.tracks) != 0:
                 self.send_music()
-            if self.post.poll:
+            if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll()
         except telegram.error.BadRequest as error:
             if str(error) == "Chat not found":
