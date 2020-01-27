@@ -10,18 +10,18 @@ from mutagen import File, id3
 from mutagen.easyid3 import EasyID3
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from vk_api import exceptions
-from vk_api.audio import VkAudio, scrap_data
+from vk_api.audio import VkAudio
 from wget import download
 
 from tools import build_menu
 
 
-def get_posts(group, api_vk):
+def get_posts(group, vk_session):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
 
-    :param api_vk: Экземпляр класса VkApiMethod
+    :param vk_session: Экземпляр класса VkApi
     :param group: ID группы ВК
     :return: Возвращает список словарей с постами
     """
@@ -29,21 +29,21 @@ def get_posts(group, api_vk):
     try:
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
-            feed = api_vk.wall.get(owner_id=group, count=11)
+            feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": 11})
         else:
-            feed = api_vk.wall.get(domain=group, count=11)
+            feed = vk_session.method(method="wall.get", values={"domain": group, "count": 11})
         return feed["items"]
     except Exception:
         log.exception("Ошибка получения постов: {0}".format(sys.exc_info()[0]))
         return list()
 
 
-def get_stories(group, api_vk):
+def get_stories(group, vk_session):
     """
     Функция получения новых историй с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
 
-    :param api_vk: Экземпляр класса VkApiMethod
+    :param vk_session: Экземпляр класса VkApi
     :param group: ID группы ВК
     :return: Возвращает список словарей с историями
     """
@@ -51,23 +51,27 @@ def get_stories(group, api_vk):
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
         else:
-            group = -api_vk.groups.getById(group_ids=group)[0]["id"]
-        stories = api_vk.stories.get(owner_id=group)
+            group = -vk_session.method(method="groups.getById", values={"group_ids": group})[0]["id"]
+        stories = vk_session.method(method="stories.get", values={"owner_id": group})
         return stories["items"][0] if stories["count"] >= 1 else list()
     except Exception:
         log.exception("Ошибка получения историй: {0}".format(sys.exc_info()[0]))
         return list()
 
 
-def get_new_posts(domain, last_id, pinned_id, api_vk, config, session):
+def get_new_posts(domain, last_id, pinned_id, vk_session, config):
     log.info("[VK] Проверка на наличие новых постов в {0} с последним ID {1}".format(domain, last_id))
-    posts = get_posts(domain, api_vk)
+    posts = get_posts(domain, vk_session)
     send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts"))
+    sign_posts = config.getboolean(domain, "sign_posts", fallback=config.getboolean("global", "sign_posts"))
+    what_to_parse = set(
+        config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
+    )
     for post in reversed(posts):
         is_pinned = post.get("is_pinned", False)
         if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post["id"]))
-            parsed_post = VkPostParser(post, domain, session, api_vk, config)
+            parsed_post = VkPostParser(post, domain, vk_session, sign_posts, what_to_parse)
             parsed_post.generate_post()
             if "copy_history" in parsed_post.post:
                 if send_reposts in ("no", 0):
@@ -90,9 +94,9 @@ def get_new_posts(domain, last_id, pinned_id, api_vk, config, session):
             log.info("[VK] Новых постов больше не обнаружено")
 
 
-def get_new_stories(domain, last_story_id, api_vk, config):
+def get_new_stories(domain, last_story_id, vk_session, config):
     log.info("[VK] Проверка на наличие новых историй в {0} с последним ID {1}".format(domain, last_story_id))
-    stories = get_stories(domain, api_vk)
+    stories = get_stories(domain, vk_session)
     for story in reversed(stories):
         if story["id"] > last_story_id:
             log.info("[VK] Обнаружен новая история с ID {0}".format(story["id"]))
@@ -105,11 +109,10 @@ def get_new_stories(domain, last_story_id, api_vk, config):
 
 
 class VkPostParser:
-    def __init__(self, post, group, session, api_vk, config, its_repost=False, what_to_parse=None):
+    def __init__(self, post, group, session, sign_posts=False, what_to_parse=None):
         self.session = session
         self.audio_session = VkAudio(session)
-        self.api_vk = api_vk
-        self.config = config
+        self.sign_posts = sign_posts
         self.pattern = "@" + group
         self.group = group
         self.post = post
@@ -125,34 +128,28 @@ class VkPostParser:
         self.tracks = []
         self.poll = None
         self.attachments_types = set()
-        self.its_repost = its_repost
         self.what_to_parse = what_to_parse
 
     def generate_post(self):
         log.info("[AP] Парсинг поста...")
-        if not self.its_repost:
-            self.what_to_parse = self.config.get(
-                self.group, "what_to_send", fallback=self.config.get("global", "what_to_send", fallback="all")
-            ).split(",")
-        if self.config.getboolean("global", "sign_posts"):
-            self.generate_user()
         if "attachments" in self.post:
             for attachment in self.post["attachments"]:
                 self.attachments_types.add(attachment["type"])
-        if set(self.what_to_parse).intersection({"link", "text", "all"}):
+        if self.what_to_parse.intersection({"link", "text", "all"}):
             self.generate_text()
             self.generate_links()
-        if self.config.getboolean("global", "sign_posts"):
+        if self.sign_posts:
+            self.generate_user()
             self.sign_post()
-        if set(self.what_to_parse).intersection({"photo", "all"}):
+        if self.what_to_parse.intersection({"photo", "all"}):
             self.generate_photos()
-        if set(self.what_to_parse).intersection({"video", "all"}):
+        if self.what_to_parse.intersection({"video", "all"}):
             self.generate_videos()
-        if set(self.what_to_parse).intersection({"doc", "all"}):
+        if self.what_to_parse.intersection({"doc", "all"}):
             self.generate_docs()
-        if set(self.what_to_parse).intersection({"music", "all"}):
+        if self.what_to_parse.intersection({"music", "all"}):
             self.generate_music()
-        if set(self.what_to_parse).intersection({"polls", "all"}):
+        if self.what_to_parse.intersection({"polls", "all"}):
             self.generate_poll()
 
     def generate_text(self):
@@ -309,16 +306,18 @@ class VkPostParser:
 
     def generate_user(self):
         if "signer_id" in self.post:
-            self.user = self.api_vk.users.get(user_ids=self.post["signer_id"], fields="domain")[0]
+            self.user = self.session.method(
+                method="users.get", values={"user_ids": self.post["signer_id"], "fields": "domain"}
+            )[0]
 
     def generate_repost(self):
         log.info("Включена отправка репоста. Начинаем парсинг репоста.")
         source_id = int(self.post["copy_history"][0]["from_id"])
         try:
-            source_info = self.api_vk.groups.getById(group_id=-source_id)[0]
+            source_info = self.session.method(method="groups.getById", values={"group_id": -source_id})[0]
             repost_source = 'Репост из <a href="https://vk.com/{screen_name}">{name}</a>:\n\n'.format(**source_info)
         except exceptions.ApiError:
-            source_info = self.api_vk.users.get(user_ids=source_id)[0]
+            source_info = self.session.method(method="users.get", values={"user_ids": source_id})[0]
             repost_source = 'Репост от <a href="https://vk.com/id{id}">' "{first_name} {last_name}</a>:\n\n".format(
                 **source_info
             )
@@ -326,9 +325,7 @@ class VkPostParser:
             self.post["copy_history"][0],
             source_info.get("screen_name", ""),
             self.session,
-            self.api_vk,
-            self.config,
-            True,
+            self.sign_posts,
             self.what_to_parse,
         )
         self.repost.text = repost_source
