@@ -120,6 +120,7 @@ class AutoPoster:
                 for story in stories:
                     sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
                     sender.send_post()
+                    self._save_config()
             for data in os.listdir("."):
                 os.remove(data)
         self._save_config()
