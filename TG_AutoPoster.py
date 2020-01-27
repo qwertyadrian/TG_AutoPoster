@@ -79,11 +79,10 @@ class AutoPoster:
             with open(self.stop_list, "r", encoding="utf-8") as f:
                 self.stop_list = [i.strip() for i in f.readlines()]
         # Инициализация ВК сессии
-        self.session = VkApi(
+        self.vk_session = VkApi(
             login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
         )
-        self.session.auth()
-        self.api_vk = self.session.get_api()
+        self.vk_session.auth()
 
     def get_updates(self):
         # Переход в папку с кэшем
@@ -101,7 +100,7 @@ class AutoPoster:
             )
             # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
-            posts = get_new_posts(group, last_id, pinned_id, self.api_vk, self.config, self.session)
+            posts = get_new_posts(group, last_id, pinned_id, self.vk_session, self.config)
             for post in posts:
                 skip_post = False
                 for word in self.stop_list:
@@ -116,7 +115,7 @@ class AutoPoster:
             if send_stories:
                 # Получение историй, если включено
                 last_story_id = self.config.getint(group, "last_story_id", fallback=0)
-                stories = get_new_stories(group, last_story_id, self.api_vk, self.config)
+                stories = get_new_stories(group, last_story_id, self.vk_session, self.config)
                 for story in stories:
                     sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
                     sender.send_post()
