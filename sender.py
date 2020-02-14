@@ -157,6 +157,7 @@ class PostSender:
                             timeout=60,
                             reply_markup=self.post.reply_markup,
                             disable_notification=self.disable_notification,
+                            filename=filename,
                         )
                     else:
                         self.send_splitted_message(self.bot, self.text, self.chat_id)
@@ -168,6 +169,7 @@ class PostSender:
                             reply_markup=self.post.reply_markup,
                             disable_web_page_preview=True,
                             disable_notification=self.disable_notification,
+                            filename=filename,
                         )
 
                         self.bot.send_document(
@@ -175,6 +177,7 @@ class PostSender:
                             document=open(doc, "rb"),
                             disable_notification=self.disable_notification,
                             timeout=60,
+                            filename=filename,
                         )
                 else:
                     self.bot.send_document(
@@ -182,10 +185,12 @@ class PostSender:
                         document=open(doc, "rb"),
                         disable_notification=self.disable_notification,
                         timeout=60,
+                        filename=filename,
                     )
             else:
                 self.bot.send_document(
                     self.chat_id, document=open(doc, "rb"), disable_notification=self.disable_notification, timeout=60,
+                    filename=filename,
                 )
 
     def send_music(self):
