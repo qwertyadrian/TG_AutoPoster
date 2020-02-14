@@ -128,7 +128,7 @@ class VkPostParser:
         self.tracks = []
         self.poll = None
         self.attachments_types = set()
-        self.what_to_parse = what_to_parse
+        self.what_to_parse = what_to_parse if what_to_parse else {"all"}
 
     def generate_post(self):
         log.info("[AP] Парсинг поста...")
@@ -148,7 +148,8 @@ class VkPostParser:
         if self.what_to_parse.intersection({"doc", "all"}):
             self.generate_docs()
         if self.what_to_parse.intersection({"music", "all"}):
-            self.generate_music()
+            # self.generate_music()
+            pass
         if self.what_to_parse.intersection({"polls", "all"}):
             self.generate_poll()
 
@@ -158,6 +159,7 @@ class VkPostParser:
             self.text += self.post["text"] + "\n"
             if self.pattern != "@":
                 self.text = self.text.replace(self.pattern, "")
+            self.text = self.text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             matches = finditer(r"\[(.*?)\]", self.text, MULTILINE)
             result = {}
             for _, match in enumerate(matches):
@@ -179,7 +181,7 @@ class VkPostParser:
                     self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(**attachment["page"])
                 elif attachment["type"] == "album":
                     self.text += (
-                        '\n🖼 <a href="https://vk.com/wall{owner_id}_{id}">'
+                        '\n🖼 <a href="https://vk.com/album{owner_id}_{id}">'
                         "Альбом с фотографиями: {title}</a>\n"
                         "Описание: {description}".format(**attachment["album"])
                     )
@@ -209,7 +211,10 @@ class VkPostParser:
                 if attachment["type"] == "doc" and attachment["doc"]["size"] <= 52428800:
                     try:
                         doc = download(attachment["doc"]["url"], out="file.{ext}".format(**attachment["doc"]))
-                        self.docs.append([doc, "{title}.{ext}".format(**attachment["doc"])])
+                        if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
+                            self.docs.append([doc, "{title}".format(**attachment["doc"])])
+                        else:
+                            self.docs.append([doc, "{title}.{ext}".format(**attachment["doc"])])
                     except urllib.error.URLError:
                         log.exception("[AP] Невозможно скачать вложенный файл: {0}.".format(sys.exc_info()[1]))
                         self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
