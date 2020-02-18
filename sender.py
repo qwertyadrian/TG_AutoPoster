@@ -1,4 +1,4 @@
-import telegram.error
+import pyrogram.errors
 from loguru import logger as log
 
 from tools import list_splitter, split
@@ -24,18 +24,15 @@ class PostSender:
                 self.send_music()
             if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll()
-        except telegram.error.BadRequest as error:
-            if str(error) == "Chat not found":
-                log.error(
-                    "Чат {} не был найден. Возможно, ID чата (канала) указан неверно или бот отсутствует в нём.".format(
-                        self.chat_id
-                    )
+        except (pyrogram.errors.ChatIdInvalid, pyrogram.errors.PeerIdInvalid):
+            log.error(
+                "Чат {} не был найден. Возможно, ID чата (канала) указан неверно или бот отсутствует в нём.".format(
+                    self.chat_id
                 )
-            else:
-                log.error("Bad Request: {}".format(str(error)))
-        except telegram.error.TimedOut:
-            log.error("Timed out: время ожидания истекло.")
-        except telegram.error.TelegramError as error:
+            )
+        except pyrogram.errors.InternalServerError:
+            log.error("Telegram испытывает проблемы. Попробуйте позднее.")
+        except pyrogram.errors.RPCError as error:
             log.error("Telegram Error: {}".format(str(error)))
 
     def send_text_and_photos(self):
@@ -47,7 +44,6 @@ class PostSender:
                     self.bot.send_message(
                         self.chat_id,
                         self.text[-1],
-                        parse_mode="HTML",
                         reply_markup=self.post.reply_markup,
                         disable_web_page_preview=True,
                         disable_notification=self.disable_notification,
@@ -55,7 +51,6 @@ class PostSender:
                     self.bot.send_photo(
                         self.chat_id,
                         self.post.photos[0]["media"],
-                        parse_mode="HTML",
                         disable_notification=self.disable_notification,
                     )
                 else:
@@ -64,7 +59,6 @@ class PostSender:
                         self.post.photos[0]["media"],
                         caption=self.text[-1],
                         reply_markup=self.post.reply_markup,
-                        parse_mode="HTML",
                         disable_notification=self.disable_notification,
                     )
             else:
@@ -74,7 +68,6 @@ class PostSender:
                     self.bot.send_message(
                         self.chat_id,
                         self.text[-1],
-                        parse_mode="HTML",
                         reply_markup=self.post.reply_markup,
                         disable_web_page_preview=True,
                         disable_notification=self.disable_notification,
@@ -86,7 +79,6 @@ class PostSender:
                         self.bot.send_media_group(
                             self.chat_id,
                             i,
-                            reply_markup=self.post.reply_markup,
                             disable_notification=self.disable_notification,
                         )
         elif self.post.text and not self.post.photos and not self.post.videos and not self.post.docs:
@@ -94,7 +86,6 @@ class PostSender:
             self.bot.send_message(
                 self.chat_id,
                 self.text[-1],
-                parse_mode="HTML",
                 reply_markup=self.post.reply_markup,
                 disable_web_page_preview=True,
                 disable_notification=self.disable_notification,
@@ -108,9 +99,7 @@ class PostSender:
                     if len(self.post.text) < 1024:
                         self.bot.send_video(
                             self.chat_id,
-                            video=open(video, "rb"),
-                            timeout=60,
-                            parse_mode="HTML",
+                            video=video,
                             caption=self.text[-1],
                             reply_markup=self.post.reply_markup,
                             disable_notification=self.disable_notification,
@@ -120,44 +109,38 @@ class PostSender:
                         self.bot.send_message(
                             self.chat_id,
                             self.text[-1],
-                            parse_mode="HTML",
                             reply_markup=self.post.reply_markup,
                             disable_web_page_preview=True,
                             disable_notification=self.disable_notification,
                         )
                         self.bot.send_video(
                             self.chat_id,
-                            video=open(video, "rb"),
+                            video=video,
                             disable_notification=self.disable_notification,
-                            timeout=60,
                         )
                 else:
                     self.bot.send_video(
                         self.chat_id,
-                        video=open(video, "rb"),
+                        video=video,
                         disable_notification=self.disable_notification,
-                        timeout=60,
                     )
             else:
                 self.bot.send_video(
-                    self.chat_id, video=open(video, "rb"), disable_notification=self.disable_notification, timeout=60,
+                    self.chat_id, video=video, disable_notification=self.disable_notification,
                 )
 
     def send_documents(self):
         log.info("Отправка прочих вложений")
-        for i, (doc, filename) in enumerate(self.post.docs):
+        for i, doc in enumerate(self.post.docs):
             if i == 0:
                 if not self.post.photos and not self.post.videos:
                     if len(self.post.text) < 1024:
                         self.bot.send_document(
                             self.chat_id,
-                            document=open(doc, "rb"),
+                            document=doc,
                             caption=self.text[-1],
-                            parse_mode="HTML",
-                            timeout=60,
                             reply_markup=self.post.reply_markup,
                             disable_notification=self.disable_notification,
-                            filename=filename,
                         )
                     else:
                         self.send_splitted_message(self.bot, self.text, self.chat_id)
@@ -165,39 +148,32 @@ class PostSender:
                         self.bot.send_message(
                             self.chat_id,
                             self.text[-1],
-                            parse_mode="HTML",
                             reply_markup=self.post.reply_markup,
                             disable_web_page_preview=True,
                             disable_notification=self.disable_notification,
-                            filename=filename,
                         )
 
                         self.bot.send_document(
                             self.chat_id,
-                            document=open(doc, "rb"),
+                            document=doc,
                             disable_notification=self.disable_notification,
-                            timeout=60,
-                            filename=filename,
                         )
                 else:
                     self.bot.send_document(
                         self.chat_id,
-                        document=open(doc, "rb"),
+                        document=doc,
                         disable_notification=self.disable_notification,
-                        timeout=60,
-                        filename=filename,
                     )
             else:
                 self.bot.send_document(
-                    self.chat_id, document=open(doc, "rb"), disable_notification=self.disable_notification, timeout=60,
-                    filename=filename,
+                    self.chat_id, document=doc, disable_notification=self.disable_notification,
                 )
 
     def send_music(self):
         log.info("Отправка аудио")
         for audio, duration in self.post.tracks:
             self.bot.send_audio(
-                self.chat_id, open(audio, "rb"), duration, disable_notification=self.disable_notification, timeout=60,
+                self.chat_id, audio, duration, disable_notification=self.disable_notification,
             )
 
     def send_poll(self):
@@ -205,4 +181,4 @@ class PostSender:
 
     def send_splitted_message(self, bot, text, chat_id):
         for i in range(len(text) - 1):
-            bot.send_message(chat_id, text[i], parse_mode="HTML", disable_notification=self.disable_notification)
+            bot.send_message(chat_id, text[i], disable_notification=self.disable_notification)

@@ -10,8 +10,7 @@ from tempfile import TemporaryDirectory
 from time import sleep
 
 from loguru import logger as log
-from telegram import Bot
-from telegram.utils.request import Request
+from pyrogram import Client
 from vk_api import VkApi
 
 from handlers import auth_handler, captcha_handler
@@ -58,17 +57,10 @@ class AutoPoster:
         self.cache_dir = cache_dir
         self.config_path = config_path
         # Чтение конфигурации бота из файла config.ini
-        self.config = configparser.ConfigParser()
-        self.config.read(self.config_path)
+        self._reload_config()
         # Инициализация Telegram бота
-        bot_token = self.config.get("global", "bot_token")
-        # Указан ли прокси в конфиге
-        if self.config.get("global", "proxy_url"):
-            log.warning("Бот будет работать через прокси. Возможны перебои в работе бота.")
-            request = Request(proxy_url=self.config.get("global", "proxy_url"), connect_timeout=15.0, read_timeout=15.0)
-        else:
-            request = None
-        self.bot = Bot(bot_token, request=request)
+        self.bot = Client("TG_AutoPoster")
+        self.bot.set_parse_mode('html')
         # Чтение из конфига логина и пароля ВК
         vk_login = self.config.get("global", "login")
         vk_pass = self.config.get("global", "pass")
@@ -85,11 +77,14 @@ class AutoPoster:
         self.vk_session.auth()
 
     def get_updates(self):
+        self.bot.start()
         # Переход в папку с кэшем
         os.chdir(self.cache_dir)
-        for group in self.config.sections()[1:]:
-            last_id = self.config.getint(group, "last_id", fallback=0)
-            pinned_id = self.config.getint(group, "pinned_id", fallback=0)
+        for group in self.config.sections()[3:]:
+            try:
+                chat_id = self.config.getint(group, "channel")
+            except ValueError:
+                chat_id = self.config.get(group, 'channel')
             disable_notification = self.config.getboolean(
                 group,
                 "disable_notification",
@@ -100,7 +95,7 @@ class AutoPoster:
             )
             # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
-            posts = get_new_posts(group, last_id, pinned_id, self.vk_session, self.config)
+            posts = get_new_posts(group, self.vk_session, self.config)
             for post in posts:
                 skip_post = False
                 for word in self.stop_list:
@@ -109,7 +104,7 @@ class AutoPoster:
                         log.info("Пост содержит стоп-слово, поэтому он не будет отправлен.")
                 # Отправка постов
                 if not skip_post:
-                    sender = PostSender(self.bot, post, self.config.get(group, "channel"), disable_notification)
+                    sender = PostSender(self.bot, post, chat_id, disable_notification)
                     sender.send_post()
                 self._save_config()
             if send_stories:
@@ -123,6 +118,7 @@ class AutoPoster:
             for data in os.listdir("."):
                 os.remove(data)
         self._save_config()
+        self.bot.stop()
 
     def get_infinity_updates(self, interval=3600):
         while True:
@@ -133,6 +129,10 @@ class AutoPoster:
     def _save_config(self):
         with open(self.config_path, "w", encoding="utf-8") as f:
             self.config.write(f)
+
+    def _reload_config(self):
+        self.config = configparser.ConfigParser()
+        self.config.read(self.config_path)
 
 
 if __name__ == "__main__":
