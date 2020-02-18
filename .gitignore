@@ -112,3 +112,5 @@ ENV/
 tests/
 config.ini
 *.pid
+TG_AutoPoster.session
+TG_AutoPoster.session-journal

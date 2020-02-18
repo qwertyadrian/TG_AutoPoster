@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from loguru import logger as log
 from mutagen import File, id3
 from mutagen.easyid3 import EasyID3
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
@@ -59,21 +59,27 @@ def get_stories(group, vk_session):
         return list()
 
 
-def get_new_posts(domain, last_id, pinned_id, vk_session, config):
-    log.info("[VK] Проверка на наличие новых постов в {0} с последним ID {1}".format(domain, last_id))
-    posts = get_posts(domain, vk_session)
+def get_new_posts(domain, vk_session, config):
+    last_id = config.getint(domain, "last_id", fallback=0)
+    pinned_id = config.getint(domain, "pinned_id", fallback=0)
     send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts"))
     sign_posts = config.getboolean(domain, "sign_posts", fallback=config.getboolean("global", "sign_posts"))
     what_to_parse = set(
         config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
     )
+
+    log.info("[VK] Проверка на наличие новых постов в {0} с последним ID {1}".format(domain, last_id))
+
+    posts = get_posts(domain, vk_session)
     for post in reversed(posts):
         is_pinned = post.get("is_pinned", False)
         if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post["id"]))
+            if post.get('marked_as_ads', 0):
+                continue
             parsed_post = VkPostParser(post, domain, vk_session, sign_posts, what_to_parse)
             parsed_post.generate_post()
-            if "copy_history" in parsed_post.post:
+            if "copy_history" in parsed_post.raw_post:
                 if send_reposts in ("no", 0):
                     log.info("Отправка репостов полностью отключена, поэтому пост будет пропущен.")
                 elif send_reposts in ("post_only", 1):
@@ -115,8 +121,8 @@ class VkPostParser:
         self.sign_posts = sign_posts
         self.pattern = "@" + group
         self.group = group
-        self.post = post
-        self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.post)
+        self.raw_post = post
+        self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.raw_post)
         self.text = ""
         self.user = None
         self.repost = None
@@ -132,8 +138,8 @@ class VkPostParser:
 
     def generate_post(self):
         log.info("[AP] Парсинг поста...")
-        if "attachments" in self.post:
-            for attachment in self.post["attachments"]:
+        if "attachments" in self.raw_post:
+            for attachment in self.raw_post["attachments"]:
                 self.attachments_types.add(attachment["type"])
         if self.what_to_parse.intersection({"link", "text", "all"}):
             self.generate_text()
@@ -154,9 +160,9 @@ class VkPostParser:
             self.generate_poll()
 
     def generate_text(self):
-        if self.post["text"]:
+        if self.raw_post["text"]:
             log.info("[AP] Обнаружен текст. Извлечение...")
-            self.text += self.post["text"] + "\n"
+            self.text += self.raw_post["text"] + "\n"
             if self.pattern != "@":
                 self.text = self.text.replace(self.pattern, "")
             self.text = self.text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -173,8 +179,8 @@ class VkPostParser:
                 pass
 
     def generate_links(self):
-        if "attachments" in self.post:
-            for attachment in self.post["attachments"]:
+        if "attachments" in self.raw_post:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "link" and attachment["link"]["title"]:
                     self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
                 elif attachment["type"] == "page":
@@ -191,13 +197,14 @@ class VkPostParser:
             photo = None
             counter = 1
             log.info("[AP] Извлечение фото...")
-            for attachment in self.post["attachments"]:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "photo":
                     for i in attachment["photo"]["sizes"]:
                         photo = i["url"]
+                    photo = download(photo, bar=None)
                     if photo and counter == 1:
                         if len(self.text) < 1024:
-                            self.photos.append(InputMediaPhoto(photo, caption=self.text, parse_mode="HTML"))
+                            self.photos.append(InputMediaPhoto(photo, caption=self.text))
                         else:
                             self.photos.append(InputMediaPhoto(photo))
                     elif photo:
@@ -207,14 +214,14 @@ class VkPostParser:
     def generate_docs(self):
         if "doc" in self.attachments_types:
             log.info("[AP] Извлечение вложениий (файлы, гифки и т.п.)...")
-            for attachment in self.post["attachments"]:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "doc" and attachment["doc"]["size"] <= 52428800:
                     try:
-                        doc = download(attachment["doc"]["url"], out="file.{ext}".format(**attachment["doc"]))
                         if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
-                            self.docs.append([doc, "{title}".format(**attachment["doc"])])
+                            doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
                         else:
-                            self.docs.append([doc, "{title}.{ext}".format(**attachment["doc"])])
+                            doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
+                        self.docs.append(doc)
                     except urllib.error.URLError:
                         log.exception("[AP] Невозможно скачать вложенный файл: {0}.".format(sys.exc_info()[1]))
                         self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
@@ -224,7 +231,7 @@ class VkPostParser:
     def generate_videos(self):
         if "video" in self.attachments_types:
             log.info("[AP] Извлечение видео...")
-            for attachment in self.post["attachments"]:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "video":
                     video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
                     if not attachment["video"].get("platform"):
@@ -249,7 +256,7 @@ class VkPostParser:
     def generate_music(self):
         if "audio" in self.attachments_types:
             log.info("[AP] Извлечение аудио...")
-            tracks = self.audio_session.get_post_audio(self.post["owner_id"], self.post["id"])
+            tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
             for track in tracks:
                 name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"] + ".mp3")
                 try:
@@ -273,19 +280,19 @@ class VkPostParser:
 
     def generate_poll(self):
         if "poll" in self.attachments_types:
-            for attachment in self.post["attachments"]:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "poll":
                     self.poll = {
                         "question": attachment["poll"]["question"],
                         "options": [answer["text"] for answer in attachment["poll"]["answers"]],
-                        "allows_multiple_answers": attachment["poll"]["multiple"],
-                        "is_anonymous": attachment["poll"]["anonymous"],
+                        # "allows_multiple_answers": attachment["poll"]["multiple"],
+                        # "is_anonymous": attachment["poll"]["anonymous"],
                     }
 
     def sign_post(self):
         photos = 0
         if "photo" in self.attachments_types:
-            for attachment in self.post["attachments"]:
+            for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "photo":
                     photos += 1
         button_list = []
@@ -310,31 +317,31 @@ class VkPostParser:
             self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
 
     def generate_user(self):
-        if "signer_id" in self.post:
+        if "signer_id" in self.raw_post:
             self.user = self.session.method(
-                method="users.get", values={"user_ids": self.post["signer_id"], "fields": "domain"}
+                method="users.get", values={"user_ids": self.raw_post["signer_id"], "fields": "domain"}
             )[0]
 
     def generate_repost(self):
         log.info("Включена отправка репоста. Начинаем парсинг репоста.")
-        source_id = int(self.post["copy_history"][0]["from_id"])
+        source_id = int(self.raw_post["copy_history"][0]["from_id"])
         try:
             source_info = self.session.method(method="groups.getById", values={"group_id": -source_id})[0]
             repost_source = 'Репост из <a href="https://vk.com/{screen_name}">{name}</a>:\n\n'.format(**source_info)
         except exceptions.ApiError:
             source_info = self.session.method(method="users.get", values={"user_ids": source_id})[0]
-            repost_source = 'Репост от <a href="https://vk.com/id{id}">' "{first_name} {last_name}</a>:\n\n".format(
+            repost_source = 'Репост от <a href="https://vk.com/id{id}">{first_name} {last_name}</a>:\n\n'.format(
                 **source_info
             )
         self.repost = VkPostParser(
-            self.post["copy_history"][0],
+            self.raw_post["copy_history"][0],
             source_info.get("screen_name", ""),
             self.session,
             self.sign_posts,
             self.what_to_parse,
         )
-        self.repost.text = repost_source
         self.repost.generate_post()
+        self.repost.text = repost_source + self.repost.text
 
 
 class VkStoryParser:
@@ -358,6 +365,7 @@ class VkStoryParser:
         photo = None
         for i in self.story["photo"]["sizes"]:
             photo = i["url"]
+        photo = download(photo, bar=None)
         if photo is not None:
             self.photos.append(InputMediaPhoto(photo))
 
