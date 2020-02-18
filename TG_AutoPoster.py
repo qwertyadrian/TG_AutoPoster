@@ -77,7 +77,6 @@ class AutoPoster:
         self.vk_session.auth()
 
     def get_updates(self):
-        self.bot.start()
         # Переход в папку с кэшем
         os.chdir(self.cache_dir)
         groups = self.config.sections()[3:] if self.config.has_section('proxy') else self.config.sections()[2:]
@@ -105,21 +104,22 @@ class AutoPoster:
                         log.info("Пост содержит стоп-слово, поэтому он не будет отправлен.")
                 # Отправка постов
                 if not skip_post:
-                    sender = PostSender(self.bot, post, chat_id, disable_notification)
-                    sender.send_post()
+                    with self.bot:
+                        sender = PostSender(self.bot, post, chat_id, disable_notification)
+                        sender.send_post()
                 self._save_config()
             if send_stories:
                 # Получение историй, если включено
                 last_story_id = self.config.getint(group, "last_story_id", fallback=0)
                 stories = get_new_stories(group, last_story_id, self.vk_session, self.config)
                 for story in stories:
-                    sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
-                    sender.send_post()
+                    with self.bot:
+                        sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
+                        sender.send_post()
                     self._save_config()
             for data in os.listdir("."):
                 os.remove(data)
         self._save_config()
-        self.bot.stop()
 
     def get_infinity_updates(self, interval=3600):
         while True:
