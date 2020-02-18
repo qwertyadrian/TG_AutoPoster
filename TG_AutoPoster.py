@@ -80,7 +80,8 @@ class AutoPoster:
         self.bot.start()
         # Переход в папку с кэшем
         os.chdir(self.cache_dir)
-        for group in self.config.sections()[3:]:
+        groups = self.config.sections()[3:] if self.config.has_section('proxy') else self.config.sections()[2:]
+        for group in groups:
             try:
                 chat_id = self.config.getint(group, "channel")
             except ValueError:
@@ -125,6 +126,7 @@ class AutoPoster:
             self.get_updates()
             log.info("Работа завершена. Отправка в сон на {} секунд.".format(interval))
             sleep(interval)
+            self._reload_config()
 
     def _save_config(self):
         with open(self.config_path, "w", encoding="utf-8") as f:
