@@ -30,6 +30,12 @@ def create_parser():
     )
 
     parser.add_argument(
+        "-6",
+        "--ipv6",
+        action='store_true',
+        help="Использовать IPv6 при подключении к Telegram (IPv4 по умолчанию)"
+    )
+    parser.add_argument(
         "-l",
         "--loop",
         action="store_const",
@@ -53,13 +59,13 @@ def create_parser():
 
 
 class AutoPoster:
-    def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR.name):
+    def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR.name, ipv6=False):
         self.cache_dir = cache_dir
         self.config_path = config_path
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
         # Инициализация Telegram бота
-        self.bot = Client("TG_AutoPoster")
+        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path)
         self.bot.set_parse_mode('html')
         # Чтение из конфига логина и пароля ВК
         vk_login = self.config.get("global", "login")
@@ -140,7 +146,7 @@ class AutoPoster:
 if __name__ == "__main__":
     log.info("Начало работы.")
     args = create_parser().parse_args()
-    autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir)
+    autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir, ipv6=args.ipv6)
     if args.loop or args.sleep:
         sleep_time = args.sleep if args.sleep else 3600
         log.info("Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.")
