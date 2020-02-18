@@ -26,13 +26,6 @@ api_id =
 api_hash =
 bot_token =
 
-[proxy] # Настройка прокси
-enabled = False # Использовать ли прокси?
-hostname =
-port =
-username =
-password =
-
 [domain1]
 channel =
 last_id =
