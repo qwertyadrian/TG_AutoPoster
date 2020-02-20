@@ -30,10 +30,7 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-6",
-        "--ipv6",
-        action='store_true',
-        help="Использовать IPv6 при подключении к Telegram (IPv4 по умолчанию)"
+        "-6", "--ipv6", action="store_true", help="Использовать IPv6 при подключении к Telegram (IPv4 по умолчанию)"
     )
     parser.add_argument(
         "-l",
@@ -66,7 +63,7 @@ class AutoPoster:
         self._reload_config()
         # Инициализация Telegram бота
         self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path)
-        self.bot.set_parse_mode('html')
+        self.bot.set_parse_mode("html")
         # Чтение из конфига логина и пароля ВК
         vk_login = self.config.get("global", "login")
         vk_pass = self.config.get("global", "pass")
@@ -85,12 +82,12 @@ class AutoPoster:
     def get_updates(self):
         # Переход в папку с кэшем
         os.chdir(self.cache_dir)
-        groups = self.config.sections()[3:] if self.config.has_section('proxy') else self.config.sections()[2:]
+        groups = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
         for group in groups:
             try:
                 chat_id = self.config.getint(group, "channel")
             except ValueError:
-                chat_id = self.config.get(group, 'channel')
+                chat_id = self.config.get(group, "channel")
             disable_notification = self.config.getboolean(
                 group,
                 "disable_notification",
