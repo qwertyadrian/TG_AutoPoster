@@ -33,7 +33,7 @@ def get_posts(group, vk_session):
             feed = vk_session.method(method="wall.get", values={"domain": group, "count": 11})
         return feed["items"]
     except Exception as error:
-        log.exception("Ошибка получения постов: {0}".format(error))
+        log.exception("Ошибка получения постов: {}", error)
         return list()
 
 
@@ -54,7 +54,7 @@ def get_stories(group, vk_session):
         stories = vk_session.method(method="stories.get", values={"owner_id": group})
         return stories["items"][0] if stories["count"] >= 1 else list()
     except Exception as error:
-        log.exception("Ошибка получения историй: {0}".format(error))
+        log.exception("Ошибка получения историй: {0}", error)
         return list()
 
 
@@ -67,21 +67,24 @@ def get_new_posts(domain, vk_session, config):
         config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
     )
 
-    log.info("[VK] Проверка на наличие новых постов в {0} с последним ID {1}".format(domain, last_id))
+    log.info("[VK] Проверка на наличие новых постов в {} с последним ID {}", domain, last_id, colorize=True)
 
     posts = get_posts(domain, vk_session)
     for post in reversed(posts):
         is_pinned = post.get("is_pinned", False)
         if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
-            log.info("[VK] Обнаружен новый пост с ID {0}".format(post["id"]))
+            log.info("[VK] Обнаружен новый пост с ID {}", post["id"])
             if post.get("marked_as_ads", 0):
+                log.info("[VK] Пост рекламный. Он будет пропущен.")
                 continue
             parsed_post = VkPostParser(post, domain, vk_session, sign_posts, what_to_parse)
             parsed_post.generate_post()
             if "copy_history" in parsed_post.raw_post:
+                log.info("В посте содержится репост.")
                 if send_reposts in ("no", 0):
                     log.info("Отправка репостов полностью отключена, поэтому пост будет пропущен.")
                 elif send_reposts in ("post_only", 1):
+                    log.info("Отправка поста без репоста.")
                     yield parsed_post
                 elif send_reposts in ("yes", "all", 2):
                     yield parsed_post
@@ -95,16 +98,14 @@ def get_new_posts(domain, vk_session, config):
                 config.set(domain, "last_id", str(post["id"]))
                 last_id = post["id"]
             time.sleep(5)
-        elif post["id"] == last_id:
-            log.info("[VK] Новых постов больше не обнаружено")
 
 
 def get_new_stories(domain, last_story_id, vk_session, config):
-    log.info("[VK] Проверка на наличие новых историй в {0} с последним ID {1}".format(domain, last_story_id))
+    log.info("[VK] Проверка на наличие новых историй в {} с последним ID {}", domain, last_story_id)
     stories = get_stories(domain, vk_session)
     for story in reversed(stories):
         if story["id"] > last_story_id:
-            log.info("[VK] Обнаружен новая история с ID {0}".format(story["id"]))
+            log.info("[VK] Обнаружен новая история с ID {}", story["id"])
             parsed_story = VkStoryParser(story)
             parsed_story.generate_story()
             if not story.get("is_expired") and not story.get("is_deleted") and story.get("can_see"):
@@ -178,13 +179,17 @@ class VkPostParser:
                 pass
 
     def generate_links(self):
-        if "attachments" in self.raw_post:
+        if "link" in self.attachments_types or "page" in self.attachments_types or "album" in self.attachments_types:
+            log.info("[AP] Обнаружены ссылки. Извлечение..")
             for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "link" and attachment["link"]["title"]:
+                    log.debug("Detected link. Adding to message")
                     self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
                 elif attachment["type"] == "page":
+                    log.debug("Detected wiki page. Adding to message")
                     self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(**attachment["page"])
                 elif attachment["type"] == "album":
+                    log.debug("Detected album. Adding to message")
                     self.text += (
                         '\n🖼 <a href="https://vk.com/album{owner_id}_{id}">'
                         "Альбом с фотографиями: {title}</a>\n"
@@ -273,6 +278,7 @@ class VkPostParser:
 
     def generate_poll(self):
         if "poll" in self.attachments_types:
+            log.info("[AP] Обнаружен опрос.")
             for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "poll":
                     self.poll = {
@@ -311,6 +317,7 @@ class VkPostParser:
 
     def generate_user(self):
         if "signer_id" in self.raw_post:
+            log.debug("Retrieving signer_id")
             self.user = self.session.method(
                 method="users.get", values={"user_ids": self.raw_post["signer_id"], "fields": "domain"}
             )[0]

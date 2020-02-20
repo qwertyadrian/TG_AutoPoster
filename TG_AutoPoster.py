@@ -4,7 +4,7 @@
 import argparse
 import configparser
 import os.path
-from datetime import timedelta
+import sys
 from parser import get_new_posts, get_new_stories
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -19,7 +19,8 @@ from sender import PostSender
 CACHE_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
 CONFIG_PATH = os.path.join(os.getcwd(), "config.ini")
 
-log.add("./logs/bot_log_{time}.log", retention=timedelta(days=2))
+log.remove()
+log.add("./logs/bot_log_{time}.log")
 
 
 def create_parser():
@@ -52,6 +53,9 @@ def create_parser():
         default=CACHE_DIR.name,
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка)",
     )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Режим отладки"
+    )
     return parser
 
 
@@ -73,6 +77,7 @@ class AutoPoster:
             # Инициализация списка стоп-слов
             with open(self.stop_list, "r", encoding="utf-8") as f:
                 self.stop_list = [i.strip() for i in f.readlines()]
+            log.info("Загружен список стоп-слов")
         # Инициализация ВК сессии
         self.vk_session = VkApi(
             login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
@@ -134,15 +139,20 @@ class AutoPoster:
     def _save_config(self):
         with open(self.config_path, "w", encoding="utf-8") as f:
             self.config.write(f)
+        log.debug("Config saved.")
 
     def _reload_config(self):
         self.config = configparser.ConfigParser()
         self.config.read(self.config_path)
+        log.debug("Config reloaded.")
 
 
 if __name__ == "__main__":
-    log.info("Начало работы.")
     args = create_parser().parse_args()
+    if args.debug:
+        log.add(sys.stdout, colorize=True)
+        log.add('./logs/bot_log_DEBUG.log', level="DEBUG", rotation="5 MB")
+    log.info("Начало работы.")
     autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir, ipv6=args.ipv6)
     if args.loop or args.sleep:
         sleep_time = args.sleep if args.sleep else 3600
