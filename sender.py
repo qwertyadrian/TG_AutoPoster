@@ -25,15 +25,18 @@ class PostSender:
             if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll()
         except (pyrogram.errors.ChatIdInvalid, pyrogram.errors.PeerIdInvalid):
-            log.error(
+            log.exception(
                 "Чат {} не был найден. Возможно, ID чата (канала) указан неверно или бот отсутствует в нём.".format(
                     self.chat_id
                 )
             )
+            log.opt(exception=True).debug("Error stacktrace added to the log message")
         except pyrogram.errors.InternalServerError:
-            log.error("Telegram испытывает проблемы. Попробуйте позднее.")
+            log.exception("Telegram испытывает проблемы. Попробуйте позднее.")
+            log.opt(exception=True).debug("Error stacktrace added to the log message")
         except pyrogram.errors.RPCError as error:
-            log.error("Telegram Error: {}".format(str(error)))
+            log.exception("Telegram Error: {}".format(str(error)))
+            log.opt(exception=True).debug("Error stacktrace added to the log message")
 
     def send_text_and_photos(self):
         if self.post.photos:
@@ -90,6 +93,7 @@ class PostSender:
     def send_videos(self):
         log.info("Отправка видео")
         for i, video in enumerate(self.post.videos):
+            log.debug("Sending video {}", video)
             if i == 0:
                 if not self.post.photos:
                     if len(self.post.text) < 1024:
@@ -124,6 +128,7 @@ class PostSender:
     def send_documents(self):
         log.info("Отправка прочих вложений")
         for i, doc in enumerate(self.post.docs):
+            log.debug("Sending document {}", doc)
             if i == 0:
                 if not self.post.photos and not self.post.videos:
                     if len(self.post.text) < 1024:
@@ -160,13 +165,16 @@ class PostSender:
     def send_music(self):
         log.info("Отправка аудио")
         for audio, duration in self.post.tracks:
+            log.debug("Sending audio {} with duration {} secs", audio, duration)
             self.bot.send_audio(
                 self.chat_id, audio, duration, disable_notification=self.disable_notification,
             )
 
     def send_poll(self):
+        log.info("Отправка опроса")
         self.bot.send_poll(self.chat_id, **self.post.poll, disable_notification=self.disable_notification)
 
     def send_splitted_message(self, bot, text, chat_id):
+        log.debug("Sending splitted message")
         for i in range(len(text) - 1):
             bot.send_message(chat_id, text[i], disable_notification=self.disable_notification)
