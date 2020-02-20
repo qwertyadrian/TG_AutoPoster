@@ -49,9 +49,7 @@ class PostSender:
                         disable_notification=self.disable_notification,
                     )
                     self.bot.send_photo(
-                        self.chat_id,
-                        self.post.photos[0]["media"],
-                        disable_notification=self.disable_notification,
+                        self.chat_id, self.post.photos[0]["media"], disable_notification=self.disable_notification,
                     )
                 else:
                     self.bot.send_photo(
@@ -77,9 +75,7 @@ class PostSender:
                 else:
                     for i in list_splitter(self.post.photos, 10):
                         self.bot.send_media_group(
-                            self.chat_id,
-                            i,
-                            disable_notification=self.disable_notification,
+                            self.chat_id, i, disable_notification=self.disable_notification,
                         )
         elif self.post.text and not self.post.photos and not self.post.videos and not self.post.docs:
             self.send_splitted_message(self.bot, self.text, self.chat_id)
@@ -114,15 +110,11 @@ class PostSender:
                             disable_notification=self.disable_notification,
                         )
                         self.bot.send_video(
-                            self.chat_id,
-                            video=video,
-                            disable_notification=self.disable_notification,
+                            self.chat_id, video=video, disable_notification=self.disable_notification,
                         )
                 else:
                     self.bot.send_video(
-                        self.chat_id,
-                        video=video,
-                        disable_notification=self.disable_notification,
+                        self.chat_id, video=video, disable_notification=self.disable_notification,
                     )
             else:
                 self.bot.send_video(
@@ -154,15 +146,11 @@ class PostSender:
                         )
 
                         self.bot.send_document(
-                            self.chat_id,
-                            document=doc,
-                            disable_notification=self.disable_notification,
+                            self.chat_id, document=doc, disable_notification=self.disable_notification,
                         )
                 else:
                     self.bot.send_document(
-                        self.chat_id,
-                        document=doc,
-                        disable_notification=self.disable_notification,
+                        self.chat_id, document=doc, disable_notification=self.disable_notification,
                     )
             else:
                 self.bot.send_document(

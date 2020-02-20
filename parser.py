@@ -1,4 +1,3 @@
-import sys
 import time
 import urllib.error
 from os.path import getsize
@@ -33,8 +32,8 @@ def get_posts(group, vk_session):
         else:
             feed = vk_session.method(method="wall.get", values={"domain": group, "count": 11})
         return feed["items"]
-    except Exception:
-        log.exception("Ошибка получения постов: {0}".format(sys.exc_info()[0]))
+    except Exception as error:
+        log.exception("Ошибка получения постов: {0}".format(error))
         return list()
 
 
@@ -54,8 +53,8 @@ def get_stories(group, vk_session):
             group = -vk_session.method(method="groups.getById", values={"group_ids": group})[0]["id"]
         stories = vk_session.method(method="stories.get", values={"owner_id": group})
         return stories["items"][0] if stories["count"] >= 1 else list()
-    except Exception:
-        log.exception("Ошибка получения историй: {0}".format(sys.exc_info()[0]))
+    except Exception as error:
+        log.exception("Ошибка получения историй: {0}".format(error))
         return list()
 
 
@@ -75,7 +74,7 @@ def get_new_posts(domain, vk_session, config):
         is_pinned = post.get("is_pinned", False)
         if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
             log.info("[VK] Обнаружен новый пост с ID {0}".format(post["id"]))
-            if post.get('marked_as_ads', 0):
+            if post.get("marked_as_ads", 0):
                 continue
             parsed_post = VkPostParser(post, domain, vk_session, sign_posts, what_to_parse)
             parsed_post.generate_post()
@@ -165,7 +164,7 @@ class VkPostParser:
             self.text += self.raw_post["text"] + "\n"
             if self.pattern != "@":
                 self.text = self.text.replace(self.pattern, "")
-            self.text = self.text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            self.text = self.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             matches = finditer(r"\[(.*?)\]", self.text, MULTILINE)
             result = {}
             for _, match in enumerate(matches):
@@ -215,17 +214,14 @@ class VkPostParser:
         if "doc" in self.attachments_types:
             log.info("[AP] Извлечение вложениий (файлы, гифки и т.п.)...")
             for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "doc" and attachment["doc"]["size"] <= 52428800:
-                    try:
-                        if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
-                            doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
-                        else:
-                            doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
-                        self.docs.append(doc)
-                    except urllib.error.URLError:
-                        log.exception("[AP] Невозможно скачать вложенный файл: {0}.".format(sys.exc_info()[1]))
-                        self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
-                elif attachment["type"] == "doc" and attachment["doc"]["size"] >= 52428800:
+                try:
+                    if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
+                        doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
+                    else:
+                        doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
+                    self.docs.append(doc)
+                except urllib.error.URLError as error:
+                    log.exception("[AP] Невозможно скачать вложенный файл: {0}.".format(error))
                     self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
 
     def generate_videos(self):
@@ -239,8 +235,8 @@ class VkPostParser:
                         if len(soup.find_all("source")) >= 2:
                             video_link = soup.find_all("source")[1].get("src")
                             file = download(video_link)
-                            if getsize(file) >= 52428800:
-                                log.info("[AP] Видео весит более 50 МиБ. Добавляем ссылку на видео в текст.")
+                            if getsize(file) >= 1610612736:
+                                log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
                                 self.text += (
                                     '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)'
                                     " ⏳ {1[duration]} сек".format(video_link.replace("m.", ""), attachment["video"])
@@ -263,9 +259,6 @@ class VkPostParser:
                     file = download(track["url"], out=name)
                 except (urllib.error.URLError, IndexError):
                     log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
-                    continue
-                if getsize(file) >= 52428800:
-                    log.warning("[AP] Файл весит более 50 МиБ. Пропускаем его...")
                     continue
                 try:
                     music = EasyID3(file)
