@@ -219,15 +219,16 @@ class VkPostParser:
         if "doc" in self.attachments_types:
             log.info("[AP] Извлечение вложениий (файлы, гифки и т.п.)...")
             for attachment in self.raw_post["attachments"]:
-                try:
-                    if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
-                        doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
-                    else:
-                        doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
-                    self.docs.append(doc)
-                except urllib.error.URLError as error:
-                    log.exception("[AP] Невозможно скачать вложенный файл: {0}.".format(error))
-                    self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
+                if attachment["type"] == "doc":
+                    try:
+                        if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
+                            doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
+                        else:
+                            doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
+                        self.docs.append(doc)
+                    except urllib.error.URLError as error:
+                        log.exception("[AP] Невозможно скачать вложенный файл: {0}.", error)
+                        self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
 
     def generate_videos(self):
         if "video" in self.attachments_types:

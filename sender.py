@@ -35,7 +35,7 @@ class PostSender:
             log.exception("Telegram испытывает проблемы. Попробуйте позднее.")
             log.opt(exception=True).debug("Error stacktrace added to the log message")
         except pyrogram.errors.RPCError as error:
-            log.exception("Telegram Error: {}".format(str(error)))
+            log.exception("Telegram Error: {}", error)
             log.opt(exception=True).debug("Error stacktrace added to the log message")
 
     def send_text_and_photos(self):
@@ -47,12 +47,12 @@ class PostSender:
                     self.bot.send_message(
                         self.chat_id,
                         self.text[-1],
-                        reply_markup=self.post.reply_markup,
                         disable_web_page_preview=True,
                         disable_notification=self.disable_notification,
                     )
                     self.bot.send_photo(
-                        self.chat_id, self.post.photos[0]["media"], disable_notification=self.disable_notification,
+                        self.chat_id, self.post.photos[0]["media"], reply_markup=self.post.reply_markup,
+                        disable_notification=self.disable_notification,
                     )
                 else:
                     self.bot.send_photo(
