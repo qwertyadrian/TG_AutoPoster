@@ -84,7 +84,7 @@ class AutoPoster:
         )
         self.vk_session.auth()
 
-    def get_updates(self):
+    def run(self):
         # Переход в папку с кэшем
         os.chdir(self.cache_dir)
         groups = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
@@ -129,10 +129,10 @@ class AutoPoster:
                 os.remove(data)
         self._save_config()
 
-    def get_infinity_updates(self, interval=3600):
+    def infinity_run(self, interval=3600):
         while True:
-            self.get_updates()
-            log.info("Работа завершена. Отправка в сон на {} секунд.".format(interval))
+            self.run()
+            log.info("Работа завершена. Отправка в сон на {} секунд.", interval)
             sleep(interval)
             self._reload_config()
 
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     if args.loop or args.sleep:
         sleep_time = args.sleep if args.sleep else 3600
         log.info("Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.")
-        autoposter.get_infinity_updates(interval=sleep_time)
+        autoposter.infinity_run(interval=sleep_time)
     else:
-        autoposter.get_updates()
+        autoposter.run()
     log.info("Работа завершена. Выход...")
