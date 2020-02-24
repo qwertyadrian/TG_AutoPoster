@@ -5,7 +5,7 @@ import argparse
 import configparser
 import os.path
 import sys
-from parser import get_new_posts, get_new_stories
+from parsers import get_new_posts, get_new_stories
 from tempfile import TemporaryDirectory
 from time import sleep
 
@@ -16,7 +16,10 @@ from vk_api import VkApi
 from handlers import auth_handler, captcha_handler
 from sender import PostSender
 
-CACHE_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
+if os.name != 'nt':
+    CACHE_DIR = TemporaryDirectory(prefix="TG_AutoPoster").name
+else:
+    CACHE_DIR = os.path.join(os.getcwd(), ".cache")
 CONFIG_PATH = os.path.join(os.getcwd(), "config.ini")
 
 log.remove()
@@ -50,7 +53,7 @@ def create_parser():
     )
     parser.add_argument(
         "--cache-dir",
-        default=CACHE_DIR.name,
+        default=CACHE_DIR,
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка)",
     )
     parser.add_argument(
@@ -60,13 +63,13 @@ def create_parser():
 
 
 class AutoPoster:
-    def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR.name, ipv6=False):
+    def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR, ipv6=False):
         self.cache_dir = cache_dir
         self.config_path = config_path
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
         # Инициализация Telegram бота
-        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path)
+        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path, workdir=os.getcwd())
         self.bot.set_parse_mode("html")
         # Чтение из конфига логина и пароля ВК
         vk_login = self.config.get("global", "login")
@@ -86,7 +89,10 @@ class AutoPoster:
 
     def run(self):
         # Переход в папку с кэшем
-        os.chdir(self.cache_dir)
+        try:
+            os.chdir(self.cache_dir)
+        except FileNotFoundError:
+            os.mkdir(self.cache_dir)
         groups = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
         for group in groups:
             try:
@@ -160,4 +166,4 @@ if __name__ == "__main__":
         autoposter.infinity_run(interval=sleep_time)
     else:
         autoposter.run()
-    log.info("Работа завершена. Выход...")
+    log.info("Работа завершена. Выход.")
