@@ -17,7 +17,8 @@ from handlers import auth_handler, captcha_handler
 from sender import PostSender
 
 if os.name != 'nt':
-    CACHE_DIR = TemporaryDirectory(prefix="TG_AutoPoster").name
+    TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
+    CACHE_DIR = TEMP_DIR.name
 else:
     CACHE_DIR = os.path.join(os.getcwd(), ".cache")
 CONFIG_PATH = os.path.join(os.getcwd(), "config.ini")
