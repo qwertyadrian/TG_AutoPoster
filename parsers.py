@@ -137,7 +137,7 @@ class VkPostParser:
         self.what_to_parse = what_to_parse if what_to_parse else {"all"}
 
     def generate_post(self):
-        log.info("[AP] Парсинг поста...")
+        log.info("[AP] Парсинг поста.")
         if "attachments" in self.raw_post:
             for attachment in self.raw_post["attachments"]:
                 self.attachments_types.add(attachment["type"])
@@ -161,7 +161,7 @@ class VkPostParser:
 
     def generate_text(self):
         if self.raw_post["text"]:
-            log.info("[AP] Обнаружен текст. Извлечение...")
+            log.info("[AP] Обнаружен текст. Извлечение.")
             self.text += self.raw_post["text"] + "\n"
             if self.pattern != "@":
                 self.text = self.text.replace(self.pattern, "")
@@ -200,7 +200,7 @@ class VkPostParser:
         if "photo" in self.attachments_types:
             photo = None
             counter = 1
-            log.info("[AP] Извлечение фото...")
+            log.info("[AP] Извлечение фото.")
             for attachment in self.raw_post["attachments"]:
                 if attachment["type"] == "photo":
                     for i in attachment["photo"]["sizes"]:
