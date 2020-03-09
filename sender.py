@@ -1,7 +1,8 @@
 import pyrogram.errors
 from loguru import logger as log
+from pyrogram import InputMediaPhoto
 
-from tools import list_splitter, split
+from tools import split
 
 
 class PostSender:
@@ -15,9 +16,7 @@ class PostSender:
     @log.catch()
     def send_post(self):
         try:
-            self.send_text_and_photos()
-            if hasattr(self.post, "videos") and len(self.post.videos) != 0:
-                self.send_videos()
+            self.send_media()
             if hasattr(self.post, "docs") and len(self.post.docs) != 0:
                 self.send_documents()
             if hasattr(self.post, "tracks") and len(self.post.tracks) != 0:
@@ -38,10 +37,9 @@ class PostSender:
             log.exception("Telegram Error: {}", error)
             log.opt(exception=True).debug("Error stacktrace added to the log message")
 
-    def send_text_and_photos(self):
-        if self.post.photos:
-            if len(self.post.photos) == 1:
-                log.info("Отправка текста и фото")
+    def send_media(self):
+        if self.post.media:
+            if len(self.post.media) == 1:
                 if len(self.post.text) > 1024:
                     self.send_splitted_message(self.bot, self.text, self.chat_id)
                     self.bot.send_message(
@@ -50,18 +48,37 @@ class PostSender:
                         disable_web_page_preview=True,
                         disable_notification=self.disable_notification,
                     )
-                    self.bot.send_photo(
-                        self.chat_id, self.post.photos[0]["media"], reply_markup=self.post.reply_markup,
-                        disable_notification=self.disable_notification,
-                    )
+                    if isinstance(self.post.media[0], InputMediaPhoto):
+                        self.bot.send_photo(
+                            self.chat_id,
+                            self.post.media[0]["media"],
+                            reply_markup=self.post.reply_markup,
+                            disable_notification=self.disable_notification,
+                        )
+                    else:
+                        self.bot.send_video(
+                            self.chat_id,
+                            self.post.media[0]["media"],
+                            reply_markup=self.post.reply_markup,
+                            disable_notification=self.disable_notification,
+                        )
                 else:
-                    self.bot.send_photo(
-                        self.chat_id,
-                        self.post.photos[0]["media"],
-                        caption=self.text[-1],
-                        reply_markup=self.post.reply_markup,
-                        disable_notification=self.disable_notification,
-                    )
+                    if isinstance(self.post.media[0], InputMediaPhoto):
+                        self.bot.send_photo(
+                            self.chat_id,
+                            self.post.media[0]["media"],
+                            caption=self.text[-1],
+                            reply_markup=self.post.reply_markup,
+                            disable_notification=self.disable_notification,
+                        )
+                    else:
+                        self.bot.send_video(
+                            self.chat_id,
+                            self.post.media[0]["media"],
+                            caption=self.text[-1],
+                            reply_markup=self.post.reply_markup,
+                            disable_notification=self.disable_notification,
+                        )
             else:
                 log.info("Отправка текста")
                 if len(self.post.text) > 1024:
@@ -73,14 +90,15 @@ class PostSender:
                         disable_web_page_preview=True,
                         disable_notification=self.disable_notification,
                     )
-                    for i in list_splitter(self.post.photos, 10):
-                        self.bot.send_media_group(self.chat_id, i, disable_notification=self.disable_notification)
+                    self.bot.send_media_group(
+                        self.chat_id, self.post.media, disable_notification=self.disable_notification
+                    )
                 else:
-                    for i in list_splitter(self.post.photos, 10):
-                        self.bot.send_media_group(
-                            self.chat_id, i, disable_notification=self.disable_notification,
-                        )
-        elif self.post.text and not self.post.photos and not self.post.videos and not self.post.docs:
+                    self.post.media[0]["caption"] = self.post.text
+                    self.bot.send_media_group(
+                        self.chat_id, self.post.media, disable_notification=self.disable_notification
+                    )
+        elif self.post.text and not self.post.docs:
             self.send_splitted_message(self.bot, self.text, self.chat_id)
             self.bot.send_message(
                 self.chat_id,
@@ -90,47 +108,12 @@ class PostSender:
                 disable_notification=self.disable_notification,
             )
 
-    def send_videos(self):
-        log.info("Отправка видео")
-        for i, video in enumerate(self.post.videos):
-            log.debug("Sending video {}", video)
-            if i == 0:
-                if not self.post.photos:
-                    if len(self.post.text) < 1024:
-                        self.bot.send_video(
-                            self.chat_id,
-                            video=video,
-                            caption=self.text[-1],
-                            reply_markup=self.post.reply_markup,
-                            disable_notification=self.disable_notification,
-                        )
-                    else:
-                        self.send_splitted_message(self.bot, self.text, self.chat_id)
-                        self.bot.send_message(
-                            self.chat_id,
-                            self.text[-1],
-                            reply_markup=self.post.reply_markup,
-                            disable_web_page_preview=True,
-                            disable_notification=self.disable_notification,
-                        )
-                        self.bot.send_video(
-                            self.chat_id, video=video, disable_notification=self.disable_notification,
-                        )
-                else:
-                    self.bot.send_video(
-                        self.chat_id, video=video, disable_notification=self.disable_notification,
-                    )
-            else:
-                self.bot.send_video(
-                    self.chat_id, video=video, disable_notification=self.disable_notification,
-                )
-
     def send_documents(self):
         log.info("Отправка прочих вложений")
         for i, doc in enumerate(self.post.docs):
             log.debug("Sending document {}", doc)
             if i == 0:
-                if not self.post.photos and not self.post.videos:
+                if not self.post.media:
                     if len(self.post.text) < 1024:
                         self.bot.send_document(
                             self.chat_id,
