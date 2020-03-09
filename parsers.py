@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from loguru import logger as log
 from mutagen import File, id3
 from mutagen.easyid3 import EasyID3
-from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
@@ -128,36 +128,37 @@ class VkPostParser:
         self.repost = None
         self.repost_source = None
         self.reply_markup = None
-        self.photos = []
-        self.videos = []
+        self.media = []
         self.docs = []
         self.tracks = []
         self.poll = None
-        self.attachments_types = set()
+        self.attachments_types = []
         self.what_to_parse = what_to_parse if what_to_parse else {"all"}
 
     def generate_post(self):
         log.info("[AP] Парсинг поста.")
-        if "attachments" in self.raw_post:
-            for attachment in self.raw_post["attachments"]:
-                self.attachments_types.add(attachment["type"])
-        if self.what_to_parse.intersection({"link", "text", "all"}):
+        if self.what_to_parse.intersection({"text", "all"}):
             self.generate_text()
-            self.generate_links()
+
+        if "attachments" in self.raw_post:
+            self.attachments_types = tuple(x["type"] for x in self.raw_post["attachments"])
+            for attachment in self.raw_post["attachments"]:
+                if attachment["type"] in ["link", "page", "album"] and self.what_to_parse.intersection({"link", "all"}):
+                    self.generate_link(attachment)
+                if attachment["type"] == "photo" and self.what_to_parse.intersection({"photo", "all"}):
+                    self.generate_photo(attachment)
+                if attachment["type"] == "video" and self.what_to_parse.intersection({"video", "all"}):
+                    self.generate_video(attachment)
+                if attachment["type"] == "doc" and self.what_to_parse.intersection({"doc", "all"}):
+                    self.generate_doc(attachment)
+                if attachment["type"] == "poll" and self.what_to_parse.intersection({"polls", "all"}):
+                    self.generate_poll(attachment)
+            if self.what_to_parse.intersection({"music", "all"}):
+                self.generate_music()
+
         if self.sign_posts:
             self.generate_user()
             self.sign_post()
-        if self.what_to_parse.intersection({"photo", "all"}):
-            self.generate_photos()
-        if self.what_to_parse.intersection({"video", "all"}):
-            self.generate_videos()
-        if self.what_to_parse.intersection({"doc", "all"}):
-            self.generate_docs()
-        if self.what_to_parse.intersection({"music", "all"}):
-            # self.generate_music()
-            pass
-        if self.what_to_parse.intersection({"polls", "all"}):
-            self.generate_poll()
 
     def generate_text(self):
         if self.raw_post["text"]:
@@ -178,82 +179,60 @@ class VkPostParser:
             except IndexError:
                 pass
 
-    def generate_links(self):
-        if "link" in self.attachments_types or "page" in self.attachments_types or "album" in self.attachments_types:
-            log.info("[AP] Обнаружены ссылки. Извлечение..")
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "link" and attachment["link"]["title"]:
-                    log.debug("Detected link. Adding to message")
-                    self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
-                elif attachment["type"] == "page":
-                    log.debug("Detected wiki page. Adding to message")
-                    self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(**attachment["page"])
-                elif attachment["type"] == "album":
-                    log.debug("Detected album. Adding to message")
-                    self.text += (
-                        '\n🖼 <a href="https://vk.com/album{owner_id}_{id}">'
-                        "Альбом с фотографиями: {title}</a>\n"
-                        "Описание: {description}".format(**attachment["album"])
+    def generate_link(self, attachment):
+        log.info("[AP] Парсинг ссылки...")
+        if attachment["type"] == "link" and attachment["link"]["title"]:
+            log.debug("Detected link. Adding to message")
+            self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
+        elif attachment["type"] == "page":
+            log.debug("Detected wiki page. Adding to message")
+            self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(**attachment["page"])
+        elif attachment["type"] == "album":
+            log.debug("Detected album. Adding to message")
+            self.text += (
+                '\n🖼 <a href="https://vk.com/album{owner_id}_{id}">'
+                "Альбом с фотографиями: {title}</a>\n"
+                "Описание: {description}".format(**attachment["album"])
+            )
+
+    def generate_photo(self, attachment):
+        photo = None
+        for i in attachment["photo"]["sizes"]:
+            photo = i["url"]
+        photo = download(photo, bar=None)
+        if photo:
+            self.media.append(InputMediaPhoto(photo))
+
+    def generate_doc(self, attachment):
+        try:
+            if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
+                doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
+            else:
+                doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
+            self.docs.append(doc)
+        except urllib.error.URLError as error:
+            log.exception("[AP] Невозможно скачать вложенный файл: {0}.", error)
+            self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
+
+    def generate_video(self, attachment):
+        video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
+        if not attachment["video"].get("platform"):
+            soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
+            if len(soup.find_all("source")) >= 2:
+                video_link = soup.find_all("source")[1].get("src")
+                file = download(video_link)
+                if getsize(file) >= 1610612736:
+                    log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
+                    self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)' " ⏳ {1[duration]} сек".format(
+                        video_link.replace("m.", ""), attachment["video"]
                     )
-
-    def generate_photos(self):
-        if "photo" in self.attachments_types:
-            photo = None
-            counter = 1
-            log.info("[AP] Извлечение фото.")
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "photo":
-                    for i in attachment["photo"]["sizes"]:
-                        photo = i["url"]
-                    photo = download(photo, bar=None)
-                    if photo and counter == 1:
-                        if len(self.text) < 1024:
-                            self.photos.append(InputMediaPhoto(photo, caption=self.text))
-                        else:
-                            self.photos.append(InputMediaPhoto(photo))
-                    elif photo:
-                        self.photos.append(InputMediaPhoto(photo))
-                    counter += 1
-
-    def generate_docs(self):
-        if "doc" in self.attachments_types:
-            log.info("[AP] Извлечение вложениий (файлы, гифки и т.п.)...")
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "doc":
-                    try:
-                        if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
-                            doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
-                        else:
-                            doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
-                        self.docs.append(doc)
-                    except urllib.error.URLError as error:
-                        log.exception("[AP] Невозможно скачать вложенный файл: {0}.", error)
-                        self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
-
-    def generate_videos(self):
-        if "video" in self.attachments_types:
-            log.info("[AP] Извлечение видео...")
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "video":
-                    video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
-                    if not attachment["video"].get("platform"):
-                        soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
-                        if len(soup.find_all("source")) >= 2:
-                            video_link = soup.find_all("source")[1].get("src")
-                            file = download(video_link)
-                            if getsize(file) >= 1610612736:
-                                log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
-                                self.text += (
-                                    '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)'
-                                    " ⏳ {1[duration]} сек".format(video_link.replace("m.", ""), attachment["video"])
-                                )
-                                del file
-                                continue
-                            self.videos.append(file)
-                    else:
-                        self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                            video_link.replace("m.", ""), attachment["video"]
-                        )
+                    del file
+                    return None
+                self.media.append(InputMediaVideo(file))
+        else:
+            self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
+                video_link.replace("m.", ""), attachment["video"]
+            )
 
     def generate_music(self):
         if "audio" in self.attachments_types:
@@ -277,44 +256,29 @@ class VkPostParser:
                 del music
                 self.tracks.append((name, track["duration"]))
 
-    def generate_poll(self):
-        if "poll" in self.attachments_types:
-            log.info("[AP] Обнаружен опрос.")
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "poll":
-                    self.poll = {
-                        "question": attachment["poll"]["question"],
-                        "options": [answer["text"] for answer in attachment["poll"]["answers"]],
-                        # "allows_multiple_answers": attachment["poll"]["multiple"],
-                        # "is_anonymous": attachment["poll"]["anonymous"],
-                    }
+    def generate_poll(self, attachment):
+        self.poll = {
+            "question": attachment["poll"]["question"],
+            "options": [answer["text"] for answer in attachment["poll"]["answers"]],
+            # "allows_multiple_answers": attachment["poll"]["multiple"],
+            # "is_anonymous": attachment["poll"]["anonymous"],
+        }
 
     def sign_post(self):
-        photos = 0
-        if "photo" in self.attachments_types:
-            for attachment in self.raw_post["attachments"]:
-                if attachment["type"] == "photo":
-                    photos += 1
         button_list = []
+        log.info("[AP] Подписывание поста и добавление ссылки на его оригинал.")
         if self.user:
-            log.info("[AP] Подписывание поста и добавление ссылки на его оригинал.")
             user = "https://vk.com/{0[domain]}".format(self.user)
             button_list.append(
                 InlineKeyboardButton("Автор поста: {first_name} {last_name}".format(**self.user), url=user)
             )
-            if photos > 1:
+        if self.attachments_types.count("photo") > 1:
+            if self.user:
                 self.text += '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(user, **self.user)
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
-            else:
-                button_list.append(InlineKeyboardButton("Оригинал поста", url=self.post_url))
-            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
+            self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
         else:
-            if photos > 1:
-                self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
-            else:
-                button_list.append(InlineKeyboardButton("Оригинал поста", url=self.post_url))
-            log.info("[AP] Добавление только ссылки на оригинал поста, так как в нем не указан автор.")
-            self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
+            button_list.append(InlineKeyboardButton("Оригинал поста", url=self.post_url))
+        self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=1)) if button_list else None
 
     def generate_user(self):
         if "signer_id" in self.raw_post:
@@ -349,8 +313,7 @@ class VkStoryParser:
     def __init__(self, story):
         self.story = story
         self.text = ""
-        self.photos = []
-        self.videos = []
+        self.media = []
         self.reply_markup = None
 
     def generate_story(self):
@@ -368,7 +331,7 @@ class VkStoryParser:
             photo = i["url"]
         photo = download(photo, bar=None)
         if photo is not None:
-            self.photos.append(InputMediaPhoto(photo))
+            self.media.append(InputMediaPhoto(photo))
 
     def generate_video(self):
         log.info("[AP] Извлечение видео...")
@@ -379,7 +342,7 @@ class VkStoryParser:
         if video_link is not None:
             video_file = download(video_link)
         if video_file is not None:
-            self.videos.append(video_file)
+            self.media.append(InputMediaVideo(video_file))
 
     def generate_link(self):
         log.info("[AP] Обнаружена ссылка, создание кнопки...")

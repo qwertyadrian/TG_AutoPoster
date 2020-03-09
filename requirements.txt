@@ -1,4 +1,4 @@
-vk-api==11.7.0
+-e git://github.com/qwertyadrian/vk_api#egg=vk_api
 pyrogram[fast]==0.16.0
 loguru==0.4.1
 wget==3.2
