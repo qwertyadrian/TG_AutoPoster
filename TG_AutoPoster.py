@@ -16,7 +16,7 @@ from vk_api import VkApi
 from handlers import auth_handler, captcha_handler
 from sender import PostSender
 
-if os.name != 'nt':
+if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
     CACHE_DIR = TEMP_DIR.name
 else:
@@ -57,9 +57,7 @@ def create_parser():
         default=CACHE_DIR,
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка)",
     )
-    parser.add_argument(
-        "-d", "--debug", action="store_true", help="Режим отладки"
-    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Режим отладки")
     return parser
 
 
@@ -103,12 +101,16 @@ class AutoPoster:
             disable_notification = self.config.getboolean(
                 group,
                 "disable_notification",
-                fallback=self.config.get("global", "disable_notification", fallback=False),
+                fallback=self.config.getboolean("global", "disable_notification", fallback=False),
+            )
+            disable_web_page_preview = self.config.getboolean(
+                group,
+                "disable_web_page_preview",
+                fallback=self.config.getboolean("global", "disable_web_page_preview", fallback=True),
             )
             send_stories = self.config.getboolean(
-                group, "send_stories", fallback=self.config.get("global", "send_stories", fallback=False)
+                group, "send_stories", fallback=self.config.getboolean("global", "send_stories", fallback=False)
             )
-            # channel = config.get(group, 'channel', fallback=config.get('global', 'admin'))
             # Получение постов
             posts = get_new_posts(group, self.vk_session, self.config)
             for post in posts:
@@ -120,16 +122,21 @@ class AutoPoster:
                 # Отправка постов
                 if not skip_post:
                     with self.bot:
-                        sender = PostSender(self.bot, post, chat_id, disable_notification)
+                        sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
                         sender.send_post()
                 self._save_config()
             if send_stories:
                 # Получение историй, если включено
-                last_story_id = self.config.getint(group, "last_story_id", fallback=0)
-                stories = get_new_stories(group, last_story_id, self.vk_session, self.config)
+                stories = get_new_stories(group, self.vk_session, self.config)
                 for story in stories:
                     with self.bot:
-                        sender = PostSender(self.bot, story, self.config.get(group, "channel"), disable_notification)
+                        sender = PostSender(
+                            self.bot,
+                            story,
+                            self.config.get(group, "channel"),
+                            disable_notification,
+                            disable_web_page_preview,
+                        )
                         sender.send_post()
                     self._save_config()
             for data in os.listdir("."):
@@ -158,7 +165,7 @@ if __name__ == "__main__":
     args = create_parser().parse_args()
     if args.debug:
         log.add(sys.stdout, colorize=True)
-        log.add('./logs/bot_log_DEBUG.log', level="DEBUG", rotation="5 MB")
+        log.add("./logs/bot_log_DEBUG.log", level="DEBUG", rotation="5 MB")
     log.info("Начало работы.")
     autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir, ipv6=args.ipv6)
     if args.loop or args.sleep:
