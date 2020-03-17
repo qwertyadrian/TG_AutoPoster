@@ -61,8 +61,10 @@ def get_stories(group, vk_session):
 def get_new_posts(domain, vk_session, config):
     last_id = config.getint(domain, "last_id", fallback=0)
     pinned_id = config.getint(domain, "pinned_id", fallback=0)
-    send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts"))
-    sign_posts = config.getboolean(domain, "sign_posts", fallback=config.getboolean("global", "sign_posts"))
+    send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts", fallback=0))
+    sign_posts = config.getboolean(
+        domain, "sign_posts", fallback=config.getboolean("global", "sign_posts", fallback=True)
+    )
     what_to_parse = set(
         config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
     )
@@ -100,7 +102,8 @@ def get_new_posts(domain, vk_session, config):
             time.sleep(5)
 
 
-def get_new_stories(domain, last_story_id, vk_session, config):
+def get_new_stories(domain, vk_session, config):
+    last_story_id = config.getint(domain, "last_story_id", fallback=0)
     log.info("[VK] Проверка на наличие новых историй в {} с последним ID {}", domain, last_story_id)
     stories = get_stories(domain, vk_session)
     for story in reversed(stories):
@@ -337,7 +340,7 @@ class VkStoryParser:
         log.info("[AP] Извлечение видео...")
         video_link = None
         video_file = None
-        for k, v in self.story["video"]["files"].items():
+        for _, v in self.story["video"]["files"].items():
             video_link = v
         if video_link is not None:
             video_file = download(video_link)

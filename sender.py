@@ -6,12 +6,13 @@ from tools import split
 
 
 class PostSender:
-    def __init__(self, bot, post, chat_id, disable_notification=False):
+    def __init__(self, bot, post, chat_id, disable_notification=False, disable_web_page_preview=True):
         self.bot = bot
         self.post = post
         self.chat_id = chat_id
         self.text = split(self.post.text)
         self.disable_notification = disable_notification
+        self.disable_web_page_preview = disable_web_page_preview
 
     @log.catch()
     def send_post(self):
@@ -45,7 +46,7 @@ class PostSender:
                     self.bot.send_message(
                         self.chat_id,
                         self.text[-1],
-                        disable_web_page_preview=True,
+                        disable_web_page_preview=self.disable_web_page_preview,
                         disable_notification=self.disable_notification,
                     )
                     if isinstance(self.post.media[0], InputMediaPhoto):
@@ -87,7 +88,7 @@ class PostSender:
                         self.chat_id,
                         self.text[-1],
                         reply_markup=self.post.reply_markup,
-                        disable_web_page_preview=True,
+                        disable_web_page_preview=self.disable_web_page_preview,
                         disable_notification=self.disable_notification,
                     )
                     self.bot.send_media_group(
@@ -104,7 +105,7 @@ class PostSender:
                 self.chat_id,
                 self.text[-1],
                 reply_markup=self.post.reply_markup,
-                disable_web_page_preview=True,
+                disable_web_page_preview=self.disable_web_page_preview,
                 disable_notification=self.disable_notification,
             )
 
@@ -129,7 +130,7 @@ class PostSender:
                             self.chat_id,
                             self.text[-1],
                             reply_markup=self.post.reply_markup,
-                            disable_web_page_preview=True,
+                            disable_web_page_preview=self.disable_web_page_preview,
                             disable_notification=self.disable_notification,
                         )
 
