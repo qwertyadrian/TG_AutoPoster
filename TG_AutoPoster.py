@@ -5,7 +5,7 @@ import argparse
 import configparser
 import os.path
 from datetime import timedelta
-from parser import get_new_posts, get_new_stories
+from parsers import get_new_posts, get_new_stories
 from tempfile import TemporaryDirectory
 from time import sleep
 
