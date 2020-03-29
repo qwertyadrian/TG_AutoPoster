@@ -314,6 +314,10 @@ class VkPostParser:
             self.user = self.session.method(
                 method="users.get", values={"user_ids": self.post["signer_id"], "fields": "domain"}
             )[0]
+        elif self.post["owner_id"] != self.post["from_id"]:
+            self.user = self.session.method(
+                method="users.get", values={"user_ids": self.post["from_id"], "fields": "domain"}
+            )[0]
 
     def generate_repost(self):
         log.info("Включена отправка репоста. Начинаем парсинг репоста.")
