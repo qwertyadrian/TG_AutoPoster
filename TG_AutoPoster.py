@@ -70,9 +70,10 @@ class AutoPoster:
         # Инициализация Telegram бота
         self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path, workdir=os.getcwd())
         self.bot.set_parse_mode("html")
-        # Чтение из конфига логина и пароля ВК
+        # Чтение из конфига логина, пароля, а также токена (если он есть)
         vk_login = self.config.get("global", "login")
         vk_pass = self.config.get("global", "pass")
+        vk_token = self.config.get("global", "token", fallback="")
         # Чтение из конфига пути к файлу со стоп-словами
         self.stop_list = self.config.get("global", "stop_list", fallback=[])
         if self.stop_list:
@@ -81,10 +82,13 @@ class AutoPoster:
                 self.stop_list = [i.strip() for i in f.readlines()]
             log.info("Загружен список стоп-слов")
         # Инициализация ВК сессии
-        self.vk_session = VkApi(
-            login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
-        )
-        self.vk_session.auth()
+        if vk_token:  # Если в конфиге был указан токен, то используем его
+            self.vk_session = VkApi(token=vk_token)  # При использовании токена будут недоступны аудиозаписи
+        else:  # В противном случае авторизуемся, используя логин и пароль
+            self.vk_session = VkApi(
+                login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
+            )
+            self.vk_session.auth()
 
     def run(self):
         # Переход в папку с кэшем

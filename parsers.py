@@ -54,7 +54,7 @@ def get_stories(group, vk_session):
         stories = vk_session.method(method="stories.get", values={"owner_id": group})
         return stories["items"][0] if stories["count"] >= 1 else list()
     except Exception as error:
-        log.exception("Ошибка получения историй: {0}", error)
+        log.error("Ошибка получения историй: {0}", error)
         return list()
 
 
@@ -120,7 +120,10 @@ def get_new_stories(domain, vk_session, config):
 class VkPostParser:
     def __init__(self, post, group, session, sign_posts=False, what_to_parse=None):
         self.session = session
-        self.audio_session = VkAudio(session)
+        try:
+            self.audio_session = VkAudio(session)
+        except IndexError:
+            self.audio_session = None
         self.sign_posts = sign_posts
         self.pattern = "@" + group
         self.group = group
@@ -240,24 +243,28 @@ class VkPostParser:
     def generate_music(self):
         if "audio" in self.attachments_types:
             log.info("[AP] Извлечение аудио...")
-            tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
-            for track in tracks:
-                name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"] + ".mp3")
-                try:
-                    file = download(track["url"], out=name)
-                except (urllib.error.URLError, IndexError):
-                    log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
-                    continue
-                try:
-                    music = EasyID3(file)
-                except id3.ID3NoHeaderError:
-                    music = File(file, easy=True)
-                    music.add_tags()
-                music["title"] = track["title"]
-                music["artist"] = track["artist"]
-                music.save()
-                del music
-                self.tracks.append((name, track["duration"]))
+            try:
+                tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
+            except Exception as error:
+                log.error("Ошибка получения аудиозаписей: {0}", error)
+            else:
+                for track in tracks:
+                    name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"] + ".mp3")
+                    try:
+                        file = download(track["url"], out=name)
+                    except (urllib.error.URLError, IndexError):
+                        log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
+                        continue
+                    try:
+                        music = EasyID3(file)
+                    except id3.ID3NoHeaderError:
+                        music = File(file, easy=True)
+                        music.add_tags()
+                    music["title"] = track["title"]
+                    music["artist"] = track["artist"]
+                    music.save()
+                    del music
+                    self.tracks.append((name, track["duration"]))
 
     def generate_poll(self, attachment):
         self.poll = {
