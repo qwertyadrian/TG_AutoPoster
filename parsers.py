@@ -26,6 +26,7 @@ def get_posts(group, vk_session):
     """
     # noinspection PyBroadException
     try:
+        group = group.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
             feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": 11})
@@ -47,6 +48,7 @@ def get_stories(group, vk_session):
     :return: Возвращает список словарей с историями
     """
     try:
+        group = group.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
         else:
@@ -118,15 +120,14 @@ def get_new_stories(domain, vk_session, config):
 
 
 class VkPostParser:
-    def __init__(self, post, group, session, sign_posts=False, what_to_parse=None):
+    def __init__(self, post, domain, session, sign_posts=False, what_to_parse=None):
         self.session = session
         try:
             self.audio_session = VkAudio(session)
         except IndexError:
             self.audio_session = None
         self.sign_posts = sign_posts
-        self.pattern = "@" + group
-        self.group = group
+        self.pattern = "@" + domain.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
         self.raw_post = post
         self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.raw_post)
         self.text = ""
@@ -270,8 +271,8 @@ class VkPostParser:
         self.poll = {
             "question": attachment["poll"]["question"],
             "options": [answer["text"] for answer in attachment["poll"]["answers"]],
-            # "allows_multiple_answers": attachment["poll"]["multiple"],
-            # "is_anonymous": attachment["poll"]["anonymous"],
+            "allows_multiple_answers": attachment["poll"]["multiple"],
+            "is_anonymous": attachment["poll"]["anonymous"],
         }
 
     def sign_post(self):
