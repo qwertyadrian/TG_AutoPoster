@@ -20,7 +20,7 @@ else
         echo "Активация виртуального окружения."
         . ${ENV_PATH}/bin/activate
         echo "Запуск бота."
-        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$*"
+        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$@"
         then
             echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
         fi
@@ -30,7 +30,7 @@ else
     else
         echo "Папка с виртуальным окружением не найдена или задана не правильно."
         echo "Попытка запуска бота без виртуального окружения."
-        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$*"
+        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$@"
         then
             echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
         fi
