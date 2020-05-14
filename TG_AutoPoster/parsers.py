@@ -12,7 +12,9 @@ from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from tools import build_menu
+from TG_AutoPoster.tools import build_menu
+
+MAX_FILENAME = 255
 
 
 def get_posts(group, vk_session):
@@ -230,7 +232,7 @@ class VkPostParser:
                 file = download(video_link)
                 if getsize(file) >= 1610612736:
                     log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
-                    self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а)' " ⏳ {1[duration]} сек".format(
+                    self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                         video_link.replace("m.", ""), attachment["video"]
                     )
                     del file
@@ -250,7 +252,12 @@ class VkPostParser:
                 log.error("Ошибка получения аудиозаписей: {0}", error)
             else:
                 for track in tracks:
-                    name = sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"] + ".mp3")
+                    name = (
+                        sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
+                            : MAX_FILENAME - 16
+                        ]
+                        + ".mp3"
+                    )
                     try:
                         file = download(track["url"], out=name)
                     except (urllib.error.URLError, IndexError):

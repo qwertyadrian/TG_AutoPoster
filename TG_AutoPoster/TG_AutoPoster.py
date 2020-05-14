@@ -4,8 +4,7 @@
 import argparse
 import configparser
 import os.path
-import sys
-from parsers import get_new_posts, get_new_stories
+from TG_AutoPoster.parsers import get_new_posts, get_new_stories
 from tempfile import TemporaryDirectory
 from time import sleep
 
@@ -13,8 +12,8 @@ from loguru import logger as log
 from pyrogram import Client
 from vk_api import VkApi
 
-from handlers import auth_handler, captcha_handler
-from sender import PostSender
+from TG_AutoPoster.handlers import auth_handler, captcha_handler
+from TG_AutoPoster.sender import PostSender
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
@@ -55,7 +54,7 @@ def create_parser():
     parser.add_argument(
         "--cache-dir",
         default=CACHE_DIR,
-        help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка)",
+        help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка; .cache в Windows)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Режим отладки")
     return parser
@@ -143,8 +142,8 @@ class AutoPoster:
                         )
                         sender.send_post()
                     self._save_config()
-            for data in os.listdir("."):
-                os.remove(data)
+            for data in os.listdir(self.cache_dir):
+                os.remove(os.path.join(self.cache_dir, data))
         self._save_config()
 
     def infinity_run(self, interval=3600):
@@ -164,18 +163,3 @@ class AutoPoster:
         self.config.read(self.config_path)
         log.debug("Config reloaded.")
 
-
-if __name__ == "__main__":
-    args = create_parser().parse_args()
-    if args.debug:
-        log.add(sys.stdout, colorize=True)
-        log.add("./logs/bot_log_DEBUG.log", level="DEBUG", rotation="5 MB")
-    log.info("Начало работы.")
-    autoposter = AutoPoster(config_path=args.config, cache_dir=args.cache_dir, ipv6=args.ipv6)
-    if args.loop or args.sleep:
-        sleep_time = args.sleep if args.sleep else 3600
-        log.info("Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.")
-        autoposter.infinity_run(interval=sleep_time)
-    else:
-        autoposter.run()
-    log.info("Работа завершена. Выход.")

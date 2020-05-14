@@ -2,7 +2,7 @@ import pyrogram.errors
 from loguru import logger as log
 from pyrogram import InputMediaPhoto
 
-from tools import split
+from TG_AutoPoster.tools import split
 
 
 class PostSender:
