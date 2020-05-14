@@ -281,6 +281,8 @@ class VkPostParser:
             "allows_multiple_answers": attachment["poll"]["multiple"],
             "is_anonymous": attachment["poll"]["anonymous"],
         }
+        if len(self.poll["options"]) == 1:
+            self.poll["options"].append("...")
 
     def sign_post(self):
         button_list = []
