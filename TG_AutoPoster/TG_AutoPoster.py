@@ -4,7 +4,7 @@
 import argparse
 import configparser
 import os.path
-from TG_AutoPoster.parsers import get_new_posts, get_new_stories
+from re import sub
 from tempfile import TemporaryDirectory
 from time import sleep
 
@@ -13,6 +13,7 @@ from pyrogram import Client
 from vk_api import VkApi
 
 from TG_AutoPoster.handlers import auth_handler, captcha_handler
+from TG_AutoPoster.parsers import get_new_posts, get_new_stories
 from TG_AutoPoster.sender import PostSender
 
 if os.name != "nt":
@@ -75,11 +76,16 @@ class AutoPoster:
         vk_token = self.config.get("global", "token", fallback="")
         # Чтение из конфига пути к файлу со стоп-словами
         self.stop_list = self.config.get("global", "stop_list", fallback=[])
+        self.blacklist = self.config.get("global", "blacklist", fallback=[])
         if self.stop_list:
             # Инициализация списка стоп-слов
             with open(self.stop_list, "r", encoding="utf-8") as f:
                 self.stop_list = [i.strip() for i in f.readlines()]
             log.info("Загружен список стоп-слов")
+        if self.blacklist:
+            with open(self.blacklist, encoding="utf-8") as f:
+                self.blacklist = [i.strip() for i in f.readlines()]
+            log.info("Загружен черный спиок слов")
         # Инициализация ВК сессии
         if vk_token:  # Если в конфиге был указан токен, то используем его
             self.vk_session = VkApi(token=vk_token)  # При использовании токена будут недоступны аудиозаписи
@@ -124,6 +130,8 @@ class AutoPoster:
                         log.info("Пост содержит стоп-слово, поэтому он не будет отправлен.")
                 # Отправка постов
                 if not skip_post:
+                    for word in self.blacklist:
+                        post.text = sub(word, "", post.text)
                     with self.bot:
                         sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
                         sender.send_post()
@@ -162,4 +170,3 @@ class AutoPoster:
         self.config = configparser.ConfigParser()
         self.config.read(self.config_path)
         log.debug("Config reloaded.")
-

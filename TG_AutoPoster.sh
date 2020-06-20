@@ -10,14 +10,14 @@ if [[ $1 = 'edit' ]]
 then
     if [[ -x ${EDITOR} ]]
     then
-        ${EDITOR} TG_AutoPoster/config.ini
+        ${EDITOR} config.ini
     else
-        echo 'Variable environment EDITOR is not set.'
+        echo 'Variable environment EDITOR is not set. Edit file config.ini manually.'
     fi
 else
     if [[ -d ${ENV_PATH} ]]
     then
-        echo "Активация виртуального окружения."
+        echo "Activating virtual environment."
         . ${ENV_PATH}/bin/activate
         echo "Запуск бота."
         if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$@"
