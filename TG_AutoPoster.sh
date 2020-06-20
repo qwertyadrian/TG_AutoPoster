@@ -8,14 +8,19 @@ PYTHON_EXECUTABLE="python3" # Имя файла интерпретатора Pyt
 
 if [[ $1 = 'edit' ]]
 then
-    nano ./config.ini
+    if [[ -x ${EDITOR} ]]
+    then
+        ${EDITOR} config.ini
+    else
+        echo 'Variable environment EDITOR is not set. Edit file config.ini manually.'
+    fi
 else
     if [[ -d ${ENV_PATH} ]]
     then
-        echo "Активация виртуального окружения."
-        source ${ENV_PATH}/bin/activate
+        echo "Activating virtual environment."
+        . ${ENV_PATH}/bin/activate
         echo "Запуск бота."
-        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1 $2 $3 $4"
+        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$@"
         then
             echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
         fi
@@ -25,7 +30,7 @@ else
     else
         echo "Папка с виртуальным окружением не найдена или задана не правильно."
         echo "Попытка запуска бота без виртуального окружения."
-        if ! ${PYTHON_EXECUTABLE} TG_AutoPoster.py "$1"
+        if ! ${PYTHON_EXECUTABLE} -m TG_AutoPoster "$@"
         then
             echo -e "\e[41mПрограмма завершилась неудачно. Смотрите логи.\e[0m"
         fi
