@@ -150,6 +150,7 @@ class AutoPoster:
                         )
                         sender.send_post()
                     self._save_config()
+            log.debug("Clearing cache directory {}", self.cache_dir)
             for data in os.listdir(self.cache_dir):
                 os.remove(os.path.join(self.cache_dir, data))
         self._save_config()

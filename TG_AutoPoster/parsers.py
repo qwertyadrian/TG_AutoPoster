@@ -1,7 +1,7 @@
 import time
 import urllib.error
 from os.path import getsize
-from re import MULTILINE, finditer, sub
+from re import IGNORECASE, MULTILINE, finditer, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
@@ -15,6 +15,7 @@ from wget import download
 from TG_AutoPoster.tools import build_menu
 
 MAX_FILENAME = 255
+DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
 
 def get_posts(group, vk_session):
@@ -28,7 +29,7 @@ def get_posts(group, vk_session):
     """
     # noinspection PyBroadException
     try:
-        group = group.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
+        group = sub(DOMAIN_REGEX, "", group)
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
             feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": 11})
@@ -50,9 +51,11 @@ def get_stories(group, vk_session):
     :return: Возвращает список словарей с историями
     """
     try:
-        group = group.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
+        group = sub(DOMAIN_REGEX, "", group)
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
+        elif group.startswith("id"):
+            group = group.replace("id", "")
         else:
             group = -vk_session.method(method="groups.getById", values={"group_ids": group})[0]["id"]
         stories = vk_session.method(method="stories.get", values={"owner_id": group})
@@ -129,7 +132,7 @@ class VkPostParser:
         except IndexError:
             self.audio_session = None
         self.sign_posts = sign_posts
-        self.pattern = "@" + domain.replace("https://vk.com/", "").replace("https://m.vk.com/", "")
+        self.pattern = "@" + sub(DOMAIN_REGEX, "", domain)
         self.raw_post = post
         self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.raw_post)
         self.text = ""
@@ -174,7 +177,7 @@ class VkPostParser:
             log.info("[AP] Обнаружен текст. Извлечение.")
             self.text += self.raw_post["text"] + "\n"
             if self.pattern != "@":
-                self.text = self.text.replace(self.pattern, "")
+                self.text = sub(self.pattern, "", self.text, flags=IGNORECASE)
             self.text = self.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             matches = finditer(r"\[(.*?)\]", self.text, MULTILINE)
             result = {}
