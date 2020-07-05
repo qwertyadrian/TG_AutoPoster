@@ -217,6 +217,7 @@ class VkPostParser:
 
     def generate_doc(self, attachment):
         try:
+            attachment["doc"]["title"] = sub(r"[/\\:*?\"><|]", "", attachment["doc"]["title"])
             if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
                 doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
             else:
