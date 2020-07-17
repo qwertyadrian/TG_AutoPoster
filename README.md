@@ -7,9 +7,10 @@ TG_AutoPoster
 [![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***
 ## Установка
-1. Клонируйте репозиторий
+1. Клонируйте репозиторий и перейдите в директорию репозитория
 ```shell script
 git clone https://github.com/qwertyadrian/TG_AutoPoster
+cd TG_AutoPoster
 ```
 2. Установите требуемые зависимости (желательно использовать виртуальное окружние)
 ```shell script
@@ -67,34 +68,12 @@ pip install -r requirements.txt
 9. Готово!
 ***
 Дополнительно:
-Если вы хотите управлять автопостингом через Telegram чат, то предлагаю ознакомиться с [TG_AutoConfigurator](https://github.com/qwertyadrian/TG_AutoConfigurator).  
-Сейчас он умеет: смотреть логи, удалять/добавлять/просматривать источники постов  
-Запланировано для него следующее: настройка отправляемых вложений (в том числе отдельно для каждой группы), управление несколькими ботами  
+Если вы хотите управлять автопостингом через Telegram чат, то предлагаю ознакомиться с [TG_AutoConfigurator](https://github.com/qwertyadrian/TG_AutoConfigurator). 
 ***
-
-## Docker контейнер
-### Порядок установки
-1. Установите Docker
-2. Получите образ контейнера с помощью команды:
-```shell script
-docker pull qwertyadrian/tg_autoposter
-```
-3. Запустите docker контейнер командой (должно завершиться с ошибкой)
-```shell script
-docker run -it --name <имя_контейнера> tg_autoposter
-```
-4. Скопируйте файл конфигурации config.ini в созданный контейнер командой:
-```shell script
-docker cp <путь_до_файла_конфигурации> <имя_контейнера>:/TG_AutoPoster/config.ini
-```
-5. Если необходимо, скопируйте файл со стоп-словами в созданный контейнер командой:
-```shell script
-docker cp <путь_до_файла_со_стоп_словами> <имя_контейнера>:/TG_AutoPoster/<имя_файла_со_стоп_словами>
-```
-6. Повторно запустите контейнер командой (параметр `-ai` необходим только для интерактивного режима, для запуска в фоне можно опустить):
-```shell script
-docker start -ai <имя_контейнера>
-```
+При установке TG_AutoPoster на Windows могут наблюдаться проблемы с установкой зависимости vk_api, так как используется мой форк библиотеки с поддержкой аудио.
+Поэтому при возникновении ошибок необходимо самостоятельно скачать [архив](https://github.com/qwertyadrian/vk_api/archive/master.zip) библиотеки, распаковать и установить с помощью команды `pip install -U ./vk_api-master`
+***
+[Использование Docker контейнера](/Docker.md)
 
 Вопросы и предложения:
 1. Telegram: [@QwertyAdrian](https://t.me/QwertyAdrian)
