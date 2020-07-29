@@ -3,7 +3,8 @@
 
 import argparse
 import configparser
-import os.path
+import os
+from pathlib import Path
 from re import sub
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -18,13 +19,10 @@ from TG_AutoPoster.sender import PostSender
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
-    CACHE_DIR = TEMP_DIR.name
+    CACHE_DIR = Path(TEMP_DIR.name)
 else:
-    CACHE_DIR = os.path.join(os.getcwd(), ".cache")
-CONFIG_PATH = os.path.join(os.getcwd(), "config.ini")
-
-log.remove()
-log.add("./logs/bot_log_{time}.log")
+    CACHE_DIR = Path.cwd() / ".cache"
+CONFIG_PATH = Path.cwd() / "config.ini"
 
 
 def create_parser():
@@ -58,10 +56,18 @@ def create_parser():
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка; .cache в Windows)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Режим отладки")
+    parser.add_argument(
+        "-i",
+        "--ignore-errors",
+        action="store_true",
+        help="Игнорировать любые возникающие ошибки (работает с параметром --loop)"
+    )
     return parser
 
 
 class AutoPoster:
+    IGNORE_ERRORS = False
+
     def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR, ipv6=False):
         self.cache_dir = cache_dir
         self.config_path = config_path
@@ -152,15 +158,24 @@ class AutoPoster:
                     self._save_config()
             log.debug("Clearing cache directory {}", self.cache_dir)
             for data in os.listdir(self.cache_dir):
-                os.remove(os.path.join(self.cache_dir, data))
+                os.remove(self.cache_dir / data)
         self._save_config()
 
     def infinity_run(self, interval=3600):
         while True:
-            self.run()
-            log.info("Работа завершена. Отправка в сон на {} секунд.", interval)
-            sleep(interval)
-            self._reload_config()
+            try:
+                self.run()
+            except Exception as exc:
+                log.opt(exception=True).exception("При работе программы возникла ошибка")
+                if self.IGNORE_ERRORS:
+                    log.warning("Было включено игнорирование ошибок, возобновление работы")
+                else:
+                    log.error("Продолжение работы невозможно. Выход...")
+                    raise exc
+            else:
+                log.info("Работа завершена. Отправка в сон на {} секунд.", interval)
+                sleep(interval)
+                self._reload_config()
 
     def _save_config(self):
         with open(self.config_path, "w", encoding="utf-8") as f:
