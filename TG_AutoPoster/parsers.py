@@ -14,27 +14,29 @@ from wget import download
 
 from TG_AutoPoster.tools import build_menu
 
-MAX_FILENAME = 255
+MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
 
-def get_posts(group, vk_session):
+def get_posts(group, vk_session, count=11):
     """
     Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
     ничего
 
     :param vk_session: Экземпляр класса VkApi
     :param group: ID группы ВК
+    :param count: Количество получаемых постов
     :return: Возвращает список словарей с постами
     """
     # noinspection PyBroadException
     try:
+        log.info("Получение последних {} постов", count)
         group = sub(DOMAIN_REGEX, "", group)
         if group.startswith("club") or group.startswith("public") or "-" in group:
             group = group.replace("club", "-").replace("public", "-")
-            feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": 11})
+            feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": count})
         else:
-            feed = vk_session.method(method="wall.get", values={"domain": group, "count": 11})
+            feed = vk_session.method(method="wall.get", values={"domain": group, "count": count})
         return feed["items"]
     except Exception as error:
         log.exception("Ошибка получения постов: {}", error)
@@ -75,10 +77,11 @@ def get_new_posts(domain, vk_session, config):
     what_to_parse = set(
         config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
     )
+    posts_count = config.getint(domain, "posts_count", fallback=config.get("global", "posts_count", fallback=11))
 
     log.info("[VK] Проверка на наличие новых постов в {} с последним ID {}", domain, last_id, colorize=True)
 
-    posts = get_posts(domain, vk_session)
+    posts = get_posts(domain, vk_session, count=posts_count)
     for post in reversed(posts):
         is_pinned = post.get("is_pinned", False)
         if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
@@ -228,6 +231,7 @@ class VkPostParser:
             self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
 
     def generate_video(self, attachment):
+        log.info("[AP] Извлечение видео...")
         video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
         if not attachment["video"].get("platform"):
             soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
@@ -258,7 +262,7 @@ class VkPostParser:
                 for track in tracks:
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
-                            : MAX_FILENAME - 16
+                        : MAX_FILENAME_LENGTH - 16
                         ]
                         + ".mp3"
                     )
