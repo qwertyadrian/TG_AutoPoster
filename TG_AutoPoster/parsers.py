@@ -12,7 +12,7 @@ from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from TG_AutoPoster.tools import build_menu
+from TG_AutoPoster.tools import build_menu, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -260,23 +260,33 @@ class VkPostParser:
                 log.error("Ошибка получения аудиозаписей: {0}", error)
             else:
                 for track in tracks:
-                    if ".m3u8" in track["url"]:
-                        log.warning(
-                            "Файлом аудиозаписи является m3u8 плейлист. Его конвертация в mp3 временно не доступна "
-                            "Пропуск файла"
-                        )
-                        continue
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
                         : MAX_FILENAME_LENGTH - 16
                         ]
                         + ".mp3"
                     )
-                    try:
-                        file = download(track["url"], out=name)
-                    except (urllib.error.URLError, IndexError):
-                        log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
-                        continue
+                    if ".m3u8" in track["url"]:
+                        log.warning("Файлом аудиозаписи является m3u8 плейлист.")
+                        file = name
+                        streamlink_args = ["streamlink", "--output", name.replace(".mp3", ".ts"), track["url"], "best"]
+                        ffmpeg_args = ["ffmpeg", "-i", name.replace(".mp3", ".ts"), name]
+
+                        result = start_process(streamlink_args)
+                        if result > 0:
+                            log.critical("При запуске команды {} произошла ошибка.", " ".join(streamlink_args))
+                            continue
+
+                        result = start_process(ffmpeg_args)
+                        if result > 0:
+                            log.critical("При запуске команды {} произошла ошибка", " ".join(ffmpeg_args))
+                            continue
+                    else:
+                        try:
+                            file = download(track["url"], out=name)
+                        except (urllib.error.URLError, IndexError):
+                            log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
+                            continue
                     try:
                         music = EasyID3(file)
                     except id3.ID3NoHeaderError:
