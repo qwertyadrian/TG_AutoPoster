@@ -260,6 +260,12 @@ class VkPostParser:
                 log.error("Ошибка получения аудиозаписей: {0}", error)
             else:
                 for track in tracks:
+                    if ".m3u8" in track["url"]:
+                        log.warning(
+                            "Файлом аудиозаписи является m3u8 плейлист. Его конвертация в mp3 временно не доступна "
+                            "Пропуск файла"
+                        )
+                        continue
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
                         : MAX_FILENAME_LENGTH - 16
