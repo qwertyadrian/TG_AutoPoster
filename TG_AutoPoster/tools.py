@@ -1,3 +1,6 @@
+import subprocess
+import time
+
 # Символы, на которых можно разбить сообщение
 message_breakers = ["\n", ", "]
 
@@ -12,8 +15,8 @@ def update_parameter(config, section, name, num, config_path="../config.ini") ->
 def split(text: str, max_message_length: int = 4091) -> list:
     """ Разделение текста на части
 
-    :param text: Рабиваемый текст
-    :param max_message_length: Максимальная длина рабитой части текста
+    :param text: Разбиваемый текст
+    :param max_message_length: Максимальная длина разбитой части текста
     """
     if len(text) >= max_message_length:
         last_index = max(map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
@@ -35,3 +38,10 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     if footer_buttons:
         menu.append(footer_buttons)
     return menu
+
+
+def start_process(command: list) -> int:
+    process = subprocess.Popen(command)
+    while process.poll() is None:
+        time.sleep(1)
+    return process.returncode
