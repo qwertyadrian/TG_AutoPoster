@@ -32,9 +32,9 @@ def captcha_handler(captcha):
     input_thread.start()
     for _ in range(120):
         sleep(1)
-        if user_input[0] is not None:
+        if user_input[1] is not None:
             key = user_input[1]
-            user_input[0] = None
+            user_input[1] = None
             break
     if not key:
         raise TimeoutError("Время ожидания ввода истекло.")
