@@ -295,7 +295,7 @@ class VkPostParser:
                     )
                     if result:
                         log.info("Аудиозапись {} подготовлена к отправке", name)
-                        self.tracks.append((name, track["duration"]))
+                        self.tracks.append((name, track["duration"], track["artist"], track["title"], track_cover))
 
     def generate_poll(self, attachment):
         self.poll = {
