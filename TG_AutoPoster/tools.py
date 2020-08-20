@@ -1,6 +1,9 @@
 import subprocess
 import time
 
+from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
+from mutagen.mp3 import MP3
+
 # Символы, на которых можно разбить сообщение
 message_breakers = ["\n", ", "]
 
@@ -45,3 +48,42 @@ def start_process(command: list) -> int:
     while process.poll() is None:
         time.sleep(1)
     return process.returncode
+
+
+def add_audio_tags(filename, artist, title, track_cover):
+    audio = MP3(filename, ID3=ID3)
+    # add ID3 tag if it doesn't exist
+    try:
+        audio.add_tags()
+    except error as e:
+        if str(e) != "an ID3 tag already exists":
+            return False
+    audio.clear()
+
+    if track_cover:
+        audio.tags.add(
+            APIC(
+                encoding=3,  # 3 is for utf-8
+                mime="image/png",  # image/jpeg or image/png
+                type=3,  # 3 is for the cover image
+                desc=u"Cover",
+                data=open(track_cover, "rb").read()
+            )
+        )
+
+    audio.tags.add(
+        TIT2(
+            encoding=3,
+            text=title
+        )
+    )
+
+    audio.tags.add(
+        TPE1(
+            encoding=3,
+            text=artist
+        )
+    )
+
+    audio.save()
+    return True
