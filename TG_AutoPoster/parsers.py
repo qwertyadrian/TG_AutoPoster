@@ -5,14 +5,12 @@ from re import IGNORECASE, MULTILINE, finditer, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
-from mutagen import File, id3
-from mutagen.easyid3 import EasyID3
 from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from TG_AutoPoster.tools import build_menu, start_process
+from TG_AutoPoster.tools import add_audio_tags, build_menu, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -270,7 +268,7 @@ class VkPostParser:
                         log.warning("Файлом аудиозаписи является m3u8 плейлист.")
                         file = name
                         streamlink_args = ["streamlink", "--output", name.replace(".mp3", ".ts"), track["url"], "best"]
-                        ffmpeg_args = ["ffmpeg", "-i", name.replace(".mp3", ".ts"), name]
+                        ffmpeg_args = ["ffmpeg", "-i", name.replace(".mp3", ".ts"), "-b:a", "320k", name]
 
                         result = start_process(streamlink_args)
                         if result > 0:
@@ -287,16 +285,17 @@ class VkPostParser:
                         except (urllib.error.URLError, IndexError):
                             log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                             continue
-                    try:
-                        music = EasyID3(file)
-                    except id3.ID3NoHeaderError:
-                        music = File(file, easy=True)
-                        music.add_tags()
-                    music["title"] = track["title"]
-                    music["artist"] = track["artist"]
-                    music.save()
-                    del music
-                    self.tracks.append((name, track["duration"]))
+                    track_cover = download(track["track_covers"][-1]) if track["track_covers"] else None
+                    log.info("Добавление тегов и обложки в аудиозапись")
+                    result = add_audio_tags(
+                        file,
+                        title=track["title"],
+                        artist=track["artist"],
+                        track_cover=track_cover,
+                    )
+                    if result:
+                        log.info("Аудиозапись {} подготовлена к отправке", name)
+                        self.tracks.append((name, track["duration"]))
 
     def generate_poll(self, attachment):
         self.poll = {
