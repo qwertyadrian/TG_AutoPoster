@@ -148,10 +148,11 @@ class PostSender:
 
     def send_music(self):
         log.info("Отправка аудио")
-        for audio, duration in self.post.tracks:
+        for audio, duration, artist, title, cover in self.post.tracks:
             log.debug("Sending audio {} with duration {} secs", audio, duration)
             self.bot.send_audio(
                 self.chat_id, audio, duration, disable_notification=self.disable_notification,
+                performer=artist, title=title, thumb=cover
             )
 
     def send_poll(self):
