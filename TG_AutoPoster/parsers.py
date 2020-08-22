@@ -1,4 +1,3 @@
-import time
 import urllib.error
 from os.path import getsize
 from re import IGNORECASE, MULTILINE, sub
@@ -14,115 +13,6 @@ from TG_AutoPoster.tools import add_audio_tags, build_menu, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
-
-
-def get_posts(group, vk_session, count=11):
-    """
-    Функция получения новых постов с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
-    ничего
-
-    :param vk_session: Экземпляр класса VkApi
-    :param group: ID группы ВК
-    :param count: Количество получаемых постов
-    :return: Возвращает список словарей с постами
-    """
-    # noinspection PyBroadException
-    try:
-        log.info("Получение последних {} постов", count)
-        group = sub(DOMAIN_REGEX, "", group)
-        if group.startswith("club") or group.startswith("public") or "-" in group:
-            group = group.replace("club", "-").replace("public", "-")
-            feed = vk_session.method(method="wall.get", values={"owner_id": group, "count": count})
-        else:
-            feed = vk_session.method(method="wall.get", values={"domain": group, "count": count})
-        return feed["items"]
-    except Exception as error:
-        log.exception("Ошибка получения постов: {}", error)
-        return list()
-
-
-def get_stories(group, vk_session):
-    """
-    Функция получения новых историй с серверов VK. В случае успеха возвращает словарь с постами, а в случае неудачи -
-    ничего
-
-    :param vk_session: Экземпляр класса VkApi
-    :param group: ID группы ВК
-    :return: Возвращает список словарей с историями
-    """
-    try:
-        group = sub(DOMAIN_REGEX, "", group)
-        if group.startswith("club") or group.startswith("public") or "-" in group:
-            group = group.replace("club", "-").replace("public", "-")
-        elif group.startswith("id"):
-            group = group.replace("id", "")
-        else:
-            group = -vk_session.method(method="groups.getById", values={"group_ids": group})[0]["id"]
-        stories = vk_session.method(method="stories.get", values={"owner_id": group})
-        return stories["items"][0] if stories["count"] >= 1 else list()
-    except Exception as error:
-        log.error("Ошибка получения историй: {0}", error)
-        return list()
-
-
-def get_new_posts(domain, vk_session, config):
-    last_id = config.getint(domain, "last_id", fallback=0)
-    pinned_id = config.getint(domain, "pinned_id", fallback=0)
-    send_reposts = config.get(domain, "send_reposts", fallback=config.get("global", "send_reposts", fallback=0))
-    sign_posts = config.getboolean(
-        domain, "sign_posts", fallback=config.getboolean("global", "sign_posts", fallback=True)
-    )
-    what_to_parse = set(
-        config.get(domain, "what_to_send", fallback=config.get("global", "what_to_send", fallback="all")).split(",")
-    )
-    posts_count = config.getint(domain, "posts_count", fallback=config.get("global", "posts_count", fallback=11))
-
-    log.info("[VK] Проверка на наличие новых постов в {} с последним ID {}", domain, last_id, colorize=True)
-
-    posts = get_posts(domain, vk_session, count=posts_count)
-    for post in reversed(posts):
-        is_pinned = post.get("is_pinned", False)
-        if post["id"] > last_id or (is_pinned and post["id"] != pinned_id):
-            log.info("[VK] Обнаружен новый пост с ID {}", post["id"])
-            if post.get("marked_as_ads", 0):
-                log.info("[VK] Пост рекламный. Он будет пропущен.")
-                continue
-            parsed_post = VkPostParser(post, domain, vk_session, sign_posts, what_to_parse)
-            parsed_post.generate_post()
-            if "copy_history" in parsed_post.raw_post:
-                log.info("В посте содержится репост.")
-                if send_reposts in ("no", 0):
-                    log.info("Отправка репостов полностью отключена, поэтому пост будет пропущен.")
-                elif send_reposts in ("post_only", 1):
-                    log.info("Отправка поста без репоста.")
-                    yield parsed_post
-                elif send_reposts in ("yes", "all", 2):
-                    yield parsed_post
-                    parsed_post.generate_repost()
-                    yield parsed_post.repost
-            else:
-                yield parsed_post
-            if is_pinned:
-                config.set(domain, "pinned_id", str(post["id"]))
-            if post["id"] > last_id:
-                config.set(domain, "last_id", str(post["id"]))
-                last_id = post["id"]
-            time.sleep(5)
-
-
-def get_new_stories(domain, vk_session, config):
-    last_story_id = config.getint(domain, "last_story_id", fallback=0)
-    log.info("[VK] Проверка на наличие новых историй в {} с последним ID {}", domain, last_story_id)
-    stories = get_stories(domain, vk_session)
-    for story in reversed(stories):
-        if story["id"] > last_story_id:
-            log.info("[VK] Обнаружен новая история с ID {}", story["id"])
-            parsed_story = VkStoryParser(story)
-            parsed_story.generate_story()
-            if not story.get("is_expired") and not story.get("is_deleted") and story.get("can_see"):
-                yield parsed_story
-            config.set(domain, "last_story_id", str(story["id"]))
-            last_story_id = story["id"]
 
 
 class VkPostParser:
@@ -227,7 +117,7 @@ class VkPostParser:
                 video_link = soup.find_all("source")[1].get("src")
                 file = download(video_link)
                 if getsize(file) >= 2097152000:
-                    log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
+                    log.info("[AP] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст.")
                     self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                         video_link.replace("m.", ""), attachment["video"]
                     )
