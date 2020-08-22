@@ -1,7 +1,7 @@
 import time
 import urllib.error
 from os.path import getsize
-from re import IGNORECASE, MULTILINE, finditer, sub
+from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
@@ -182,17 +182,7 @@ class VkPostParser:
             if self.pattern != "@":
                 self.text = sub(self.pattern, "", self.text, flags=IGNORECASE)
             self.text = self.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            matches = finditer(r"\[(.*?)\]", self.text, MULTILINE)
-            result = {}
-            for _, match in enumerate(matches):
-                for group_num in range(0, len(match.groups())):
-                    group_num = group_num + 1
-                    result[match.group()] = match.group(group_num)
-            try:
-                for i in result.keys():
-                    self.text = self.text.replace(i, '<a href="https://vk.com/{}">{}</a>'.format(*result[i].split("|")))
-            except IndexError:
-                pass
+            self.text = sub(r"\[(.*?)\|(.*?)\]", r'<a href="https://vk.com/\1">\2</a>', self.text, flags=MULTILINE)
 
     def generate_link(self, attachment):
         log.info("[AP] Парсинг ссылки...")
