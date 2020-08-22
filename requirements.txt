@@ -1,5 +1,5 @@
 -e git://github.com/qwertyadrian/vk_api#egg=vk_api
-pyrogram==0.17.1
+pyrogram==0.18.0
 tgcrypto==1.2.1
 loguru==0.5.1
 wget==3.2
