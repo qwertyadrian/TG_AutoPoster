@@ -5,3 +5,4 @@ loguru==0.5.1
 wget==3.2
 mutagen==1.44.0
 beautifulsoup4==4.8.2
+streamlink==1.5.0
