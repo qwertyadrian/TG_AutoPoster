@@ -228,7 +228,7 @@ class VkPostParser:
             if len(soup.find_all("source")) >= 2:
                 video_link = soup.find_all("source")[1].get("src")
                 file = download(video_link)
-                if getsize(file) >= 1610612736:
+                if getsize(file) >= 2097152000:
                     log.info("[AP] Видео весит более 1.5 ГиБ. Добавляем ссылку на видео в текст.")
                     self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                         video_link.replace("m.", ""), attachment["video"]
