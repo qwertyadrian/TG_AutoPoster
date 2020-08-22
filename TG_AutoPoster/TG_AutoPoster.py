@@ -14,7 +14,7 @@ from pyrogram import Client
 from vk_api import VkApi
 
 from TG_AutoPoster.handlers import auth_handler, captcha_handler
-from TG_AutoPoster.parsers import get_new_posts, get_new_stories
+from TG_AutoPoster.classes import Group
 from TG_AutoPoster.sender import PostSender
 
 if os.name != "nt":
@@ -107,27 +107,48 @@ class AutoPoster:
             os.chdir(self.cache_dir)
         except FileNotFoundError:
             os.mkdir(self.cache_dir)
-        groups = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
-        for group in groups:
+        domains = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
+        for domain in domains:
             try:
-                chat_id = self.config.getint(group, "channel")
+                chat_id = self.config.getint(domain, "channel")
             except ValueError:
-                chat_id = self.config.get(group, "channel")
+                chat_id = self.config.get(domain, "channel")
             disable_notification = self.config.getboolean(
-                group,
+                domain,
                 "disable_notification",
                 fallback=self.config.getboolean("global", "disable_notification", fallback=False),
             )
             disable_web_page_preview = self.config.getboolean(
-                group,
+                domain,
                 "disable_web_page_preview",
                 fallback=self.config.getboolean("global", "disable_web_page_preview", fallback=True),
             )
             send_stories = self.config.getboolean(
-                group, "send_stories", fallback=self.config.getboolean("global", "send_stories", fallback=False)
+                domain, "send_stories", fallback=self.config.getboolean("global", "send_stories", fallback=False)
+            )
+            last_id = self.config.getint(domain, "last_id", fallback=0)
+            pinned_id = self.config.getint(domain, "pinned_id", fallback=0)
+            send_reposts = self.config.get(domain, "send_reposts", fallback=self.config.get("global", "send_reposts", fallback=0))
+            sign_posts = self.config.getboolean(
+                domain, "sign_posts", fallback=self.config.getboolean("global", "sign_posts", fallback=True)
+            )
+            what_to_parse = set(
+                self.config.get(domain, "what_to_send", fallback=self.config.get("global", "what_to_send", fallback="all")).split(",")
+            )
+            posts_count = self.config.getint(domain, "posts_count", fallback=self.config.get("global", "posts_count", fallback=11))
+            last_story_id = self.config.getint(domain, "last_story_id", fallback=0)
+            group = Group(
+                domain,
+                self.vk_session,
+                last_id, pinned_id,
+                send_reposts,
+                sign_posts,
+                what_to_parse,
+                posts_count,
+                last_story_id
             )
             # Получение постов
-            posts = get_new_posts(group, self.vk_session, self.config)
+            posts = group.get_posts()
             for post in posts:
                 skip_post = False
                 for word in self.stop_list:
@@ -141,20 +162,23 @@ class AutoPoster:
                     with self.bot:
                         sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
                         sender.send_post()
+                self.config.set(domain, "pinned_id", str(group.pinned_id))
+                self.config.set(domain, "last_id", str(group.last_id))
                 self._save_config()
             if send_stories:
                 # Получение историй, если включено
-                stories = get_new_stories(group, self.vk_session, self.config)
+                stories = group.get_stories()
                 for story in stories:
                     with self.bot:
                         sender = PostSender(
                             self.bot,
                             story,
-                            self.config.get(group, "channel"),
+                            self.config.get(domain, "channel"),
                             disable_notification,
                             disable_web_page_preview,
                         )
                         sender.send_post()
+                        self.config.set(domain, "last_story_id", str(group.last_story_id))
                     self._save_config()
             log.debug("Clearing cache directory {}", self.cache_dir)
             for data in os.listdir(self.cache_dir):
