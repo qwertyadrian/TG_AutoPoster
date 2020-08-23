@@ -166,7 +166,7 @@ class VkPostParser:
                             log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                             continue
                     track_cover = download(track["track_covers"][-1]) if track["track_covers"] else None
-                    log.info("Добавление тегов и обложки в аудиозапись")
+                    log.debug("Adding tags in track")
                     result = add_audio_tags(
                         file,
                         title=track["title"],
@@ -174,7 +174,7 @@ class VkPostParser:
                         track_cover=track_cover,
                     )
                     if result:
-                        log.info("Аудиозапись {} подготовлена к отправке", name)
+                        log.debug("Track {} ready for sending", name)
                         self.tracks.append((name, track["duration"], track["artist"], track["title"], track_cover))
 
     def generate_poll(self, attachment):
