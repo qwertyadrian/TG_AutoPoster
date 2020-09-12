@@ -4,7 +4,7 @@ from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
-from pyrogram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
