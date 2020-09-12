@@ -6,22 +6,29 @@ TG_AutoPoster
 ![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
 [![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***
-## Установка (Linux)
-1. Клонируйте репозиторий и перейдите в папку с проектом
+### Установка
+```shell script
+pip3 install -U TG-AutoPoster
+```
+***
+### Установка (классический способ)
+Команды указаны для Linux
+Клонируйте репозиторий и перейдите в папку с проектом
 ```shell script
 git clone https://github.com/qwertyadrian/TG_AutoPoster
 cd TG_AutoPoster
 ```
-2. Инициализируйте и активируйте виртуальное окружение (при необходимости)
+Инициализируйте и активируйте виртуальное окружение (при необходимости)
 ```shell script
 python3 -m venv venv
 source venv/bin/activate
 ```
-3. Установите требуемые зависимости
+Установите требуемые зависимости
 ```shell script
 pip install -r requirements.txt
 ```
-4. Скопируйте содержимое файла [config.ini.example](/config.ini.example) в файл config.ini (создайте его, разумеется) и выполните настройку секции **global**
+### Настройка
+Скопируйте содержимое файла [config.ini.example](/config.ini.example) в файл config.ini (создайте его, разумеется) и выполните настройку секции **global**
 
 | Параметр | Возможные значения | Описание |
 | :------: | :----------------: | :------: |
@@ -38,7 +45,7 @@ pip install -r requirements.txt
 | disable_web_page_preview (необязательно) | yes, no | Отключить предпросмотр ссылок в сообщениях. По умолчанию: yes |
 | posts_count (необязательно) | число от 1 до 100 | Количество отправляемых ботом новых постов за раз. По умолчанию 11. |
 
-5. Получите ваши api_id и api_hash на https://my.telegram.org/apps и настройте секцию **pyrogram** (подробнее об Telegram API Keys [здесь](https://docs.pyrogram.org/intro/setup#api-keys))
+Получите ваши api_id и api_hash на https://my.telegram.org/apps и настройте секцию **pyrogram** (подробнее об Telegram API Keys [здесь](https://docs.pyrogram.org/intro/setup#api-keys))
 
 | Параметр | Описание |
 | :------: | :------: |
@@ -46,7 +53,7 @@ pip install -r requirements.txt
 | api_hash | App api_hash |
 | bot_token | Токен Telegram бота, полученный у [@BotFather](https://t.me/BotFather) |
 
-6. Если необходимо, настройте использование SOCKS прокси, добавив секцию **proxy** со следующим содержимым:
+Если необходимо, настройте использование SOCKS прокси, добавив секцию **proxy** со следующим содержимым:
 
 | Параметр | Возможные значения | Описание |
 | :------: | :----------------: | :------: |
@@ -56,7 +63,7 @@ pip install -r requirements.txt
 | username | | Имя пользователя (можно оставить пустым) |
 | password | | Пароль (можно оставить пустым) |
 
-7. Замените название секции с **domain1** на домен группы ВК (или на ссылку группы) и выполните соответствующую настройку этого секции.
+Замените название секции с **domain1** на домен группы ВК (или на ссылку группы) и выполните соответствующую настройку этого секции.
 
 | Параметр | Возможные значения | Описание |
 | :------: | :----------------: | :------: |
@@ -67,11 +74,11 @@ pip install -r requirements.txt
 Все необязательные параметры секции **global** могут быть заданы индивидуально для каждой группы.
 
 **Для работы с несколькими группами добавьте новые секции в соответствии с пунктом № 6**
-## Запуск
+### Запуск
 
-8. Пропишите запуск файла по расписанию [TG_AutoPoster.sh](/TG_AutoPoster.sh) в crontab (Linux) (нежелательно запускать бота каждые 5-10 минут, так как за это могут заморозить ваш профиль ВК). Также возможен запуск бота в бесконечном цикле с проверкой постов через определенный промежуток времени. Подробнее `python3 -m TG_AutoPoster --help`.
-9. Активируйте бота командой /start
-10. Готово!
+1. Пропишите запуск файла по расписанию [TG_AutoPoster.sh](/TG_AutoPoster.sh) в crontab (Linux) (нежелательно запускать бота каждые 5-10 минут, так как за это могут заморозить ваш профиль ВК). Также возможен запуск бота в бесконечном цикле с проверкой постов через определенный промежуток времени. Подробнее `python3 -m TG_AutoPoster --help`.
+2. Активируйте бота командой /start
+3. Готово!
 ***
 Дополнительно:
 Если вы хотите управлять автопостингом через Telegram чат, то предлагаю ознакомиться с [TG_AutoConfigurator](https://github.com/qwertyadrian/TG_AutoConfigurator).  
