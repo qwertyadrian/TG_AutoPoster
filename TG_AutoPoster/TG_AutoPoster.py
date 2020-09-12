@@ -14,7 +14,7 @@ from pyrogram import Client
 from vk_api import VkApi
 
 from TG_AutoPoster.handlers import auth_handler, captcha_handler
-from TG_AutoPoster.classes import Group
+from TG_AutoPoster.group import Group
 from TG_AutoPoster.sender import PostSender
 
 if os.name != "nt":

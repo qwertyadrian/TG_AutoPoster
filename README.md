@@ -2,7 +2,7 @@ TG_AutoPoster
 =============
 Бот, пересылающий записи из групп ВК в канал/чат/ЛС в Telegram.
 
-![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![Python Version](https://img.shields.io/badge/python-3.5%2B-orange.svg) [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg) ![Python Version](https://img.shields.io/badge/python-3.6%2B-orange.svg) [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg) ![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)
 [![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***
@@ -14,7 +14,7 @@ cd TG_AutoPoster
 ```
 2. Инициализируйте и активируйте виртуальное окружение (при необходимости)
 ```shell script
-virtualenv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 3. Установите требуемые зависимости
@@ -76,30 +76,7 @@ pip install -r requirements.txt
 Дополнительно:
 Если вы хотите управлять автопостингом через Telegram чат, то предлагаю ознакомиться с [TG_AutoConfigurator](https://github.com/qwertyadrian/TG_AutoConfigurator).  
 ***
-
-## Docker контейнер
-### Порядок установки
-1. Установите Docker
-2. Получите образ контейнера с помощью команды:
-```shell script
-docker pull qwertyadrian/tg_autoposter
-```
-3. Запустите docker контейнер командой (должно завершиться с ошибкой)
-```shell script
-docker run -it --name <имя_контейнера> tg_autoposter
-```
-4. Скопируйте файл конфигурации config.ini в созданный контейнер командой:
-```shell script
-docker cp <путь_до_файла_конфигурации> <имя_контейнера>:/TG_AutoPoster/config.ini
-```
-5. Если необходимо, скопируйте файл со стоп-словами в созданный контейнер командой:
-```shell script
-docker cp <путь_до_файла_со_стоп_словами> <имя_контейнера>:/TG_AutoPoster/<имя_файла_со_стоп_словами>
-```
-6. Повторно запустите контейнер командой (параметр `-ai` необходим только для интерактивного режима, для запуска в фоне можно опустить):
-```shell script
-docker start -ai <имя_контейнера>
-```
+[Использование Docker контейнера](/Docker.md)
 
 Вопросы и предложения:
 1. Telegram: [@QwertyAdrian](https://t.me/QwertyAdrian)

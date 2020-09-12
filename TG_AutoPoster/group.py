@@ -2,7 +2,7 @@ from vk_api import VkApi
 from loguru import logger as log
 import re
 import time
-from TG_AutoPoster.parsers import VkPostParser, VkStoryParser
+from TG_AutoPoster.parser import VkPostParser, VkStoryParser
 
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
