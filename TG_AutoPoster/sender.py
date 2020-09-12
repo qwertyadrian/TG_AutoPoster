@@ -1,6 +1,6 @@
 import pyrogram.errors
 from loguru import logger as log
-from pyrogram import InputMediaPhoto
+from pyrogram.types import InputMediaPhoto
 
 from TG_AutoPoster.tools import split
 

@@ -27,7 +27,7 @@ setup(
 
     packages=find_packages(),
     install_requires=[
-        "pyrogram==0.18.0",
+        "pyrogram==1.0.7",
         "tgcrypto==1.2.1",
         "loguru==0.5.2",
         "wget==3.2",
