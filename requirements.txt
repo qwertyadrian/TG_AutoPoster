@@ -1,8 +1,8 @@
--e git://github.com/qwertyadrian/vk_api#egg=vk_api
+vk_api==11.9.0
 pyrogram==0.18.0
 tgcrypto==1.2.1
-loguru==0.5.1
+loguru==0.5.2
 wget==3.2
-mutagen==1.44.0
-beautifulsoup4==4.8.2
+mutagen==1.45.1
+beautifulsoup4==4.9.1
 streamlink==1.5.0
