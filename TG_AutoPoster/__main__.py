@@ -14,7 +14,7 @@ if __name__ == "__main__":
     autoposter.IGNORE_ERRORS = args.ignore_errors
     if args.loop or args.sleep:
         sleep_time = args.sleep if args.sleep else 3600
-        log.info("Программе был передан аргумен --loop (-l). Запуск бота в бесконечном цикле.")
+        log.info("Программе был передан аргумент --loop (-l). Запуск бота в бесконечном цикле.")
         autoposter.infinity_run(interval=sleep_time)
     else:
         autoposter.run()
