@@ -4,7 +4,8 @@ from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo,\
+    InputMediaAudio, InputMediaDocument
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
@@ -103,7 +104,7 @@ class VkPostParser:
                 doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
             else:
                 doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
-            self.docs.append(doc)
+            self.docs.append(InputMediaDocument(doc))
         except urllib.error.URLError as error:
             log.exception("[AP] Невозможно скачать вложенный файл: {0}.", error)
             self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
@@ -175,7 +176,12 @@ class VkPostParser:
                     )
                     if result:
                         log.debug("Track {} ready for sending", name)
-                        self.tracks.append((name, track["duration"], track["artist"], track["title"], track_cover))
+                        self.tracks.append(
+                            InputMediaAudio(
+                                name, track_cover, duration=track["duration"],
+                                performer=track["artist"], title=track["title"]
+                            )
+                        )
 
     def generate_poll(self, attachment):
         self.poll = {
@@ -241,6 +247,8 @@ class VkStoryParser:
         self.story = story
         self.text = ""
         self.media = []
+        self.docs = []
+        self.tracks = []
         self.reply_markup = None
 
     def generate_story(self):
