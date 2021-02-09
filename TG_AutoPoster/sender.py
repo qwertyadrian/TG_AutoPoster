@@ -49,40 +49,49 @@ class PostSender:
                 disable_notification=self.disable_notification,
             )
         elif len(attachments) == 1:
-            if len(self.post.text) <= 1024:
-                if isinstance(attachments[0], InputMediaPhoto):
-                    self.bot.send_photo(
-                        self.chat_id,
-                        attachments[0]["media"],
-                        caption=self.text[-1],
-                        reply_markup=self.post.reply_markup,
-                        disable_notification=self.disable_notification,
-                    )
-                elif isinstance(attachments[0], InputMediaVideo):
-                    self.bot.send_video(
-                        self.chat_id,
-                        attachments[0]["media"],
-                        caption=self.text[-1],
-                        reply_markup=self.post.reply_markup,
-                        disable_notification=self.disable_notification,
-                    )
-                elif isinstance(attachments[0], InputMediaDocument):
-                    self.bot.send_document(
-                        self.chat_id,
-                        document=attachments[0]["media"],
-                        caption=self.text[-1],
-                        disable_notification=self.disable_notification,
-                    )
-                elif isinstance(attachments[0], InputMediaAudio):
-                    self.bot.send_audio(
-                        self.chat_id,
-                        attachments[0]["media"],
-                        thumb=attachments[0]["thumb"],
-                        duration=attachments[0]["duration"],
-                        title=attachments[0]["title"],
-                        performer=attachments[0]["performer"],
-                        caption=self.text[-1],
-                    )
+            if len(self.post.text) > 1024:
+                self.send_splitted_message(self.bot, self.text, self.chat_id)
+                self.bot.send_message(
+                    self.chat_id,
+                    self.text[-1],
+                    reply_markup=self.post.reply_markup,
+                    disable_web_page_preview=self.disable_web_page_preview,
+                    disable_notification=self.disable_notification,
+                )
+                self.post.text = ""
+            if isinstance(attachments[0], InputMediaPhoto):
+                self.bot.send_photo(
+                    self.chat_id,
+                    attachments[0]["media"],
+                    caption=self.post.text,
+                    reply_markup=self.post.reply_markup,
+                    disable_notification=self.disable_notification,
+                )
+            elif isinstance(attachments[0], InputMediaVideo):
+                self.bot.send_video(
+                    self.chat_id,
+                    attachments[0]["media"],
+                    caption=self.post.text,
+                    reply_markup=self.post.reply_markup,
+                    disable_notification=self.disable_notification,
+                )
+            elif isinstance(attachments[0], InputMediaDocument):
+                self.bot.send_document(
+                    self.chat_id,
+                    document=attachments[0]["media"],
+                    caption=self.post.text,
+                    disable_notification=self.disable_notification,
+                )
+            elif isinstance(attachments[0], InputMediaAudio):
+                self.bot.send_audio(
+                    self.chat_id,
+                    attachments[0]["media"],
+                    thumb=attachments[0]["thumb"],
+                    duration=attachments[0]["duration"],
+                    title=attachments[0]["title"],
+                    performer=attachments[0]["performer"],
+                    caption=self.post.text,
+                )
         elif len(attachments) > 1:
             if len(self.post.text) <= 1024:
                 attachments[0]["caption"] = self.post.text
