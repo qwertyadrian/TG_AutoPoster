@@ -1,6 +1,6 @@
 vk_api==11.9.1
-pyrogram==1.1.7
-tgcrypto==1.2.2
+pyrogram==1.1.13
+tgcrypto
 loguru==0.5.3
 wget==3.2
 mutagen==1.45.1
