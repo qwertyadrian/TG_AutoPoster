@@ -4,8 +4,14 @@ from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger as log
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo,\
-    InputMediaAudio, InputMediaDocument
+from pyrogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InputMediaPhoto,
+    InputMediaVideo,
+    InputMediaAudio,
+    InputMediaDocument,
+)
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
@@ -141,7 +147,7 @@ class VkPostParser:
                 for track in tracks:
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
-                        : MAX_FILENAME_LENGTH - 16
+                            : MAX_FILENAME_LENGTH - 16
                         ]
                         + ".mp3"
                     )
@@ -178,8 +184,11 @@ class VkPostParser:
                         log.debug("Track {} ready for sending", name)
                         self.tracks.append(
                             InputMediaAudio(
-                                name, track_cover, duration=track["duration"],
-                                performer=track["artist"], title=track["title"]
+                                name,
+                                track_cover,
+                                duration=track["duration"],
+                                performer=track["artist"],
+                                title=track["title"],
                             )
                         )
 

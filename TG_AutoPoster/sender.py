@@ -10,7 +10,8 @@ class PostSender:
         self.bot = bot
         self.post = post
         self.chat_id = chat_id
-        self.text = split(self.post.text)
+        self.text = self.post.text
+        self.splitted_text = split(self.post.text)
         self.disable_notification = disable_notification
         self.disable_web_page_preview = disable_web_page_preview
 
@@ -40,30 +41,30 @@ class PostSender:
 
     def send_attachments(self, attachments):
         if len(self.post.media) == 0 and len(self.post.docs) == 0 and len(self.post.tracks) == 0:
-            self.send_splitted_message(self.bot, self.text, self.chat_id)
+            self.send_splitted_message(self.bot, self.splitted_text, self.chat_id)
             self.bot.send_message(
                 self.chat_id,
-                self.text[-1],
+                self.splitted_text[-1],
                 reply_markup=self.post.reply_markup,
                 disable_web_page_preview=self.disable_web_page_preview,
                 disable_notification=self.disable_notification,
             )
         elif len(attachments) == 1:
-            if len(self.post.text) > 1024:
-                self.send_splitted_message(self.bot, self.text, self.chat_id)
+            if len(self.text) > 1024:
+                self.send_splitted_message(self.bot, self.splitted_text, self.chat_id)
                 self.bot.send_message(
                     self.chat_id,
-                    self.text[-1],
+                    self.splitted_text[-1],
                     reply_markup=self.post.reply_markup,
                     disable_web_page_preview=self.disable_web_page_preview,
                     disable_notification=self.disable_notification,
                 )
-                self.post.text = ""
+                self.text = ""
             if isinstance(attachments[0], InputMediaPhoto):
                 self.bot.send_photo(
                     self.chat_id,
                     attachments[0]["media"],
-                    caption=self.post.text,
+                    caption=self.text,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
                 )
@@ -71,7 +72,7 @@ class PostSender:
                 self.bot.send_video(
                     self.chat_id,
                     attachments[0]["media"],
-                    caption=self.post.text,
+                    caption=self.text,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
                 )
@@ -79,7 +80,7 @@ class PostSender:
                 self.bot.send_document(
                     self.chat_id,
                     document=attachments[0]["media"],
-                    caption=self.post.text,
+                    caption=self.text,
                     disable_notification=self.disable_notification,
                 )
             elif isinstance(attachments[0], InputMediaAudio):
@@ -90,25 +91,23 @@ class PostSender:
                     duration=attachments[0]["duration"],
                     title=attachments[0]["title"],
                     performer=attachments[0]["performer"],
-                    caption=self.post.text,
+                    caption=self.text,
                 )
         elif len(attachments) > 1:
-            if len(self.post.text) <= 1024:
-                attachments[0]["caption"] = self.post.text
+            if len(self.text) <= 1024:
+                attachments[0]["caption"] = self.text
                 self.bot.send_media_group(self.chat_id, attachments, disable_notification=self.disable_notification)
             else:
-                self.send_splitted_message(self.bot, self.text, self.chat_id)
+                self.send_splitted_message(self.bot, self.splitted_text, self.chat_id)
                 self.bot.send_message(
                     self.chat_id,
-                    self.text[-1],
+                    self.splitted_text[-1],
                     reply_markup=self.post.reply_markup,
                     disable_web_page_preview=self.disable_web_page_preview,
                     disable_notification=self.disable_notification,
                 )
-                self.bot.send_media_group(
-                    self.chat_id, attachments, disable_notification=self.disable_notification
-                )
-        self.post.text = ""
+                self.bot.send_media_group(self.chat_id, attachments, disable_notification=self.disable_notification)
+        self.text = ""
 
     def send_poll(self):
         log.info("Отправка опроса")

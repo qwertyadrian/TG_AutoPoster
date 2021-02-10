@@ -16,7 +16,7 @@ def update_parameter(config, section, name, num, config_path="../config.ini") ->
 
 
 def split(text: str, max_message_length: int = 4091) -> list:
-    """ Разделение текста на части
+    """Разделение текста на части
 
     :param text: Разбиваемый текст
     :param max_message_length: Максимальная длина разбитой части текста
@@ -24,18 +24,18 @@ def split(text: str, max_message_length: int = 4091) -> list:
     if len(text) >= max_message_length:
         last_index = max(map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
         good_part = text[:last_index]
-        bad_part = text[last_index + 1:]
+        bad_part = text[last_index + 1 :]
         return [good_part] + split(bad_part, max_message_length)
     else:
         return [text]
 
 
 def list_splitter(lst: list, n: int) -> list:
-    return [lst[i:i + n] for i in range(0, len(lst), n)]
+    return [lst[i : i + n] for i in range(0, len(lst), n)]
 
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    menu = [buttons[i : i + n_cols] for i in range(0, len(buttons), n_cols)]
     if header_buttons:
         menu.insert(0, header_buttons)
     if footer_buttons:
@@ -67,23 +67,13 @@ def add_audio_tags(filename, artist, title, track_cover):
                 mime="image/png",  # image/jpeg or image/png
                 type=3,  # 3 is for the cover image
                 desc=u"Cover",
-                data=open(track_cover, "rb").read()
+                data=open(track_cover, "rb").read(),
             )
         )
 
-    audio.tags.add(
-        TIT2(
-            encoding=3,
-            text=title
-        )
-    )
+    audio.tags.add(TIT2(encoding=3, text=title))
 
-    audio.tags.add(
-        TPE1(
-            encoding=3,
-            text=artist
-        )
-    )
+    audio.tags.add(TPE1(encoding=3, text=artist))
 
     audio.save()
     return True

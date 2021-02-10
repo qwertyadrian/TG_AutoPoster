@@ -60,7 +60,7 @@ def create_parser():
         "-i",
         "--ignore-errors",
         action="store_true",
-        help="Игнорировать любые возникающие ошибки (работает с параметром --loop)"
+        help="Игнорировать любые возникающие ошибки (работает с параметром --loop)",
     )
     return parser
 
@@ -109,10 +109,7 @@ class AutoPoster:
             os.mkdir(self.cache_dir)
         domains = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
         for domain in domains:
-            try:
-                chat_id = self.config.getint(domain, "channel")
-            except ValueError:
-                chat_id = self.config.get(domain, "channel")
+            chat_ids = self.config.get(domain, "channel").split()
             disable_notification = self.config.getboolean(
                 domain,
                 "disable_notification",
@@ -128,24 +125,31 @@ class AutoPoster:
             )
             last_id = self.config.getint(domain, "last_id", fallback=0)
             pinned_id = self.config.getint(domain, "pinned_id", fallback=0)
-            send_reposts = self.config.get(domain, "send_reposts", fallback=self.config.get("global", "send_reposts", fallback=0))
+            send_reposts = self.config.get(
+                domain, "send_reposts", fallback=self.config.get("global", "send_reposts", fallback=0)
+            )
             sign_posts = self.config.getboolean(
                 domain, "sign_posts", fallback=self.config.getboolean("global", "sign_posts", fallback=True)
             )
             what_to_parse = set(
-                self.config.get(domain, "what_to_send", fallback=self.config.get("global", "what_to_send", fallback="all")).split(",")
+                self.config.get(
+                    domain, "what_to_send", fallback=self.config.get("global", "what_to_send", fallback="all")
+                ).split(",")
             )
-            posts_count = self.config.getint(domain, "posts_count", fallback=self.config.get("global", "posts_count", fallback=11))
+            posts_count = self.config.getint(
+                domain, "posts_count", fallback=self.config.get("global", "posts_count", fallback=11)
+            )
             last_story_id = self.config.getint(domain, "last_story_id", fallback=0)
             group = Group(
                 domain,
                 self.vk_session,
-                last_id, pinned_id,
+                last_id,
+                pinned_id,
                 send_reposts,
                 sign_posts,
                 what_to_parse,
                 posts_count,
-                last_story_id
+                last_story_id,
             )
             # Получение постов
             posts = group.get_posts()
@@ -160,8 +164,10 @@ class AutoPoster:
                     for word in self.blacklist:
                         post.text = sub(word, "", post.text)
                     with self.bot:
-                        sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
-                        sender.send_post()
+                        for chat_id in chat_ids:
+                            chat_id = int(chat_id) if chat_id.startswith("-") else chat_id
+                            sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
+                            sender.send_post()
                 self.config.set(domain, "pinned_id", str(group.pinned_id))
                 self.config.set(domain, "last_id", str(group.last_id))
                 self._save_config()
@@ -170,14 +176,16 @@ class AutoPoster:
                 stories = group.get_stories()
                 for story in stories:
                     with self.bot:
-                        sender = PostSender(
-                            self.bot,
-                            story,
-                            self.config.get(domain, "channel"),
-                            disable_notification,
-                            disable_web_page_preview,
-                        )
-                        sender.send_post()
+                        for chat_id in chat_ids:
+                            chat_id = int(chat_id) if chat_id.startswith("-") else chat_id
+                            sender = PostSender(
+                                self.bot,
+                                story,
+                                chat_id,
+                                disable_notification,
+                                disable_web_page_preview,
+                            )
+                            sender.send_post()
                         self.config.set(domain, "last_story_id", str(group.last_story_id))
                     self._save_config()
             log.debug("Clearing cache directory {}", self.cache_dir)

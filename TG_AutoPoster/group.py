@@ -9,16 +9,16 @@ DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
 class Group:
     def __init__(
-            self,
-            domain: str,
-            vk_session: VkApi,
-            last_id: int = 0,
-            pinned_id: int = 0,
-            send_reposts: int = 0,
-            sign_posts: bool = True,
-            what_to_parse: set = None,
-            posts_count: int = 11,
-            last_story_id: int = 0,
+        self,
+        domain: str,
+        vk_session: VkApi,
+        last_id: int = 0,
+        pinned_id: int = 0,
+        send_reposts: int = 0,
+        sign_posts: bool = True,
+        what_to_parse: set = None,
+        posts_count: int = 11,
+        last_story_id: int = 0,
     ):
         self.domain = domain
         self.send_reposts = send_reposts
@@ -103,5 +103,3 @@ class Group:
             self.pinned_id = post_id
         if post_id > self.last_id:
             self.last_id = post_id
-
-
