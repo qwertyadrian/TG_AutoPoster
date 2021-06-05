@@ -1,8 +1,11 @@
+import re
+import shutil
 import subprocess
 import time
 
 from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
 from mutagen.mp3 import MP3
+from requests import Session
 
 # Символы, на которых можно разбить сообщение
 message_breakers = ["\n", ", "]
@@ -77,3 +80,16 @@ def add_audio_tags(filename, artist, title, track_cover):
 
     audio.save()
     return True
+
+
+def download_video(session: Session, link: str):
+    filereq = session.get(link, stream=True)
+    res = re.findall(r"id=(\d*)(&type)?", link)
+    if res:
+        file = res[0][0] + ".mp4"
+    else:
+        file = re.findall(r"\/(.*)\/(.*)\?", link)[0][1]
+    with open(file, "wb") as receive:
+        shutil.copyfileobj(filereq.raw, receive)
+    del filereq
+    return file
