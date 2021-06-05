@@ -33,8 +33,8 @@ setup(
         "wget==3.2",
         "mutagen==1.45.1",
         "beautifulsoup4==4.9.3",
-        "vk_api==11.9.1",
-        "streamlink==2.0.0",
+        "vk_api==11.9.4",
+        "streamlink==2.1.2",
     ],
 
     classifiers=[

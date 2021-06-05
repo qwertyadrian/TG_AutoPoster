@@ -16,7 +16,7 @@ from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from TG_AutoPoster.tools import add_audio_tags, build_menu, start_process
+from TG_AutoPoster.tools import add_audio_tags, build_menu, start_process, download_video
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -122,7 +122,7 @@ class VkPostParser:
             soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
             if len(soup.find_all("source")) >= 2:
                 video_link = soup.find_all("source")[1].get("src")
-                file = download(video_link)
+                file = download_video(self.session.http, video_link)
                 if getsize(file) >= 2097152000:
                     log.info("[AP] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст.")
                     self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
