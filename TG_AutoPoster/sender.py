@@ -56,7 +56,6 @@ class PostSender:
                 self.bot.send_message(
                     self.chat_id,
                     self.splitted_text[-1],
-                    reply_markup=self.post.reply_markup,
                     disable_web_page_preview=self.disable_web_page_preview,
                     disable_notification=self.disable_notification,
                 )
