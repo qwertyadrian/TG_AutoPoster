@@ -56,18 +56,10 @@ def create_parser():
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка; .cache в Windows)",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Режим отладки")
-    parser.add_argument(
-        "-i",
-        "--ignore-errors",
-        action="store_true",
-        help="Игнорировать любые возникающие ошибки (работает с параметром --loop)",
-    )
     return parser
 
 
 class AutoPoster:
-    IGNORE_ERRORS = False
-
     def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR, ipv6=False):
         self.cache_dir = cache_dir
         self.config_path = config_path
@@ -197,13 +189,8 @@ class AutoPoster:
         while True:
             try:
                 self.run()
-            except Exception as exc:
+            except Exception:
                 log.opt(exception=True).exception("При работе программы возникла ошибка")
-                if self.IGNORE_ERRORS:
-                    log.warning("Было включено игнорирование ошибок, возобновление работы")
-                else:
-                    log.error("Продолжение работы невозможно. Выход...")
-                    raise exc
             else:
                 log.info("Работа завершена. Отправка в сон на {} секунд.", interval)
                 sleep(interval)
