@@ -1,4 +1,4 @@
-vk_api==11.9.4
+vk_api==11.9.5
 pyrogram==1.1.13
 tgcrypto
 loguru==0.5.3
