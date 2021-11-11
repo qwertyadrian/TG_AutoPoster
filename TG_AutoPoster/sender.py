@@ -18,8 +18,7 @@ class PostSender:
     @log.catch()
     def send_post(self):
         try:
-            if self.post.media:
-                self.send_attachments(self.post.media)
+            self.send_attachments(self.post.media)
             if len(self.post.docs) != 0:
                 self.send_attachments(self.post.docs)
             if len(self.post.tracks) != 0:
