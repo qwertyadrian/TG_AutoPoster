@@ -7,16 +7,16 @@ from loguru import logger as log
 from pyrogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    InputMediaPhoto,
-    InputMediaVideo,
     InputMediaAudio,
     InputMediaDocument,
+    InputMediaPhoto,
+    InputMediaVideo,
 )
 from vk_api import exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from TG_AutoPoster.tools import add_audio_tags, build_menu, start_process, download_video
+from TG_AutoPoster.tools import add_audio_tags, build_menu, download_video, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -145,6 +145,19 @@ class VkPostParser:
                 log.error("Ошибка получения аудиозаписей: {0}", error)
             else:
                 for track in tracks:
+                    if not track["url"].startswith("http"):
+                        log.warning(
+                            "Невозможно получить ссылку на аудиозапись. Попытка использовать официальный Audio API."
+                        )
+                        try:
+                            track["url"] = self.session.method(
+                                method="audio.getById",
+                                values={"audios": "{owner_id}_{id}".format(**track)},
+                            )[0]["url"]
+                        except exceptions.ApiError as e:
+                            if e.code == 15:
+                                log.error("Нет доступа к Audio API. Отмена парсинга аудиозаписей.")
+                                break
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
                             : MAX_FILENAME_LENGTH - 16
