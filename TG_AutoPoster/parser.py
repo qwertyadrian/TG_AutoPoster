@@ -169,7 +169,7 @@ class VkPostParser:
                     else:
                         try:
                             file = download(track["url"], out=name)
-                        except (urllib.error.URLError, IndexError):
+                        except (urllib.error.URLError, IndexError, ValueError):
                             log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                             continue
                     track_cover = download(track["track_covers"][-1]) if track["track_covers"] else None
