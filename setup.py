@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
-version = "2.2.0"
+version = "2.3.0"
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
@@ -12,7 +12,7 @@ setup(
     version=version,
 
     author="qwertyadrian",
-    author_email="admin@qwertyadrian.ru",
+    author_email="me@qwertyadrian.ru",
 
     description="Telegram Bot for AutoPosting from VK",
     long_description=long_description,
@@ -24,6 +24,7 @@ setup(
     ),
 
     license="MIT License, see LICENCE.md",
+    platforms=["OS Independent"],
 
     packages=find_packages(),
     install_requires=[
@@ -32,9 +33,9 @@ setup(
         "loguru==0.5.3",
         "wget==3.2",
         "mutagen==1.45.1",
-        "beautifulsoup4==4.9.3",
-        "vk_api==11.9.4",
-        "streamlink==2.1.2",
+        "beautifulsoup4==4.10.0",
+        "vk_api==11.9.6",
+        "streamlink==2.4.0",
     ],
 
     classifiers=[
