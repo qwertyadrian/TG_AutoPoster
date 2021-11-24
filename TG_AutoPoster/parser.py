@@ -185,7 +185,9 @@ class VkPostParser:
                         except (urllib.error.URLError, IndexError, ValueError):
                             log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                             continue
-                    track_cover = download(track["track_covers"][-1]) if track["track_covers"] else None
+                    track_cover = download(
+                        track["track_covers"][-1].replace("impf/", "")
+                    ) if track["track_covers"] else None
                     log.debug("Adding tags in track")
                     result = add_audio_tags(
                         file,
