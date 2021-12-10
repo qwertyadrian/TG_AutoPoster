@@ -13,7 +13,7 @@ from pyrogram.types import (
     InputMediaVideo,
 )
 from vk_api import exceptions
-from vk_api.audio import VkAudio
+from vk_api.audio import VkAudio, scrap_ids_from_html
 from wget import download
 
 from TG_AutoPoster.tools import add_audio_tags, build_menu, download_video, start_process
@@ -140,24 +140,20 @@ class VkPostParser:
         if "audio" in self.attachments_types:
             log.info("[AP] Извлечение аудио...")
             try:
-                tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
+                # tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
+                response = self.session.http.get(
+                    "https://m.vk.com/wall{owner_id}_{id}".format(**self.raw_post)
+                )
+                ids = scrap_ids_from_html(
+                    response.text,
+                    filter_root_el={'class': 'audios_list'}
+                )
+                ids = ",".join(["{0}_{1}".format(*i) for i in ids])
+                tracks = self.session.method(method="audio.getById", values={"audios": ids})
             except Exception as error:
                 log.error("Ошибка получения аудиозаписей: {0}", error)
             else:
                 for track in tracks:
-                    if not track["url"].startswith("http"):
-                        log.warning(
-                            "Невозможно получить ссылку на аудиозапись. Попытка использовать официальный Audio API."
-                        )
-                        try:
-                            track["url"] = self.session.method(
-                                method="audio.getById",
-                                values={"audios": "{owner_id}_{id}".format(**track)},
-                            )[0]["url"]
-                        except exceptions.ApiError as e:
-                            if e.code == 15:
-                                log.error("Нет доступа к Audio API. Отмена парсинга аудиозаписей.")
-                                break
                     name = (
                         sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
                             : MAX_FILENAME_LENGTH - 16
@@ -185,9 +181,15 @@ class VkPostParser:
                         except (urllib.error.URLError, IndexError, ValueError):
                             log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                             continue
-                    track_cover = download(
-                        track["track_covers"][-1].replace("impf/", "")
-                    ) if track["track_covers"] else None
+                    if track.get("album"):
+                        for key in track["album"]["thumb"]:
+                            if key.startswith("photo"):
+                                track_cover = download(
+                                    track["album"]["thumb"][key].replace("impf/", ""),
+                                    bar=None
+                                )
+                    else:
+                        track_cover = None
                     log.debug("Adding tags in track")
                     result = add_audio_tags(
                         file,
