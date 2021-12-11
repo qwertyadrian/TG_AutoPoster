@@ -66,7 +66,7 @@ class AutoPoster:
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
         # Инициализация Telegram бота
-        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=config_path, workdir=os.getcwd())
+        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=str(config_path), workdir=os.getcwd())
         self.bot.set_parse_mode("html")
         # Чтение из конфига логина, пароля, а также токена (если он есть)
         vk_login = self.config.get("global", "login")
@@ -159,7 +159,7 @@ class AutoPoster:
                         post.text = sub(word, "", post.text)
                     with self.bot:
                         for chat_id in chat_ids:
-                            chat_id = int(chat_id) if chat_id.startswith("-") else chat_id
+                            chat_id = int(chat_id) if chat_id.startswith("-") or chat_id.isnumeric() else chat_id
                             sender = PostSender(self.bot, post, chat_id, disable_notification, disable_web_page_preview)
                             sender.send_post()
                 self.config.set(domain, "pinned_id", str(group.pinned_id))
@@ -171,7 +171,7 @@ class AutoPoster:
                 for story in stories:
                     with self.bot:
                         for chat_id in chat_ids:
-                            chat_id = int(chat_id) if chat_id.startswith("-") else chat_id
+                            chat_id = int(chat_id) if chat_id.startswith("-") or chat_id.isnumeric() else chat_id
                             sender = PostSender(
                                 self.bot,
                                 story,

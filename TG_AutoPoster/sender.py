@@ -5,7 +5,7 @@ from loguru import logger as log
 from pyrogram import Client
 from pyrogram.types import InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo
 
-from .parser import VkPostParser
+from .parser import VkPostParser, VkStoryParser
 from .tools import split
 
 
@@ -13,7 +13,7 @@ class PostSender:
     def __init__(
         self,
         bot: Client,
-        post: VkPostParser,
+        post: Union[VkPostParser, VkStoryParser],
         chat_id: Union[int, str],
         disable_notification: bool = False,
         disable_web_page_preview: bool = True,
