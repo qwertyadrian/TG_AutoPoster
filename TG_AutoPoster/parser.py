@@ -13,7 +13,7 @@ from pyrogram.types import (
     InputMediaVideo,
 )
 from vk_api import exceptions
-from vk_api.audio import VkAudio, scrap_ids_from_html
+from vk_api.audio import VkAudio
 from wget import download
 
 from TG_AutoPoster.tools import add_audio_tags, build_menu, download_video, start_process
@@ -56,15 +56,15 @@ class VkPostParser:
                 if attachment["type"] in ["link", "page", "album"] and self.what_to_parse.intersection({"link", "all"}):
                     self.generate_link(attachment)
                 if attachment["type"] == "photo" and self.what_to_parse.intersection({"photo", "all"}):
-                    self.generate_photo(attachment)
+                    self.generate_photo(attachment["photo"])
                 if attachment["type"] == "video" and self.what_to_parse.intersection({"video", "all"}):
-                    self.generate_video(attachment)
+                    self.generate_video(attachment["video"])
                 if attachment["type"] == "doc" and self.what_to_parse.intersection({"doc", "all"}):
-                    self.generate_doc(attachment)
+                    self.generate_doc(attachment["doc"])
                 if attachment["type"] == "poll" and self.what_to_parse.intersection({"polls", "all"}):
-                    self.generate_poll(attachment)
-            if self.what_to_parse.intersection({"music", "all"}):
-                self.generate_music()
+                    self.generate_poll(attachment["poll"])
+                if attachment["type"] == "audio" and self.what_to_parse.intersection({"music", "all"}):
+                    self.generate_music(attachment["audio"])
 
         if self.sign_posts:
             self.generate_user()
@@ -97,7 +97,7 @@ class VkPostParser:
 
     def generate_photo(self, attachment):
         photo = None
-        for i in attachment["photo"]["sizes"]:
+        for i in attachment["sizes"]:
             photo = i["url"]
         photo = download(photo, bar=None)
         if photo:
@@ -105,20 +105,20 @@ class VkPostParser:
 
     def generate_doc(self, attachment):
         try:
-            attachment["doc"]["title"] = sub(r"[/\\:*?\"><|]", "", attachment["doc"]["title"])
-            if attachment["doc"]["title"].endswith(attachment["doc"]["ext"]):
-                doc = download(attachment["doc"]["url"], out="{title}".format(**attachment["doc"]))
+            attachment["title"] = sub(r"[/\\:*?\"><|]", "", attachment["title"])
+            if attachment["title"].endswith(attachment["ext"]):
+                doc = download(attachment["url"], out="{title}".format(**attachment))
             else:
-                doc = download(attachment["doc"]["url"], out="{title}.{ext}".format(**attachment["doc"]))
+                doc = download(attachment["url"], out="{title}.{ext}".format(**attachment))
             self.docs.append(InputMediaDocument(doc))
         except urllib.error.URLError as error:
             log.exception("[AP] Невозможно скачать вложенный файл: {0}.", error)
-            self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment["doc"])
+            self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment)
 
     def generate_video(self, attachment):
         log.info("[AP] Извлечение видео...")
-        video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment["video"])
-        if not attachment["video"].get("platform"):
+        video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
+        if not attachment.get("platform"):
             soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
             if len(soup.find_all("source")) >= 2:
                 video_link = soup.find_all("source")[1].get("src")
@@ -126,7 +126,7 @@ class VkPostParser:
                 if getsize(file) >= 2097152000:
                     log.info("[AP] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст.")
                     self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                        video_link.replace("m.", ""), attachment["video"]
+                        video_link.replace("m.", ""), attachment
                     )
                     del file
                     return None
@@ -136,85 +136,71 @@ class VkPostParser:
                 video_link.replace("m.", ""), attachment["video"]
             )
 
-    def generate_music(self):
-        if "audio" in self.attachments_types:
-            log.info("[AP] Извлечение аудио...")
+    def generate_music(self, attachment):
+        log.info("[AP] Извлечение аудио...")
+        try:
+            track = self.audio_session.get_audio_by_id(attachment["owner_id"], attachment["id"])
+        except (ValueError, AttributeError):
+            log.warning("Unable to get audio link. Attempt using official VK API")
+            track = self.session.method(
+                method="audio.getById", values={"audios": "{owner_id}_{id}".format(**attachment)}
+            )[0]
+        name = (
+            sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[: MAX_FILENAME_LENGTH - 16]
+            + ".mp3"
+        )
+        if ".m3u8" in track["url"]:
+            log.warning("Файлом аудиозаписи является m3u8 плейлист.")
+            file = name
+            streamlink_args = ["streamlink", "--output", name.replace(".mp3", ".ts"), track["url"], "best"]
+            ffmpeg_args = ["ffmpeg", "-i", name.replace(".mp3", ".ts"), "-b:a", "320k", name]
+
+            result = start_process(streamlink_args)
+            if result > 0:
+                log.critical("При запуске команды {} произошла ошибка.", " ".join(streamlink_args))
+                return
+
+            result = start_process(ffmpeg_args)
+            if result > 0:
+                log.critical("При запуске команды {} произошла ошибка", " ".join(ffmpeg_args))
+                return
+        else:
             try:
-                # tracks = self.audio_session.get_post_audio(self.raw_post["owner_id"], self.raw_post["id"])
-                response = self.session.http.get(
-                    "https://m.vk.com/wall{owner_id}_{id}".format(**self.raw_post)
+                file = download(track["url"], out=name)
+            except (urllib.error.URLError, IndexError, ValueError):
+                log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
+                return
+        if track.get("album"):
+            for key in track["album"]["thumb"]:
+                if key.startswith("photo"):
+                    track_cover = download(track["album"]["thumb"][key].replace("impf/", ""), bar=None)
+        else:
+            track_cover = None
+        log.debug("Adding tags in track")
+        result = add_audio_tags(
+            file,
+            title=track["title"],
+            artist=track["artist"],
+            track_cover=track_cover,
+        )
+        if result:
+            log.debug("Track {} ready for sending", name)
+            self.tracks.append(
+                InputMediaAudio(
+                    name,
+                    track_cover,
+                    duration=track["duration"],
+                    performer=track["artist"],
+                    title=track["title"],
                 )
-                ids = scrap_ids_from_html(
-                    response.text,
-                    filter_root_el={'class': 'audios_list'}
-                )
-                ids = ",".join(["{0}_{1}".format(*i) for i in ids])
-                tracks = self.session.method(method="audio.getById", values={"audios": ids})
-            except Exception as error:
-                log.error("Ошибка получения аудиозаписей: {0}", error)
-            else:
-                for track in tracks:
-                    name = (
-                        sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[
-                            : MAX_FILENAME_LENGTH - 16
-                        ]
-                        + ".mp3"
-                    )
-                    if ".m3u8" in track["url"]:
-                        log.warning("Файлом аудиозаписи является m3u8 плейлист.")
-                        file = name
-                        streamlink_args = ["streamlink", "--output", name.replace(".mp3", ".ts"), track["url"], "best"]
-                        ffmpeg_args = ["ffmpeg", "-i", name.replace(".mp3", ".ts"), "-b:a", "320k", name]
-
-                        result = start_process(streamlink_args)
-                        if result > 0:
-                            log.critical("При запуске команды {} произошла ошибка.", " ".join(streamlink_args))
-                            continue
-
-                        result = start_process(ffmpeg_args)
-                        if result > 0:
-                            log.critical("При запуске команды {} произошла ошибка", " ".join(ffmpeg_args))
-                            continue
-                    else:
-                        try:
-                            file = download(track["url"], out=name)
-                        except (urllib.error.URLError, IndexError, ValueError):
-                            log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
-                            continue
-                    if track.get("album"):
-                        for key in track["album"]["thumb"]:
-                            if key.startswith("photo"):
-                                track_cover = download(
-                                    track["album"]["thumb"][key].replace("impf/", ""),
-                                    bar=None
-                                )
-                    else:
-                        track_cover = None
-                    log.debug("Adding tags in track")
-                    result = add_audio_tags(
-                        file,
-                        title=track["title"],
-                        artist=track["artist"],
-                        track_cover=track_cover,
-                    )
-                    if result:
-                        log.debug("Track {} ready for sending", name)
-                        self.tracks.append(
-                            InputMediaAudio(
-                                name,
-                                track_cover,
-                                duration=track["duration"],
-                                performer=track["artist"],
-                                title=track["title"],
-                            )
-                        )
+            )
 
     def generate_poll(self, attachment):
         self.poll = {
-            "question": attachment["poll"]["question"],
-            "options": [answer["text"] for answer in attachment["poll"]["answers"]],
-            "allows_multiple_answers": attachment["poll"]["multiple"],
-            "is_anonymous": attachment["poll"]["anonymous"],
+            "question": attachment["question"],
+            "options": [answer["text"] for answer in attachment["answers"]],
+            "allows_multiple_answers": attachment["multiple"],
+            "is_anonymous": attachment["anonymous"],
         }
         if len(self.poll["options"]) == 1:
             self.poll["options"].append("...")
