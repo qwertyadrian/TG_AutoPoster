@@ -86,8 +86,10 @@ class AutoPoster:
             log.info("Загружен черный спиок слов")
         # Инициализация ВК сессии
         if vk_token:  # Если в конфиге был указан токен, то используем его
-            self.vk_session = VkApi(token=vk_token)  # При использовании токена будут недоступны аудиозаписи
+            self.vk_session = VkApi(token=vk_token)
         else:  # В противном случае авторизуемся, используя логин и пароль
+            log.critical("Использование логина и пароля не рекомендуется. "
+                         "Используйте ключ доступа пользователя.")
             self.vk_session = VkApi(
                 login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
             )
