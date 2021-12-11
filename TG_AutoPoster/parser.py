@@ -133,7 +133,7 @@ class VkPostParser:
                 self.media.append(InputMediaVideo(file))
         else:
             self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                video_link.replace("m.", ""), attachment["video"]
+                video_link.replace("m.", ""), attachment
             )
 
     def generate_music(self, attachment):
