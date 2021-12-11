@@ -1,8 +1,11 @@
-from vk_api import VkApi
-from loguru import logger as log
 import re
 import time
-from TG_AutoPoster.parser import VkPostParser, VkStoryParser
+from typing import Iterable, List
+
+from loguru import logger as log
+from vk_api import VkApi
+
+from .parser import VkPostParser, VkStoryParser
 
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
@@ -30,7 +33,7 @@ class Group:
         self.last_story_id = last_story_id
         self._vk_session = vk_session
 
-    def get_posts(self) -> VkPostParser:
+    def get_posts(self) -> Iterable[VkPostParser]:
         posts = self.get_raw_posts()
         for post in reversed(posts):
             is_pinned = post.get("is_pinned", False)
@@ -57,7 +60,7 @@ class Group:
                     yield parsed_post
                 time.sleep(5)
 
-    def get_stories(self):
+    def get_stories(self) -> Iterable[VkStoryParser]:
         log.info("[VK] Проверка на наличие новых историй в {} с последним ID {}", self.domain, self.last_story_id)
         stories = self.get_raw_stories()
         for story in reversed(stories):
@@ -69,7 +72,7 @@ class Group:
                 if not story.get("is_expired") and not story.get("is_deleted") and story.get("can_see"):
                     yield parsed_story
 
-    def get_raw_posts(self):
+    def get_raw_posts(self) -> List:
         try:
             log.info("Получение последних {} постов", self.posts_count)
             group = re.sub(DOMAIN_REGEX, "", self.domain)
@@ -83,7 +86,7 @@ class Group:
             log.exception("Ошибка получения постов: {}", error)
             return list()
 
-    def get_raw_stories(self):
+    def get_raw_stories(self) -> List:
         try:
             group = re.sub(DOMAIN_REGEX, "", self.domain)
             if group.startswith("club") or group.startswith("public") or "-" in group:

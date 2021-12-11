@@ -13,9 +13,9 @@ from loguru import logger as log
 from pyrogram import Client
 from vk_api import VkApi
 
-from TG_AutoPoster.handlers import auth_handler, captcha_handler
-from TG_AutoPoster.group import Group
-from TG_AutoPoster.sender import PostSender
+from .handlers import auth_handler, captcha_handler
+from .group import Group
+from .sender import PostSender
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")

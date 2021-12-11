@@ -1,12 +1,23 @@
+from typing import Union
+
 import pyrogram.errors
 from loguru import logger as log
-from pyrogram.types import InputMediaPhoto, InputMediaVideo, InputMediaAudio, InputMediaDocument
+from pyrogram import Client
+from pyrogram.types import InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo
 
-from TG_AutoPoster.tools import split
+from .parser import VkPostParser
+from .tools import split
 
 
 class PostSender:
-    def __init__(self, bot, post, chat_id, disable_notification=False, disable_web_page_preview=True):
+    def __init__(
+        self,
+        bot: Client,
+        post: VkPostParser,
+        chat_id: Union[int, str],
+        disable_notification: bool = False,
+        disable_web_page_preview: bool = True,
+    ):
         self.bot = bot
         self.post = post
         self.chat_id = chat_id

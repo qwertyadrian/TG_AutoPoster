@@ -12,18 +12,18 @@ from pyrogram.types import (
     InputMediaPhoto,
     InputMediaVideo,
 )
-from vk_api import exceptions
+from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from TG_AutoPoster.tools import add_audio_tags, build_menu, download_video, start_process
+from .tools import add_audio_tags, build_menu, download_video, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
 
 
 class VkPostParser:
-    def __init__(self, post, domain, session, sign_posts=False, what_to_parse=None):
+    def __init__(self, post: dict, domain: str, session: VkApi, sign_posts: bool = False, what_to_parse: bool = None):
         self.session = session
         try:
             self.audio_session = VkAudio(session)
