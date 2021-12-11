@@ -1,10 +1,10 @@
 from threading import Thread
 from time import sleep
 
-user_input = [None, None]
+user_input = ['', None]
 
 
-def auth_handler():
+def auth_handler() -> tuple[str, bool]:
     """
     При двухфакторной аутентификации вызывается эта функция.
     :return: key, remember_device
