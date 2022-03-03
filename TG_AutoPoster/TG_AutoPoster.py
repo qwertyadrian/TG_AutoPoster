@@ -29,7 +29,7 @@ def create_parser():
     parser = argparse.ArgumentParser(
         prog="TG_AutoPoster",
         description="Telegram Bot for AutoPosting from VK",
-        epilog="(C) 2018-2020 Adrian Polyakov\nReleased under the MIT License.",
+        epilog="(C) 2018-2022 Adrian Polyakov\nReleased under the MIT License.",
     )
 
     parser.add_argument(
@@ -61,37 +61,50 @@ def create_parser():
 
 class AutoPoster:
     def __init__(self, config_path=CONFIG_PATH, cache_dir=CACHE_DIR, ipv6=False):
-        self.cache_dir = cache_dir
-        self.config_path = config_path
+        self.cache_dir = Path(cache_dir).absolute()
+        self.config_path = Path(config_path).absolute()
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
         # Инициализация Telegram бота
-        self.bot = Client("TG_AutoPoster", ipv6=ipv6, config_file=str(config_path), workdir=os.getcwd())
+        self.bot = Client(
+            "TG_AutoPoster",
+            ipv6=ipv6,
+            config_file=str(self.config_path),
+            workdir=str(Path.cwd()))
         self.bot.set_parse_mode("html")
         # Чтение из конфига логина, пароля, а также токена (если он есть)
         vk_login = self.config.get("global", "login")
         vk_pass = self.config.get("global", "pass")
         vk_token = self.config.get("global", "token", fallback="")
         # Чтение из конфига пути к файлу со стоп-словами
-        self.stop_list = self.config.get("global", "stop_list", fallback=[])
-        self.blacklist = self.config.get("global", "blacklist", fallback=[])
-        if self.stop_list:
+        self.stop_list = Path(self.config.get("global", "stop_list", fallback="")).absolute()
+        self.blacklist = Path(self.config.get("global", "blacklist", fallback="")).absolute()
+
+        if self.stop_list.is_file():
             # Инициализация списка стоп-слов
-            with open(self.stop_list, "r", encoding="utf-8") as f:
-                self.stop_list = [i.strip() for i in f.readlines()]
+            self.stop_list = self.stop_list.read_text().split("\n")
             log.info("Загружен список стоп-слов")
-        if self.blacklist:
-            with open(self.blacklist, encoding="utf-8") as f:
-                self.blacklist = [i.strip() for i in f.readlines()]
+        else:
+            self.stop_list = []
+
+        if self.blacklist.is_file():
+            self.blacklist = self.blacklist.read_text().split("\n")
             log.info("Загружен черный спиок слов")
+        else:
+            self.blacklist = []
+
         # Инициализация ВК сессии
         if vk_token:  # Если в конфиге был указан токен, то используем его
-            self.vk_session = VkApi(token=vk_token)
+            self.vk_session = VkApi(token=vk_token, api_version="5.131")
         else:  # В противном случае авторизуемся, используя логин и пароль
             log.critical("Использование логина и пароля не рекомендуется. "
                          "Используйте ключ доступа пользователя.")
             self.vk_session = VkApi(
-                login=vk_login, password=vk_pass, auth_handler=auth_handler, captcha_handler=captcha_handler
+                login=vk_login,
+                password=vk_pass,
+                auth_handler=auth_handler,
+                captcha_handler=captcha_handler,
+                api_version="5.131",
             )
             self.vk_session.auth()
 
@@ -100,7 +113,7 @@ class AutoPoster:
         try:
             os.chdir(self.cache_dir)
         except FileNotFoundError:
-            os.mkdir(self.cache_dir)
+            self.cache_dir.mkdir()
         domains = self.config.sections()[3:] if self.config.has_section("proxy") else self.config.sections()[2:]
         for domain in domains:
             chat_ids = self.config.get(domain, "channel").split()
@@ -183,17 +196,23 @@ class AutoPoster:
                         self.config.set(domain, "last_story_id", str(group.last_story_id))
                     self._save_config()
             log.debug("Clearing cache directory {}", self.cache_dir)
-            for data in os.listdir(self.cache_dir):
-                os.remove(self.cache_dir / data)
+            for data in self.cache_dir.iterdir():
+                data.unlink()
         self._save_config()
 
     def infinity_run(self, interval=3600):
+        errors = 0
         while True:
             try:
                 self.run()
             except Exception:
                 log.opt(exception=True).exception("При работе программы возникла ошибка")
+                if errors >= 10:
+                    log.error("Ошибка возникла более 10 раз подряд. Выход...")
+                    exit(1)
+                errors += 1
             else:
+                errors = 0
                 log.info("Работа завершена. Отправка в сон на {} секунд.", interval)
                 sleep(interval)
                 self._reload_config()

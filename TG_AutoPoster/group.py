@@ -96,7 +96,7 @@ class Group:
             else:
                 group = -self._vk_session.method(method="groups.getById", values={"group_ids": group})[0]["id"]
             stories = self._vk_session.method(method="stories.get", values={"owner_id": group})
-            return stories["items"][0] if stories["count"] >= 1 else list()
+            return stories["items"][0]["stories"] if stories["count"] >= 1 else list()
         except Exception as error:
             log.error("Ошибка получения историй: {}", error)
             return list()
