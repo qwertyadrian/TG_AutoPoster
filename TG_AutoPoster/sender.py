@@ -121,7 +121,14 @@ class PostSender:
 
     def send_poll(self):
         log.info("Отправка опроса")
-        self.bot.send_poll(self.chat_id, **self.post.poll, disable_notification=self.disable_notification)
+        try:
+            self.bot.send_poll(self.chat_id, **self.post.poll, disable_notification=self.disable_notification)
+        except pyrogram.errors.BroadcastPublicVotersForbidden:
+            log.exception(
+                "Отправка публичных опросов в каналы запрещена. Попытка отправить анонимный опрос."
+            )
+            self.post.poll["is_anonymous"] = False
+            self.bot.send_poll(self.chat_id, **self.post.poll, disable_notification=self.disable_notification)
 
     def send_splitted_message(self, bot, text, chat_id):
         log.debug("Sending splitted message")
