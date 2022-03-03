@@ -1,5 +1,4 @@
 import urllib.error
-from os.path import getsize
 from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
@@ -122,14 +121,15 @@ class VkPostParser:
             soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
             if len(soup.find_all("source")) >= 2:
                 video_link = soup.find_all("source")[1].get("src")
-                file = download_video(self.session.http, video_link)
-                if getsize(file) >= 2097152000:
+                filesize = self.session.http.head(video_link).headers["Content-Length"]
+                if int(filesize) >= 2097152000:
                     log.info("[AP] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст.")
                     self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                         video_link.replace("m.", ""), attachment
                     )
-                    del file
                     return None
+                else:
+                    file = download_video(self.session.http, video_link)
                 self.media.append(InputMediaVideo(file))
         else:
             self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
@@ -138,13 +138,16 @@ class VkPostParser:
 
     def generate_music(self, attachment):
         log.info("[AP] Извлечение аудио...")
-        try:
-            track = self.audio_session.get_audio_by_id(attachment["owner_id"], attachment["id"])
-        except (ValueError, AttributeError):
-            log.warning("Unable to get audio link. Attempt using official VK API")
-            track = self.session.method(
-                method="audio.getById", values={"audios": "{owner_id}_{id}".format(**attachment)}
-            )[0]
+        if not attachment.get("url"):
+            try:
+                track = self.audio_session.get_audio_by_id(attachment["owner_id"], attachment["id"])
+            except (ValueError, AttributeError):
+                log.warning("Unable to get audio link. Attempt using official VK API")
+                track = self.session.method(
+                    method="audio.getById", values={"audios": "{owner_id}_{id}".format(**attachment)}
+                )[0]
+        else:
+            track = attachment
         name = (
             sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[: MAX_FILENAME_LENGTH - 16]
             + ".mp3"
