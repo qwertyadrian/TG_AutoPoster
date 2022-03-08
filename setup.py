@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
-version = "2.4.1"
+version = "2.4.2"
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
@@ -28,14 +28,14 @@ setup(
 
     packages=find_packages(),
     install_requires=[
-        "pyrogram==1.2.20",
+        "pyrogram==1.4.8",
         "tgcrypto",
-        "loguru==0.5.3",
+        "loguru==0.6.0",
         "wget==3.2",
         "mutagen==1.45.1",
         "beautifulsoup4==4.10.0",
         "vk_api==11.9.7",
-        "streamlink==3.0.3",
+        "streamlink==3.2.0",
     ],
 
     classifiers=[
