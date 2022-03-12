@@ -93,4 +93,3 @@ pip install -r requirements.txt
 
 Для пожертвований на развитие проекта:
 1. [Qiwi](https://qiwi.com/n/QWERTYADRIAN)
-2. [PayPal](https://paypal.me/qwertyadrian)
