@@ -2,7 +2,7 @@ TG_AutoPoster
 =============
 Бот, пересылающий записи из групп ВК в канал/чат/ЛС в Telegram.
 
-[![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg)](/LICENCE.md) ![Python Version](https://img.shields.io/badge/python-3.6%2B-orange.svg) [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg)](/LICENCE.md) ![Python Version](https://img.shields.io/badge/python-3.7%2B-orange.svg) [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/issues) [![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/stargazers)
 [![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***

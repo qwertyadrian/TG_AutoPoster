@@ -51,7 +51,7 @@ class PostSender:
             log.opt(exception=True).debug("Error stacktrace added to the log message")
 
     def send_attachments(self, attachments):
-        if len(self.post.media) == 0 and len(self.post.docs) == 0 and len(self.post.tracks) == 0:
+        if len(attachments) == 0:
             self.send_splitted_message(self.bot, self.splitted_text, self.chat_id)
             self.bot.send_message(
                 self.chat_id,
@@ -73,7 +73,7 @@ class PostSender:
             if isinstance(attachments[0], InputMediaPhoto):
                 self.bot.send_photo(
                     self.chat_id,
-                    attachments[0]["media"],
+                    attachments[0].media,
                     caption=self.text,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
@@ -81,7 +81,7 @@ class PostSender:
             elif isinstance(attachments[0], InputMediaVideo):
                 self.bot.send_video(
                     self.chat_id,
-                    attachments[0]["media"],
+                    attachments[0].media,
                     caption=self.text,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
@@ -89,23 +89,23 @@ class PostSender:
             elif isinstance(attachments[0], InputMediaDocument):
                 self.bot.send_document(
                     self.chat_id,
-                    document=attachments[0]["media"],
+                    document=attachments[0].media,
                     caption=self.text,
                     disable_notification=self.disable_notification,
                 )
             elif isinstance(attachments[0], InputMediaAudio):
                 self.bot.send_audio(
                     self.chat_id,
-                    attachments[0]["media"],
-                    thumb=attachments[0]["thumb"],
-                    duration=attachments[0]["duration"],
-                    title=attachments[0]["title"],
-                    performer=attachments[0]["performer"],
+                    attachments[0].media,
+                    thumb=attachments[0].thumb,
+                    duration=attachments[0].duration,
+                    title=attachments[0].title,
+                    performer=attachments[0].performer,
                     caption=self.text,
                 )
         elif len(attachments) > 1:
             if len(self.text) <= 1024:
-                attachments[0]["caption"] = self.text
+                attachments[0].caption = self.text
                 self.bot.send_media_group(self.chat_id, attachments, disable_notification=self.disable_notification)
             else:
                 self.send_splitted_message(self.bot, self.splitted_text, self.chat_id)

@@ -11,6 +11,7 @@ from time import sleep
 
 from loguru import logger as log
 from pyrogram import Client
+from pyrogram.enums import ParseMode
 from vk_api import VkApi
 
 from .handlers import auth_handler, captcha_handler
@@ -65,13 +66,30 @@ class AutoPoster:
         self.config_path = Path(config_path).absolute()
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
+        if self.config.getboolean("proxy", "enabled"):
+            proxy = dict(
+                scheme="socks5",
+                hostname=self.config.get("proxy", "hostname"),
+                port=self.config.getint("proxy", "port"),
+            )
+            username = self.config.get("proxy", "username")
+            password = self.config.get("proxy", "password")
+            if username and password:
+                proxy["username"] = username
+                proxy["password"] = password
+        else:
+            proxy = None
         # Инициализация Telegram бота
         self.bot = Client(
-            "TG_AutoPoster",
+            name="TG_AutoPoster",
+            api_id=self.config.getint("pyrogram", "api_id"),
+            api_hash=self.config.get("pyrogram", "api_hash"),
+            bot_token=self.config.get("pyrogram", "bot_token"),
+            proxy=proxy,
             ipv6=ipv6,
-            config_file=str(self.config_path),
-            workdir=str(Path.cwd()))
-        self.bot.set_parse_mode("html")
+            workdir=str(Path.cwd()),
+        )
+        self.bot.set_parse_mode(ParseMode.HTML)
         # Чтение из конфига логина, пароля, а также токена (если он есть)
         vk_login = self.config.get("global", "login")
         vk_pass = self.config.get("global", "pass")
