@@ -66,7 +66,7 @@ class AutoPoster:
         self.config_path = Path(config_path).absolute()
         # Чтение конфигурации бота из файла config.ini
         self._reload_config()
-        if self.config.getboolean("proxy", "enabled"):
+        if self.config.getboolean("proxy", "enabled", fallback=None):
             proxy = dict(
                 scheme="socks5",
                 hostname=self.config.get("proxy", "hostname"),
