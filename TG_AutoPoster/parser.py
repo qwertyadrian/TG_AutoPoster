@@ -152,6 +152,7 @@ class VkPostParser:
             sub(r"[^a-zA-Z '#0-9.а-яА-Я()-]", "", track["artist"] + " - " + track["title"])[: MAX_FILENAME_LENGTH - 16]
             + ".mp3"
         )
+        track_cover = None
         if ".m3u8" in track["url"]:
             log.warning("Файлом аудиозаписи является m3u8 плейлист.")
             file = name
@@ -174,11 +175,10 @@ class VkPostParser:
                 log.exception("[AP] Не удалось скачать аудиозапись. Пропускаем ее...")
                 return
         if track.get("album"):
-            for key in track["album"]["thumb"]:
-                if key.startswith("photo"):
-                    track_cover = download(track["album"]["thumb"][key].replace("impf/", ""), bar=None)
-        else:
-            track_cover = None
+            if track["album"].get("thumb"):
+                for key in track["album"]["thumb"]:
+                    if key.startswith("photo"):
+                        track_cover = download(track["album"]["thumb"][key].replace("impf/", ""), bar=None)
         log.debug("Adding tags in track")
         result = add_audio_tags(
             file,
