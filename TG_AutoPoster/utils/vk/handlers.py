@@ -2,7 +2,7 @@ from threading import Thread
 from time import sleep
 from typing import Tuple
 
-user_input = ['', None]
+user_input = ["", None]
 
 
 def auth_handler() -> Tuple[str, bool]:
@@ -47,4 +47,6 @@ def get_auth_code(user_input_ref):
 
 
 def get_captcha_code(user_input_ref, captcha):
-    user_input_ref[1] = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
+    user_input_ref[1] = input(
+        "Enter captcha code {0}: ".format(captcha.get_url())
+    ).strip()
