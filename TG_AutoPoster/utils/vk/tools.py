@@ -11,11 +11,29 @@ from requests import Session
 message_breakers = ["\n", ", "]
 
 
-def update_parameter(config, section, name, num, config_path="../config.ini") -> int:
-    config.set(section, name, str(num))
-    with open(config_path, "w", encoding="utf-8") as f:
-        config.write(f)
-    return num
+class Attachments:
+    def __init__(self):
+        self.media = []
+        self.audio = []
+        self.documents = []
+
+    def all(self):
+        return self.media + self.audio + self.documents
+
+    def __len__(self):
+        return len(self.all())
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.all()[item]
+        elif item == "media":
+            return self.media
+        elif item == "audio":
+            return self.audio
+        elif item == "docs" or item == "documents":
+            return self.documents
+        else:
+            raise KeyError(f"Key {item} not found")
 
 
 def split(text: str, max_message_length: int = 4091) -> list:
@@ -25,7 +43,12 @@ def split(text: str, max_message_length: int = 4091) -> list:
     :param max_message_length: Максимальная длина разбитой части текста
     """
     if len(text) >= max_message_length:
-        last_index = max(map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        last_index = max(
+            map(
+                lambda separator: text.rfind(separator, 0, max_message_length),
+                message_breakers,
+            )
+        )
         good_part = text[:last_index]
         bad_part = text[last_index + 1 :]
         return [good_part] + split(bad_part, max_message_length)
@@ -69,7 +92,7 @@ def add_audio_tags(filename, artist, title, track_cover):
                 encoding=3,  # 3 is for utf-8
                 mime="image/png",  # image/jpeg or image/png
                 type=3,  # 3 is for the cover image
-                desc=u"Cover",
+                desc="Cover",
                 data=open(track_cover, "rb").read(),
             )
         )
