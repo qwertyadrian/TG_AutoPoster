@@ -345,7 +345,7 @@ class Post:
 class Story:
     def __init__(self, story):
         self.story = story
-        self.text = ""
+        self.text = [""]
         self.attachments = Attachments()
         self.reply_markup = None
 
