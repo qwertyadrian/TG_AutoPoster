@@ -1,8 +1,9 @@
-vk_api==11.9.7
-pyrogram==2.0.16
+vk_api==11.9.8
+pyrogram==2.0.24
 tgcrypto
 loguru==0.6.0
 wget==3.2
 mutagen==1.45.1
 beautifulsoup4==4.11.1
-streamlink==4.0.0
+streamlink==4.0.1
+apscheduler==3.9.1
