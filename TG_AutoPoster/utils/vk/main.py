@@ -42,7 +42,7 @@ def main(
         group = Group(
             domain=domain,
             session=vk_session,
-            **{**config["domains"][domain], **config["settings"]},
+            **{**config["domains"][domain], **config.get("settings", {})},
         )
         chat_ids = config["domains"][domain]["channel"]
         for post in chain(group.get_posts(), group.get_stories()):
