@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from itertools import chain
 
 import yaml
 from vk_api import VkApi
@@ -44,7 +45,7 @@ def main(
             **{**config["domains"][domain], **config["settings"]},
         )
         chat_ids = config["domains"][domain]["channel"]
-        for post in group.get_posts():
+        for post in chain(group.get_posts(), group.get_stories()):
             sender = Sender(
                 bot=bot,
                 post=post,
@@ -53,6 +54,7 @@ def main(
             sender.send_post()
 
             config["domains"][domain]["last_id"] = group.last_id
+            config["domains"][domain]["last_story_id"] = group.last_story_id
             config["domains"][domain]["pinned_id"] = group.pinned_id
 
             with open(config_path, "w") as stream:
