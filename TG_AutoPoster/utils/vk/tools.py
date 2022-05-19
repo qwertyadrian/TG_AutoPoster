@@ -7,9 +7,6 @@ from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
 from mutagen.mp3 import MP3
 from requests import Session
 
-# Символы, на которых можно разбить сообщение
-message_breakers = ["\n", ", "]
-
 
 class Attachments:
     def __init__(self):
@@ -34,26 +31,6 @@ class Attachments:
             return self.documents
         else:
             raise KeyError(f"Key {item} not found")
-
-
-def split(text: str, max_message_length: int = 4091) -> list:
-    """Разделение текста на части
-
-    :param text: Разбиваемый текст
-    :param max_message_length: Максимальная длина разбитой части текста
-    """
-    if len(text) >= max_message_length:
-        last_index = max(
-            map(
-                lambda separator: text.rfind(separator, 0, max_message_length),
-                message_breakers,
-            )
-        )
-        good_part = text[:last_index]
-        bad_part = text[last_index + 1 :]
-        return [good_part] + split(bad_part, max_message_length)
-    else:
-        return [text]
 
 
 def list_splitter(lst: list, n: int) -> list:

@@ -9,7 +9,8 @@ from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from .tools import (Attachments, add_audio_tags, build_menu, download_video, split,
+from ..tools import split
+from .tools import (Attachments, add_audio_tags, build_menu, download_video,
                     start_process)
 
 MAX_FILENAME_LENGTH = 255
@@ -185,7 +186,9 @@ class Post:
                     attachment["owner_id"], attachment["id"]
                 )
             except (ValueError, AttributeError):
-                logger.warning("[VK] Unable to get audio link. Attempt using official VK API")
+                logger.warning(
+                    "[VK] Unable to get audio link. Attempt using official VK API"
+                )
                 track = self.session.method(
                     method="audio.getById",
                     values={"audios": "{owner_id}_{id}".format(**attachment)},
@@ -231,7 +234,8 @@ class Post:
             result = start_process(ffmpeg_args)
             if result > 0:
                 logger.critical(
-                    "[VK] При запуске команды {} произошла ошибка", " ".join(ffmpeg_args)
+                    "[VK] При запуске команды {} произошла ошибка",
+                    " ".join(ffmpeg_args),
                 )
                 return
         else:

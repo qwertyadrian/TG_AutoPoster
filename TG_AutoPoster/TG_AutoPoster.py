@@ -12,11 +12,12 @@ class AutoPoster(Client):
         name = self.__class__.__name__.lower()
 
         self.config_path = Path(config_path).absolute()
+        self.logs_path = Path.cwd().absolute() / "logs"
 
         with self.config_path.open() as stream:
             self.config: dict = yaml.safe_load(stream)
 
-        self.admin_id = self.config.get("settings", {}).get("admins_id", [])
+        self.admins_id = self.config.get("settings", {}).get("admins_id", [])
 
         if self.config.get("proxy"):
             proxy = self.config["proxy"]
@@ -32,6 +33,14 @@ class AutoPoster(Client):
             proxy=proxy,
             ipv6=ipv6,
             plugins=dict(
-                root=f"TG_AutoPoster_v3.plugins",
+                root="TG_AutoPoster.plugins",
             ),
         )
+
+    def reload_config(self):
+        with self.config_path.open() as stream:
+            self.config: dict = yaml.safe_load(stream)
+
+    def save_config(self):
+        with self.config_path.open("w") as stream:
+            yaml.dump(self.config, stream, indent=4)
