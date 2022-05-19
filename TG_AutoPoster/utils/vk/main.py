@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from itertools import chain
+from pathlib import Path
 
 import yaml
 from vk_api import VkApi
