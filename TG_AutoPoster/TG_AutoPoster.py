@@ -11,8 +11,12 @@ class AutoPoster(Client):
     ):
         name = self.__class__.__name__.lower()
 
-        with open(config_path, "r") as stream:
+        self.config_path = Path(config_path).absolute()
+
+        with self.config_path.open() as stream:
             self.config: dict = yaml.safe_load(stream)
+
+        self.admin_id = self.config.get("settings", {}).get("admins_id", [])
 
         if self.config.get("proxy"):
             proxy = self.config["proxy"]
