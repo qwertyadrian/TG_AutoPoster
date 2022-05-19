@@ -42,7 +42,7 @@ def main(
         group = Group(
             domain=domain,
             session=vk_session,
-            **{**config["domains"][domain], **config.get("settings", {})},
+            **{**config.get("settings", {}), **config["domains"][domain]},
         )
         chat_ids = config["domains"][domain]["channel"]
         for post in chain(group.get_posts(), group.get_stories()):
@@ -58,7 +58,7 @@ def main(
             config["domains"][domain]["pinned_id"] = group.pinned_id
 
             with open(config_path, "w") as stream:
-                yaml.dump(config, stream)
+                yaml.dump(config, stream, indent=4)
 
             for data in cache_dir.iterdir():
                 data.unlink()

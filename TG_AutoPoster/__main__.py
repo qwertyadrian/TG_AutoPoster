@@ -73,7 +73,7 @@ if __name__ == "__main__":
             backtrace=True,
             diagnose=True,
             rotation="daily",
-            retention="7 days",
+            retention=2,
         )
     else:
         log.remove()
