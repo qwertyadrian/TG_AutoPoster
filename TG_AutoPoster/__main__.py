@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 Path(args.cache_dir),
             ),
             max_instances=1,
-            next_run_time=datetime.datetime.now(),
+            next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=5),
         )
         scheduler.start()
         client.run()
