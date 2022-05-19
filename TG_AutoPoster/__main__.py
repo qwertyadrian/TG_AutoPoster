@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -6,8 +7,8 @@ from tempfile import TemporaryDirectory
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger as log
 
-from TG_AutoPoster.TG_AutoPoster import AutoPoster
-from TG_AutoPoster.utils.vk.main import main
+from .TG_AutoPoster import AutoPoster
+from .utils.vk.main import main
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
@@ -114,6 +115,7 @@ if __name__ == "__main__":
                 Path(args.cache_dir),
             ),
             max_instances=1,
+            next_run_time=datetime.datetime.now(),
         )
         scheduler.start()
         client.run()
