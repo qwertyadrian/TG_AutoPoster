@@ -1,14 +1,14 @@
 import argparse
 import datetime
 import os
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from loguru import logger as log
+from loguru import logger
 
-from .TG_AutoPoster import AutoPoster
-from .utils.vk.main import main
+from . import AutoPoster, __version__, get_new_posts
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     args = create_parser().parse_args()
 
     if args.debug:
-        log.add(
+        logger.add(
             "logs/bot_log_{time}_DEBUG.log",
             level="DEBUG",
             backtrace=True,
@@ -77,15 +77,24 @@ if __name__ == "__main__":
             retention=2,
         )
     else:
-        log.remove()
-        log.add(
+        logger.remove()
+        logger.add(
             "logs/bot_log_{time}.log",
             rotation="daily",
             retention="3 days",
             compression="zip",
         )
 
-    log.info("TG_AutoPoster запущен")
+    logger.info("TG AutoPoster запущен")
+    logger.debug(
+        "Python {}\nTG_AutoPoster {}\nOS: {}\nConfig path: {}\nCache dir: {}",
+        sys.version,
+        __version__,
+        sys.platform,
+        args.config,
+        args.cache_dir,
+    )
+
     client = AutoPoster(
         config_path=args.config,
         ipv6=args.ipv6,
@@ -106,7 +115,7 @@ if __name__ == "__main__":
     if loop:
         scheduler = BackgroundScheduler()
         scheduler.add_job(
-            func=main,
+            func=get_new_posts,
             trigger="interval",
             seconds=sleep_time,
             args=(
@@ -121,7 +130,7 @@ if __name__ == "__main__":
         client.run()
     else:
         with client:
-            main(
+            get_new_posts(
                 client,
                 Path(args.config),
                 Path(args.cache_dir),
