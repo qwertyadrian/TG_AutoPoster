@@ -1,6 +1,7 @@
 from typing import Union
 
-import pyrogram
+import pyrogram.errors
+from loguru import logger
 from pyrogram.types import (InputMediaAudio, InputMediaDocument, InputMediaPhoto,
                             InputMediaVideo)
 
@@ -24,6 +25,7 @@ class Sender:
         self.disable_notification = disable_notification
         self.disable_web_page_preview = disable_web_page_preview
 
+    @logger.catch(reraise=True)
     def send_post(self):
         for chat_id in self.chat_ids:
             self.send_splitted_message(self.post.text, chat_id)
@@ -41,9 +43,9 @@ class Sender:
 
             if self.send_attachments(chat_id, self.post.attachments["media"], caption):
                 caption = ""
-            if self.send_attachments(chat_id, self.post.attachments["audio"], caption):
+            if self.send_attachments(chat_id, self.post.attachments["docs"], caption):
                 caption = ""
-            self.send_attachments(chat_id, self.post.attachments["docs"], caption)
+            self.send_attachments(chat_id, self.post.attachments["audio"], caption)
 
             if hasattr(self.post, "poll") and self.post.poll:
                 print(hasattr(self.post, "poll") and self.post.poll)
@@ -97,7 +99,7 @@ class Sender:
         return True
 
     def send_poll(self, chat_id):
-        # log.info("Отправка опроса")
+        logger.info("Отправка опроса")
         try:
             self._bot.send_poll(
                 chat_id,
@@ -105,9 +107,9 @@ class Sender:
                 disable_notification=self.disable_notification,
             )
         except pyrogram.errors.BroadcastPublicVotersForbidden:
-            # log.exception(
-            #     "Отправка публичных опросов в каналы запрещена. Попытка отправить анонимный опрос."
-            # )
+            logger.critical(
+                "Отправка публичных опросов в каналы запрещена. Отправка анонимного опроса"
+            )
             self.post.poll["is_anonymous"] = False
             self._bot.send_poll(
                 chat_id,

@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 from typing import Iterable, List
 
-from loguru import logger as log
+from loguru import logger
 from vk_api import VkApi
 
 from .parser import Post, Story
@@ -51,16 +51,21 @@ class Group:
         else:
             self.blacklist = []
 
-    def get_posts(self):
+    def get_posts(self) -> Iterable[Post]:
+        logger.info(
+            "[VK] Проверка на наличие новых постов в {} с последним ID {}",
+            self.domain,
+            self.last_id,
+        )
         posts = self.get_raw_posts()
         for post in reversed(posts):
             is_pinned = post.get("is_pinned", False)
             if post["id"] > self.last_id or (
                 is_pinned and post["id"] != self.pinned_id
             ):
-                log.info("[VK] Обнаружен новый пост с ID {}", post["id"])
+                logger.info("[VK] Обнаружен новый пост с ID {}", post["id"])
                 if post.get("marked_as_ads", 0):
-                    log.info("[VK] Пост рекламный. Он будет пропущен.")
+                    logger.info("[VK] Пост рекламный. Он будет пропущен.")
                     continue
                 for word in self.stop_list:
                     if word.lower() in post["text"].lower():
@@ -78,13 +83,13 @@ class Group:
                     parsed_post.parse_post()
                     self.update_ids(is_pinned, post["id"])
                     if "copy_history" in parsed_post.raw_post:
-                        log.info("В посте содержится репост.")
+                        logger.info("[VK] В посте содержится репост.")
                         if self.send_reposts in ("no", 0):
-                            log.info(
-                                "Отправка репостов полностью отключена, поэтому пост будет пропущен."
+                            logger.info(
+                                "[VK] Отправка репостов полностью отключена, поэтому пост будет пропущен."
                             )
                         elif self.send_reposts in ("post_only", 1):
-                            log.info("Отправка поста без репоста.")
+                            logger.info("[VK] Отправка поста без репоста.")
                             yield parsed_post
                         elif self.send_reposts in ("yes", "all", 2):
                             yield parsed_post
@@ -94,8 +99,8 @@ class Group:
                         yield parsed_post
                     time.sleep(5)
 
-    def get_stories(self):
-        log.info(
+    def get_stories(self) -> Iterable[Story]:
+        logger.info(
             "[VK] Проверка на наличие новых историй в {} с последним ID {}",
             self.domain,
             self.last_story_id,
@@ -103,7 +108,7 @@ class Group:
         stories = self.get_raw_stories()
         for story in reversed(stories):
             if story["id"] > self.last_story_id:
-                log.info("[VK] Обнаружен новая история с ID {}", story["id"])
+                logger.info("[VK] Обнаружен новая история с ID {}", story["id"])
                 parsed_story = Story(story)
                 parsed_story.parse_story()
                 self.last_story_id = story["id"]
@@ -116,7 +121,6 @@ class Group:
 
     def get_raw_posts(self) -> List:
         try:
-            log.info("Получение последних {} постов", self.posts_count)
             group = re.sub(DOMAIN_REGEX, "", self.domain)
             if group.startswith("club") or group.startswith("public") or "-" in group:
                 group = group.replace("club", "-").replace("public", "-")
@@ -131,7 +135,7 @@ class Group:
                 )
             return feed["items"]
         except Exception as error:
-            log.exception("Ошибка получения постов: {}", error)
+            logger.exception("[VK] Ошибка получения постов: {}", error)
             return list()
 
     def get_raw_stories(self) -> List:
@@ -150,7 +154,7 @@ class Group:
             )
             return stories["items"][0]["stories"] if stories["count"] >= 1 else list()
         except Exception as error:
-            log.error("Ошибка получения историй: {}", error)
+            logger.error("[VK] Ошибка получения историй: {}", error)
             return list()
 
     def update_ids(self, is_pinned, post_id):
