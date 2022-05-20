@@ -1,5 +1,3 @@
-from configparser import NoSectionError
-
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from .. import AutoPoster
@@ -17,7 +15,7 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                     **dict(last_id=0, last_story_id=0, pinned_id=0),
                     **bot.config["domains"].pop(data[1]),
                 }
-            except NoSectionError:
+            except KeyError:
                 info = "Источник {} не был найден. Возможно он был уже удален.".format(
                     data[1]
                 )

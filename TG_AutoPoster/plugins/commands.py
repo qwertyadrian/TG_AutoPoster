@@ -21,7 +21,7 @@ def send_welcome(bot: AutoPoster, message: Message):
             ]
         ]
         message.reply(
-            messages.HELP.format(bot.get_me().username),
+            messages.HELP,
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(button),
