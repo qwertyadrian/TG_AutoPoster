@@ -88,13 +88,13 @@ def generate_setting_info(
         text = messages.GLOBAL_SETTINGS.format(settings.get("what_to_send", "всё"))
         footer_button = None
     reposts = settings.get("send_reposts", 0)
-    if reposts in ("all", True):
-        reposts = "✔️"
-    elif reposts in ("no", False):
-        reposts = "❌"
-    elif reposts == "post_only":
+    if reposts == "post_only":
         reposts = "Только пост"
         text += messages.PARTIAL_REPOSTS
+    elif reposts:
+        reposts = "✔️"
+    elif not reposts:
+        reposts = "❌"
     button_list = [
         InlineKeyboardButton(
             "Подписи: {}".format("✔️" if settings.get("sign_posts", True) else "❌"),
