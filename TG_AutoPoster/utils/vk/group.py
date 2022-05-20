@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from loguru import logger
 from vk_api import VkApi
@@ -20,7 +20,7 @@ class Group:
         last_story_id: int = 0,
         pinned_id: int = 0,
         sign_posts: bool = True,
-        send_reposts: int = 0,
+        send_reposts: Union[bool, str] = False,
         send_stories: bool = False,
         what_to_parse: set = None,
         posts_count: int = 11,
@@ -84,14 +84,14 @@ class Group:
                     self.update_ids(is_pinned, post["id"])
                     if "copy_history" in parsed_post.raw_post:
                         logger.info("[VK] В посте содержится репост.")
-                        if self.send_reposts in ("no", 0):
+                        if self.send_reposts == "post_only":
+                            logger.info("[VK] Отправка поста без репоста.")
+                            yield parsed_post
+                        elif not self.send_reposts:
                             logger.info(
                                 "[VK] Отправка репостов полностью отключена, поэтому пост будет пропущен."
                             )
-                        elif self.send_reposts in ("post_only", 1):
-                            logger.info("[VK] Отправка поста без репоста.")
-                            yield parsed_post
-                        elif self.send_reposts in ("yes", "all", 2):
+                        elif self.send_reposts:
                             yield parsed_post
                             parsed_post.parse_repost()
                             yield parsed_post.repost

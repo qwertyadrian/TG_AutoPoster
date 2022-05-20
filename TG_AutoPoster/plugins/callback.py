@@ -90,12 +90,14 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                         option = bot.config["domains"][data[1]].get("send_reposts")
                     else:
                         info = messages.SOURCE_USE_GLOBAL_SETTINGS
-                if option in ("no", False):
-                    info += "Отправка репостов отключена"
-                elif option == "post_only":
+
+                if option == "post_only":
                     info += "Отправка только постов" + messages.PARTIAL_REPOSTS
-                elif option in ("all", True):
+                elif not option:
+                    info += "Отправка репостов отключена"
+                elif option:
                     info += "Отправка репостов включена"
+
                 reply_markup = InlineKeyboardMarkup(button_list)
                 callback_query.edit_message_text(info, reply_markup=reply_markup)
                 return
