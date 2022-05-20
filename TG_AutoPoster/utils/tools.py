@@ -19,6 +19,8 @@ def admin_check(
             messages.LOG_MESSAGE,
             message=message,
         )
+        if not bot.admins_id:
+            message.reply(messages.ACCESS_DENIED)
     elif isinstance(message, InlineQuery):
         logger.info(
             messages.LOG_INLINE_QUERY,
