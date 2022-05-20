@@ -155,6 +155,24 @@ def get_config(bot: AutoPoster, message: Message):
 
 
 @AutoPoster.on_message(
+    pyrogram.filters.command(commands=["register"]) & pyrogram.filters.private
+)
+def register(bot: AutoPoster, message: Message):
+    if len(message.command) >= 2:
+        if message.command[1] == bot.bot_token:
+            bot.reload_config()
+            bot.admins_id.append(message.from_user.id)
+            if bot.config.get("settings"):
+                bot.config["settings"]["admins_id"] = bot.admins_id
+            else:
+                bot.config["settings"] = {
+                    "admins_id": bot.admins_id,
+                }
+            bot.save_config()
+            message.reply("Вы были добавлены в список администраторов")
+
+
+@AutoPoster.on_message(
     pyrogram.filters.command(commands=["about"]) & pyrogram.filters.private
 )
 def about(_, message: Message):
