@@ -271,8 +271,8 @@ class Post:
             )
 
     def parse_poll(self, attachment):
-        logger.log("[VK] Извлечение опроса")
-        logger.log(attachment)
+        logger.info("[VK] Извлечение опроса")
+        logger.debug(attachment)
         self.poll = {
             "question": attachment["question"],
             "options": [answer["text"] for answer in attachment["answers"]],

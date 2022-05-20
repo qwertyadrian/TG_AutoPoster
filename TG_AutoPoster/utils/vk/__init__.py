@@ -67,3 +67,4 @@ def get_new_posts(
 
             for data in cache_dir.iterdir():
                 data.unlink()
+    logger.info("[VK] Работа завершена")
