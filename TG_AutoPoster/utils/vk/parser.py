@@ -137,7 +137,7 @@ class Post:
             self.attachments.media.append(InputMediaPhoto(photo))
 
     def parse_doc(self, attachment):
-        logger.info("[VK] Извлечение документа")
+        logger.info("[VK] Извлечение документа {}", attachment["title"])
         logger.debug(attachment)
         try:
             attachment["title"] = sub(r"[/\\:*?\"><|]", "", attachment["title"])
@@ -178,7 +178,9 @@ class Post:
             )
 
     def parse_music(self, attachment):
-        logger.info("[VK] Извлечение аудио")
+        logger.info(
+            "[VK] Извлечение аудио {} - {}", attachment["artist"], attachment["title"]
+        )
         logger.debug(attachment)
         if not attachment.get("url"):
             try:
