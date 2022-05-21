@@ -1,11 +1,13 @@
-FROM python:3
+FROM python:3-alpine
 
 VOLUME /data
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    rm -fr /var/lib/apt/lists /var/lib/cache/* /var/log/*
-RUN pip3 --no-cache-dir install 'TG-AutoPoster'
-
 WORKDIR /data
+
+COPY TG_AutoPoster setup.py README.md requirements.txt ./
+RUN apk add --no-cache ffmpeg gcc musl-dev && \
+    pip3 --no-cache-dir install -r requirements.txt && \
+    python3 setup.py install && \
+    apk del -r gcc musl-dev
+
 ENTRYPOINT ["python3", "-m", "TG_AutoPoster"]
 CMD []
