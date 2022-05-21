@@ -60,7 +60,9 @@ def create_parser():
         default=CACHE_DIR,
         help="Абсолютный путь к папке с кэшем бота (по умолчанию используется временная папка; .cache в Windows)",
     )
-    parser.add_argument("-d", "--debug", action="store_true", help="Режим отладки")
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Режим отладки", default=False
+    )
     return parser
 
 
@@ -80,6 +82,7 @@ if __name__ == "__main__":
         logger.remove()
         logger.add(
             "logs/bot_log_{time}.log",
+            level="INFO",
             rotation="daily",
             retention="3 days",
             compression="zip",
