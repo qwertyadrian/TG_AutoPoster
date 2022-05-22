@@ -42,7 +42,16 @@ def ini_to_dict(config_path: Path) -> dict:
 
 def determine_type(config: ConfigParser, section: str, option: str):
     value = config.get(section, option)
-    if value.isdigit():
+    if option == "send_reposts":
+        if value in ("yes", "True", "all", "2"):
+            value = True
+        elif value in ("no", "False", "0"):
+            value = False
+        else:
+            value = "post_only"
+    elif option == "what_to_send":
+        value = value.split(",")
+    elif value.isdigit():
         value = int(value)
     elif value in ("yes", "True"):
         value = True
