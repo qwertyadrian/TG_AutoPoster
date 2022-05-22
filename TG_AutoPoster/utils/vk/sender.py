@@ -2,10 +2,10 @@ from typing import Union
 
 import pyrogram.errors
 from loguru import logger
+from pyrogram import Client
 from pyrogram.types import (InputMediaAudio, InputMediaDocument, InputMediaPhoto,
                             InputMediaVideo)
 
-from pyrogram import Client
 from .parser import Post
 
 

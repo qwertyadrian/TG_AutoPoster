@@ -4,13 +4,11 @@ from loguru import logger
 from pyrogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup,
                             InlineQuery, Message)
 
-from . import messages
 from ..tools import build_menu
+from . import messages
 
 
-def admin_check(
-    bot, message: Union[Message, InlineQuery, CallbackQuery]
-) -> bool:
+def admin_check(bot, message: Union[Message, InlineQuery, CallbackQuery]) -> bool:
     if isinstance(message, Message):
         logger.info(
             messages.LOG_MESSAGE,
@@ -31,9 +29,7 @@ def admin_check(
     return message.from_user.id in bot.admins_id
 
 
-def generate_setting_info(
-    bot, domain: str
-) -> Tuple[str, InlineKeyboardMarkup]:
+def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
         **bot.config.get("settings", {}),
         **bot.config["domains"].get(domain, {}),

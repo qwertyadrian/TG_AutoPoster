@@ -9,9 +9,8 @@ from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from ..tools import split, build_menu
-from .tools import (Attachments, add_audio_tags, download_video,
-                    start_process)
+from ..tools import build_menu, split
+from .tools import Attachments, add_audio_tags, download_video, start_process
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"

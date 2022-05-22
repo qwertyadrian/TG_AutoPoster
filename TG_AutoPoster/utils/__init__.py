@@ -1,5 +1,4 @@
-from .vk import *
+from .convert import ini_to_dict
 from .tg import *
-
-from TG_AutoPoster.utils.vk.sender import Sender
 from .tools import *
+from .vk import *
