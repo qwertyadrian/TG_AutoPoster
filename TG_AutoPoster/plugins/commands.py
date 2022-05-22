@@ -5,6 +5,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from .. import AutoPoster
+from ..utils import split
 from ..utils.tg import messages, tools
 
 
@@ -60,7 +61,7 @@ def send_last_logs(bot: AutoPoster, message: Message):
                 last_logs = (
                     "Последние {} строк логов:\n\n".format(str(lines)) + last_logs
                 )
-            for msg in tools.split(last_logs):
+            for msg in split(last_logs):
                 message.reply(msg, parse_mode=ParseMode.DISABLED)
         else:
             message.reply("Логи не найдены.")
