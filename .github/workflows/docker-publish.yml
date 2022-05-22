@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - 'master'
+    paths:
+      - 'TG_AutoPoster/**'
+      - 'setup.py'
+      - 'requirements.txt'
     tags:
       - 'v*'
-  release:
-    types: [published]
 
 jobs:
   push_to_registry:
