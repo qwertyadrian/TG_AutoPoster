@@ -9,7 +9,7 @@ if __name__ == "__main__":
         log.add("./logs/bot_log_DEBUG.log", level="DEBUG", rotation="5 MB")
     else:
         log.remove()
-        log.add("./logs/bot_log_{time}.log")
+        log.add("./logs/bot_log_{time}.log", level="INFO")
     log.info("Начало работы.")
     autoposter = AutoPoster(
         config_path=args.config, cache_dir=args.cache_dir, ipv6=args.ipv6
