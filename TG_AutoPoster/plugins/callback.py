@@ -1,7 +1,7 @@
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from .. import AutoPoster
-from ..utils import messages, tools
+from ..utils.tg import tools, messages
 
 
 @AutoPoster.on_callback_query()

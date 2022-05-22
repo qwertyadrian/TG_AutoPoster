@@ -1,18 +1,28 @@
+import os
+from itertools import chain
 from pathlib import Path
 from typing import Union
 
 import yaml
+from loguru import logger
 from pyrogram import Client
+from vk_api import VkApi
+
+from .utils import Group, Sender, auth_handler, captcha_handler
 
 
 class AutoPoster(Client):
     def __init__(
-        self, config_path: Union[str, Path] = Path("config.yaml"), ipv6: bool = False
+        self,
+        config_path: Union[str, Path] = Path("config.yaml"),
+        cache_dir: Union[str, Path] = Path(".logs"),
+        ipv6: bool = False,
     ):
         name = self.__class__.__name__.lower()
 
         self.config_path = Path(config_path).absolute()
         self.logs_path = Path.cwd().absolute() / "logs"
+        self.cache_dir = Path(cache_dir).absolute()
 
         with self.config_path.open() as stream:
             self.config: dict = yaml.safe_load(stream)
@@ -36,6 +46,52 @@ class AutoPoster(Client):
                 root="TG_AutoPoster.plugins",
             ),
         )
+
+    def get_new_posts(self):
+        try:
+            os.chdir(self.cache_dir)
+        except FileNotFoundError:
+            self.cache_dir.mkdir()
+            os.chdir(self.cache_dir)
+
+        if self.config["vk"].get("token"):
+            vk_session = VkApi(token=self.config["vk"]["token"], api_version="5.131")
+        else:
+            logger.warning(
+                "Использование логина и пароля не рекомендуется. "
+                "Используйте ключ доступа пользователя."
+            )
+            vk_session = VkApi(
+                login=self.config["vk"]["login"],
+                password=self.config["vk"]["password"],
+                auth_handler=auth_handler,
+                captcha_handler=captcha_handler,
+                api_version="5.131",
+            )
+        for domain in self.config["domains"].keys():
+            group = Group(
+                domain=domain,
+                session=vk_session,
+                **{**self.config.get("settings", {}), **self.config["domains"][domain]},
+            )
+            chat_ids = self.config["domains"][domain]["channel"]
+            for post in chain(group.get_posts(), group.get_stories()):
+                sender = Sender(
+                    bot=self,
+                    post=post,
+                    chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                )
+                sender.send_post()
+
+                self.config["domains"][domain]["last_id"] = group.last_id
+                self.config["domains"][domain]["last_story_id"] = group.last_story_id
+                self.config["domains"][domain]["pinned_id"] = group.pinned_id
+
+                self.save_config()
+
+                for data in self.cache_dir.iterdir():
+                    data.unlink()
+        logger.info("[VK] Работа завершена")
 
     def reload_config(self):
         with self.config_path.open() as stream:

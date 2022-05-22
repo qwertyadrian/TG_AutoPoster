@@ -9,8 +9,8 @@ from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
 from wget import download
 
-from ..tools import split
-from .tools import (Attachments, add_audio_tags, build_menu, download_video,
+from ..tools import split, build_menu
+from .tools import (Attachments, add_audio_tags, download_video,
                     start_process)
 
 MAX_FILENAME_LENGTH = 255

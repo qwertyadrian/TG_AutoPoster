@@ -5,14 +5,14 @@ from loguru import logger
 from pyrogram.types import (InputMediaAudio, InputMediaDocument, InputMediaPhoto,
                             InputMediaVideo)
 
-from ... import TG_AutoPoster
+from pyrogram import Client
 from .parser import Post
 
 
 class Sender:
     def __init__(
         self,
-        bot: TG_AutoPoster.AutoPoster,
+        bot: Client,
         post: Post,
         chat_ids: list[Union[int, str]],
         disable_notification: bool = False,
