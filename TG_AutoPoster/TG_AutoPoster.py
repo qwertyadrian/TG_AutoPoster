@@ -8,7 +8,7 @@ from loguru import logger
 from pyrogram import Client
 from vk_api import VkApi
 
-from .utils import Group, Sender, auth_handler, captcha_handler
+from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
 
 
 class AutoPoster(Client):
@@ -24,8 +24,11 @@ class AutoPoster(Client):
         self.logs_path = Path.cwd().absolute() / "logs"
         self.cache_dir = Path(cache_dir).absolute()
 
-        with self.config_path.open() as stream:
-            self.config: dict = yaml.safe_load(stream)
+        if self.config_path.exists():
+            with self.config_path.open() as stream:
+                self.config: dict = yaml.safe_load(stream)
+        else:
+            self.config = ini_to_dict(self.config_path.with_suffix(".ini"))
 
         self.admins_id = self.config.get("settings", {}).get("admins_id", [])
 
