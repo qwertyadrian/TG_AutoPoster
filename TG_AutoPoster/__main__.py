@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
 
-from . import AutoPoster, __version__, get_new_posts
+from . import AutoPoster, __version__
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
@@ -100,6 +100,7 @@ if __name__ == "__main__":
 
     client = AutoPoster(
         config_path=args.config,
+        cache_dir=args.cache_dir,
         ipv6=args.ipv6,
     )
 
@@ -118,14 +119,9 @@ if __name__ == "__main__":
     if loop:
         scheduler = BackgroundScheduler()
         scheduler.add_job(
-            func=get_new_posts,
+            func=client.get_new_posts,
             trigger="interval",
             seconds=sleep_time,
-            args=(
-                client,
-                Path(args.config),
-                Path(args.cache_dir),
-            ),
             max_instances=1,
             next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=5),
         )
@@ -133,8 +129,4 @@ if __name__ == "__main__":
         client.run()
     else:
         with client:
-            get_new_posts(
-                client,
-                Path(args.config),
-                Path(args.cache_dir),
-            )
+            client.get_new_posts()

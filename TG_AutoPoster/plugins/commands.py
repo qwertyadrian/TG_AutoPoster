@@ -5,7 +5,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from .. import AutoPoster
-from ..utils import messages, tools
+from ..utils.tg import tools, messages
 
 
 @AutoPoster.on_message(

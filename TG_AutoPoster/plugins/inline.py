@@ -2,7 +2,7 @@ from pyrogram.types import (InlineQuery, InlineQueryResultArticle,
                             InputTextMessageContent)
 
 from .. import AutoPoster
-from ..utils import tools
+from ..utils.tg import tools
 
 
 @AutoPoster.on_inline_query()

@@ -33,19 +33,6 @@ class Attachments:
             raise KeyError(f"Key {item} not found")
 
 
-def list_splitter(lst: list, n: int) -> list:
-    return [lst[i : i + n] for i in range(0, len(lst), n)]
-
-
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i : i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
-    return menu
-
-
 def start_process(command: list) -> int:
     process = subprocess.Popen(command)
     while process.poll() is None:
