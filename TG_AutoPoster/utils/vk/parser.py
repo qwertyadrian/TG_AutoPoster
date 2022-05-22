@@ -131,6 +131,7 @@ class Post:
         for i in attachment["sizes"]:
             if i["width"] > max_width:
                 photo = i["url"]
+                max_width = i["width"]
         photo = download(photo, bar=None)
         if photo:
             self.attachments.media.append(InputMediaPhoto(photo))
