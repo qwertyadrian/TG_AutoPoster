@@ -88,6 +88,7 @@ class Sender:
                     title=attachment.title,
                     performer=attachment.performer,
                     caption=caption,
+                    disable_notification=self.disable_notification,
                 )
         else:
             attachments[0].caption = caption

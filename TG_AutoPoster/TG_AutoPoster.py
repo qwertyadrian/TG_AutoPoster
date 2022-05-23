@@ -72,10 +72,11 @@ class AutoPoster(Client):
                 api_version="5.131",
             )
         for domain in self.config["domains"].keys():
+            settings = {**self.config.get("settings", {}), **self.config["domains"][domain]}
             group = Group(
                 domain=domain,
                 session=vk_session,
-                **{**self.config.get("settings", {}), **self.config["domains"][domain]},
+                **settings,
             )
             chat_ids = self.config["domains"][domain]["channel"]
             for post in chain(group.get_posts(), group.get_stories()):
@@ -83,6 +84,7 @@ class AutoPoster(Client):
                     bot=self,
                     post=post,
                     chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                    **settings,
                 )
                 sender.send_post()
 
