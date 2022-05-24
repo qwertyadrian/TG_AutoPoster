@@ -7,43 +7,30 @@ from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
 from mutagen.mp3 import MP3
 from requests import Session
 
-# Символы, на которых можно разбить сообщение
-message_breakers = ["\n", ", "]
 
+class Attachments:
+    def __init__(self):
+        self.media = []
+        self.audio = []
+        self.documents = []
 
-def update_parameter(config, section, name, num, config_path="../config.ini") -> int:
-    config.set(section, name, str(num))
-    with open(config_path, "w", encoding="utf-8") as f:
-        config.write(f)
-    return num
+    def all(self):
+        return self.media + self.audio + self.documents
 
+    def __len__(self):
+        return len(self.all())
 
-def split(text: str, max_message_length: int = 4091) -> list:
-    """Разделение текста на части
-
-    :param text: Разбиваемый текст
-    :param max_message_length: Максимальная длина разбитой части текста
-    """
-    if len(text) >= max_message_length:
-        last_index = max(map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
-        good_part = text[:last_index]
-        bad_part = text[last_index + 1 :]
-        return [good_part] + split(bad_part, max_message_length)
-    else:
-        return [text]
-
-
-def list_splitter(lst: list, n: int) -> list:
-    return [lst[i : i + n] for i in range(0, len(lst), n)]
-
-
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i : i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, header_buttons)
-    if footer_buttons:
-        menu.append(footer_buttons)
-    return menu
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.all()[item]
+        elif item == "media":
+            return self.media
+        elif item == "audio":
+            return self.audio
+        elif item == "docs" or item == "documents":
+            return self.documents
+        else:
+            raise KeyError(f"Key {item} not found")
 
 
 def start_process(command: list) -> int:
@@ -69,7 +56,7 @@ def add_audio_tags(filename, artist, title, track_cover):
                 encoding=3,  # 3 is for utf-8
                 mime="image/png",  # image/jpeg or image/png
                 type=3,  # 3 is for the cover image
-                desc=u"Cover",
+                desc="Cover",
                 data=open(track_cover, "rb").read(),
             )
         )

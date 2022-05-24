@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
-version = "2.4.4"
+version = "3.0.0"
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
@@ -36,6 +36,8 @@ setup(
         "beautifulsoup4==4.11.1",
         "vk_api==11.9.8",
         "streamlink==4.0.1",
+        "apscheduler==3.9.1",
+        "PyYAML==6.0",
     ],
 
     classifiers=[
