@@ -19,6 +19,7 @@ class AutoPoster(Client):
         config_path: Union[str, Path] = Path("config.yaml"),
         cache_dir: Union[str, Path] = Path(".logs"),
         ipv6: bool = False,
+        **kwargs,
     ):
         name = self.__class__.__name__.lower()
 
@@ -42,14 +43,13 @@ class AutoPoster(Client):
 
         super().__init__(
             name,
-            api_id=self.config["telegram"]["api_id"],
-            api_hash=self.config["telegram"]["api_hash"],
-            bot_token=self.config["telegram"]["bot_token"],
+            **self.config["telegram"],
             proxy=proxy,
             ipv6=ipv6,
             plugins=dict(
                 root="TG_AutoPoster.plugins",
             ),
+            **kwargs,
         )
 
     def load_plugins(self):
