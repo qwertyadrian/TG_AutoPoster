@@ -100,6 +100,13 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                 callback_query.edit_message_text(info, reply_markup=reply_markup)
                 return
 
+            if data[2] == "wtp":
+                info, reply_markup = tools.generate_what_to_send_info(bot, data[1])
+                callback_query.edit_message_text(
+                    info, reply_markup=reply_markup, disable_web_page_preview=True
+                )
+                return
+
         elif data[0] == "reposts":
             value = bool(int(data[2])) if data[2].isdigit() else data[2]
             if data[1] == "global":
@@ -116,7 +123,32 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
 
             bot.save_config()
 
-        info, reply_markup = tools.generate_setting_info(bot, data[1])
-        callback_query.edit_message_text(
-            info, reply_markup=reply_markup, disable_web_page_preview=True
-        )
+            info, reply_markup = tools.generate_setting_info(bot, data[1])
+            callback_query.edit_message_text(
+                info, reply_markup=reply_markup, disable_web_page_preview=True
+            )
+            return
+
+        elif data[0] == "wtp":
+            _, domain, key = data
+            bot.reload_config()
+            global_ = bot.config.get("settings", {}).get("what_to_send", ["all"])
+            if domain == "global":
+                bot.config.get(
+                    "settings", {}
+                )["what_to_send"] = tools.change_what_to_send_setting(
+                    global_, key
+                )
+            else:
+                local = bot.config["domains"][domain].get("what_to_send", global_)
+                local = tools.change_what_to_send_setting(local, key)
+                if local == global_:
+                    bot.config["domains"][domain].pop("what_to_send")
+                else:
+                    bot.config["domains"][domain]["what_to_send"] = local
+            bot.save_config()
+            info, reply_markup = tools.generate_what_to_send_info(bot, domain)
+            callback_query.edit_message_text(
+                info, reply_markup=reply_markup, disable_web_page_preview=True
+            )
+            return
