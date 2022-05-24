@@ -42,7 +42,7 @@ class Post:
         self.attachments = Attachments()
         self.poll = None
         self.attachments_types = []
-        self.what_to_parse = what_to_parse if what_to_parse else {"all"}
+        self.what_to_parse = what_to_parse
 
     def parse_post(self):
         logger.info("[VK] Парсинг поста.")
@@ -54,11 +54,11 @@ class Post:
                 x["type"] for x in self.raw_post["attachments"]
             )
             for attachment in self.raw_post["attachments"]:
-                if attachment["type"] in [
+                if attachment["type"] in (
                     "link",
                     "page",
                     "album",
-                ] and self.what_to_parse.intersection({"link", "all"}):
+                ) and self.what_to_parse.intersection({"link", "all"}):
                     self.parse_link(attachment)
                 if attachment["type"] == "photo" and self.what_to_parse.intersection(
                     {"photo", "all"}
