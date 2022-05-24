@@ -81,8 +81,60 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
             ),
             callback_data="switch {} disable_web_page_preview".format(domain),
         ),
+        InlineKeyboardButton(
+            "Отправляемые вложения",
+            callback_data="show {} wtp".format(domain),
+        ),
     ]
 
     return text, InlineKeyboardMarkup(
         build_menu(button_list, footer_buttons=footer_button, n_cols=2)
     )
+
+
+def generate_what_to_send_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
+    settings = {
+        **bot.config.get("settings", {}),
+        **bot.config["domains"].get(domain, {}),
+    }
+
+    info = "**Настройка отправки вложений:**\n\n"
+
+    button_list = [
+        InlineKeyboardButton(
+            messages.ATTACHMENTS_TYPES[key].format(
+                "✔"
+                if key in settings.get("what_to_send", ["all"])
+                or "all" in settings.get("what_to_send", ["all"])
+                else "❌"
+            ),
+            callback_data="wtp {} {}".format(domain, key),
+        )
+        for key in messages.ATTACHMENTS_TYPES.keys()
+    ]
+
+    footer_buttons = [
+        InlineKeyboardButton(
+            "Отправлять всё",
+            callback_data="wtp {} all".format(domain),
+        )
+    ]
+
+    return info, InlineKeyboardMarkup(
+        build_menu(button_list, footer_buttons=footer_buttons, n_cols=2)
+    )
+
+
+def change_what_to_send_setting(what_to_send: list, value: str) -> list:
+    attach_types = messages.ATTACHMENTS_TYPES.keys()
+    if "all" in what_to_send:
+        what_to_send = [i for i in attach_types if i != value]
+    else:
+        if value in what_to_send:
+            what_to_send.remove(value)
+        else:
+            what_to_send.append(value)
+        if set(what_to_send) == set(attach_types) or value == "all":
+            what_to_send = ["all"]
+
+    return what_to_send
