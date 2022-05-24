@@ -17,14 +17,15 @@ class AutoPoster(Client):
     def __init__(
         self,
         config_path: Path = Path("config.yaml"),
-        cache_dir: Path = Path(".logs"),
+        logs_dir: Path = Path("logs"),
+        cache_dir: Path = Path(".cache"),
         ipv6: bool = False,
         **kwargs,
     ):
         name = self.__class__.__name__.lower()
 
         self.config_path = config_path.absolute()
-        self.logs_path = Path.cwd().absolute() / "logs"
+        self.logs_path = logs_dir.absolute()
         self.cache_dir = cache_dir.absolute()
 
         if self.config_path.exists():
