@@ -22,7 +22,7 @@ class Group:
         sign_posts: bool = True,
         send_reposts: Union[bool, str] = False,
         send_stories: bool = False,
-        what_to_parse: set = None,
+        what_to_parse: list = None,
         posts_count: int = 11,
         stop_list: Path = Path(),
         blacklist: Path = Path(),
@@ -36,7 +36,7 @@ class Group:
         self.sign_posts = sign_posts
         self.send_reposts = send_reposts
         self.send_stories = send_stories
-        self.what_to_parse = what_to_parse if what_to_parse else {"all"}
+        self.what_to_parse = set(what_to_parse) if what_to_parse else {"all"}
         self.posts_count = posts_count
 
         self.stop_list = Path(stop_list)
