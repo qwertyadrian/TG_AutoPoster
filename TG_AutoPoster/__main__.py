@@ -73,9 +73,11 @@ def create_parser():
 if __name__ == "__main__":
     args = create_parser().parse_args()
 
+    logs_dir = Path.cwd().absolute() / "logs"
+
     if args.debug:
         logger.add(
-            "logs/bot_log_{time}_DEBUG.log",
+            logs_dir / "bot_log_{time}_DEBUG.log",
             level="DEBUG",
             backtrace=True,
             diagnose=True,
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     else:
         logger.remove()
         logger.add(
-            "logs/bot_log_{time}.log",
+            logs_dir / "bot_log_{time}.log",
             level="INFO",
             rotation="daily",
             retention="3 days",
@@ -104,6 +106,7 @@ if __name__ == "__main__":
 
     client = AutoPoster(
         config_path=args.config,
+        logs_dir=logs_dir,
         cache_dir=args.cache_dir,
         ipv6=args.ipv6,
     )
