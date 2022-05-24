@@ -1,4 +1,5 @@
 import os
+from importlib import import_module
 from itertools import chain
 from pathlib import Path
 from typing import Union
@@ -6,6 +7,7 @@ from typing import Union
 import yaml
 from loguru import logger
 from pyrogram import Client
+from pyrogram.handlers.handler import Handler
 from vk_api import VkApi
 
 from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
@@ -50,6 +52,20 @@ class AutoPoster(Client):
             ),
         )
 
+    def load_plugins(self):
+        if self.plugins:
+            plugins = self.plugins.copy()
+            module = import_module(plugins["root"])
+
+            for name in vars(module).keys():
+                # noinspection PyBroadException
+                try:
+                    for handler, group in getattr(module, name).handlers:
+                        if isinstance(handler, Handler) and isinstance(group, int):
+                            self.add_handler(handler, group)
+                except Exception:
+                    pass
+
     def get_new_posts(self):
         try:
             os.chdir(self.cache_dir)
@@ -72,7 +88,10 @@ class AutoPoster(Client):
                 api_version="5.131",
             )
         for domain in self.config["domains"].keys():
-            settings = {**self.config.get("settings", {}), **self.config["domains"][domain]}
+            settings = {
+                **self.config.get("settings", {}),
+                **self.config["domains"][domain],
+            }
             group = Group(
                 domain=domain,
                 session=vk_session,
