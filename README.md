@@ -2,33 +2,21 @@ TG_AutoPoster
 =============
 Бот, пересылающий записи из групп ВК в канал/чат/ЛС в Telegram.
 
-[![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg)](/LICENCE.md) ![Python Version](https://img.shields.io/badge/python-3.7%2B-orange.svg) [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/issues) [![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/stargazers)
+[![License MIT](https://img.shields.io/github/license/qwertyadrian/TG_AutoPoster.svg)](/LICENCE.md) 
+![Python Version](https://img.shields.io/badge/python-3.7%2B-orange.svg) 
+[![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![issues](https://img.shields.io/github/issues/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/issues) 
+[![stars](https://img.shields.io/github/stars/qwertyadrian/TG_AutoPoster.svg)](https://github.com/qwertyadrian/TG_AutoPoster/stargazers)
+[![PyPI](https://img.shields.io/pypi/v/TG-AutoPoster)](https://pypi.org/project/TG-AutoPoster/)
 [![docker](https://img.shields.io/badge/docker%20image-tg__autoposter-FF9900)](https://hub.docker.com/r/qwertyadrian/tg_autoposter)
 ***
-### Установка
+### Установка (обновление)
 ```shell script
 pip3 install -U TG-AutoPoster
 ```
 ***
-### Установка (классический способ)
-Команды указаны для Linux
-
-Клонируйте репозиторий и перейдите в папку с проектом
-```shell script
-git clone https://github.com/qwertyadrian/TG_AutoPoster
-cd TG_AutoPoster
-```
-Инициализируйте и активируйте виртуальное окружение (при необходимости)
-```shell script
-python3 -m venv venv
-source venv/bin/activate
-```
-Установите требуемые зависимости
-```shell script
-pip install -r requirements.txt
-```
 ### Настройка
+**Внимание!** Если у вас уже есть файл конфигурации в формате INI от старой версии бота он будет автоматически конвертирован в новый формат.
 1. Создайте файл config.yaml, скопируйте в него содержимое файла [config.yaml.example](/config.yaml.example) и выполните настройку ключа **vk**
 
 |                 Параметр                 |                                                                                                                                                                                                          Описание                                                                                                                                                                                                          |
@@ -72,7 +60,7 @@ pip install -r requirements.txt
 |         sign_posts          |                   true, false                    |                                          Указывать ли автора поста (если это возможно) и ссылку на оригинальный пост. По умолчанию: true                                          |
 |        send_reposts         |              false, post_only, true              |                             Отправлять ли репосты? Подробнее в [config.yaml.example](/config.yaml.example). По умолчанию отправка репостов отключена.                             |
 |        send_stories         |                   false, true                    |                                                                    Отправлять ли истории? По умолчанию: false                                                                     |
-|        what_to_send         | all, text, link, photo, doc, video, music, polls |                              Какие типы вложений отправлять. Подробнее в [config.yaml.example](/config.yaml.example). По умолчанию отправляется всё.                              |
+|        what_to_send         | all, text, link, photo, doc, video, music, polls |                         Какие типы вложений отправлять. Подробнее в [config.yaml.example](/config.yaml.example). По умолчанию отправляются все вложения.                          |
 |          stop_list          |                                                  | Путь к файлу, содержащий стоп-слова (в файле должно быть по одному слову на каждой строке). Если вы не хотите использовать стоп-слова удалите этот параметр из файла конфигурации |
 |          blacklist          |                                                  |                             Путь к файлу, содержащий слова, которые будут удалены из текста отправляемого поста. Поддерживаются регулярные выражения.                             |
 |    disable_notification     |                   true, false                    |                                            Отправляет сообщения молча. Пользователи получат уведомление без звука. По умолчанию: false                                            |
@@ -85,17 +73,17 @@ pip install -r requirements.txt
 
 **Для работы с несколькими группами добавьте новые ключи в соответствии с пунктом № 4**                                                                                                                                                                                                                                                                              
 ### Запуск                                                                                                                                                                                                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                                                      
-1. Пропишите запуск файла по расписанию [TG_AutoPoster.sh](/TG_AutoPoster.sh) в crontab (Linux) (нежелательно запускать бота каждые 5-10 минут, так как за это могут заморозить ваш профиль ВК). Также возможен запуск бота в бесконечном цикле с проверкой постов через определенный промежуток времени. Подробнее `python3 -m TG_AutoPoster --help`.                
-2. Активируйте бота командой /start                                                                                                                                                                                                                                                                                                                                   
-3. Готово!                                                                                                                                                                                                                                                                                                                                                            
+1. Для запуска используйте [TG_AutoPoster.sh](/TG_AutoPoster.sh) или команду `python3 -m TG_AutoPoster`     
+2. Активируйте бота командой /start
+
+Для доступных параметров командой строки используйте `bash TG_AutoPoster.sh --help` или `python3 -m TG_AutoPoster --help`
 ***
 Дополнительно:
 [Использование Docker контейнера](/Docker.md)
 
-Вопросы и предложения:
-1. Telegram: [@QwertyAdrian](https://t.me/QwertyAdrian)
-2. Вконтакте: [Адриан Поляков](https://vk.com/qwertyadrian) (отвечаю там редко)
+Отчеты об ошибках и предложения отправлять в:
+1. [GitHub Issues](https://github.com/qwertyadrian/TG_AutoPoster/issues/new/choose)
+2. Telegram: [@QwertyAdrian](https://t.me/QwertyAdrian)
 
 Для пожертвований на развитие проекта:
 1. [Qiwi](https://qiwi.com/n/QWERTYADRIAN)
