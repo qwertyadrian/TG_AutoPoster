@@ -16,16 +16,16 @@ from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
 class AutoPoster(Client):
     def __init__(
         self,
-        config_path: Union[str, Path] = Path("config.yaml"),
-        cache_dir: Union[str, Path] = Path(".logs"),
+        config_path: Path = Path("config.yaml"),
+        cache_dir: Path = Path(".logs"),
         ipv6: bool = False,
         **kwargs,
     ):
         name = self.__class__.__name__.lower()
 
-        self.config_path = Path(config_path).absolute()
+        self.config_path = config_path.absolute()
         self.logs_path = Path.cwd().absolute() / "logs"
-        self.cache_dir = Path(cache_dir).absolute()
+        self.cache_dir = cache_dir.absolute()
 
         if self.config_path.exists():
             with self.config_path.open() as stream:
