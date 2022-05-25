@@ -29,11 +29,17 @@ class Sender:
     def send_post(self):
         for chat_id in self.chat_ids:
             self.send_splitted_message(self.post.text, chat_id)
-            if len(self.post.text) > 1 or len(self.post.attachments) == 0:
+            if (
+                len(self.post.text) > 1
+                and len(self.post.attachments) == 0
+                or len(self.post.text[-1]) >= 1024
+            ):
                 self._bot.send_message(
                     chat_id,
                     self.post.text[-1],
-                    reply_markup=self.post.reply_markup,
+                    reply_markup=self.post.reply_markup
+                    if len(self.post.attachments) == 0
+                    else None,
                     disable_web_page_preview=self.disable_web_page_preview,
                     disable_notification=self.disable_notification,
                 )
