@@ -83,7 +83,7 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
         ),
         InlineKeyboardButton(
             "Отправляемые вложения",
-            callback_data="show {} wtp".format(domain),
+            callback_data="show {} wts".format(domain),
         ),
     ]
 
@@ -108,7 +108,7 @@ def generate_what_to_send_info(bot, domain: str) -> Tuple[str, InlineKeyboardMar
                 or "all" in settings.get("what_to_send", ["all"])
                 else "❌"
             ),
-            callback_data="wtp {} {}".format(domain, key),
+            callback_data="wts {} {}".format(domain, key),
         )
         for key in messages.ATTACHMENTS_TYPES.keys()
     ]
@@ -116,7 +116,7 @@ def generate_what_to_send_info(bot, domain: str) -> Tuple[str, InlineKeyboardMar
     footer_buttons = [
         InlineKeyboardButton(
             "Отправлять всё",
-            callback_data="wtp {} all".format(domain),
+            callback_data="wts {} all".format(domain),
         )
     ]
 
