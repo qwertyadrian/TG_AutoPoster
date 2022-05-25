@@ -1,10 +1,12 @@
+from typing import List
+
 from pyrogram.types import InlineKeyboardButton
 
 # Символы, на которых можно разбить сообщение
 message_breakers = [":", " ", "\n"]
 
 
-def split(text: str, max_message_length: int = 4091) -> list:
+def split(text: str, max_message_length: int = 4091) -> List:
     """Разделение текста на части
 
     :param text: Разбиваемый текст
@@ -25,11 +27,11 @@ def split(text: str, max_message_length: int = 4091) -> list:
 
 
 def build_menu(
-    buttons: list[InlineKeyboardButton],
+    buttons: List[InlineKeyboardButton],
     n_cols: int = 1,
-    header_buttons: list[InlineKeyboardButton] = None,
-    footer_buttons: list[InlineKeyboardButton] = None,
-) -> list[list[InlineKeyboardButton]]:
+    header_buttons: List[InlineKeyboardButton] = None,
+    footer_buttons: List[InlineKeyboardButton] = None,
+) -> List[List[InlineKeyboardButton]]:
     menu = [buttons[i : i + n_cols] for i in range(0, len(buttons), n_cols)]
     if header_buttons:
         menu.insert(0, header_buttons)

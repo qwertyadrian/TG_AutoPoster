@@ -2,7 +2,6 @@ import os
 from importlib import import_module
 from itertools import chain
 from pathlib import Path
-from typing import Union
 
 import yaml
 from loguru import logger

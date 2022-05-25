@@ -134,11 +134,9 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
             bot.reload_config()
             global_ = bot.config.get("settings", {}).get("what_to_send", ["all"])
             if domain == "global":
-                bot.config.get(
-                    "settings", {}
-                )["what_to_send"] = tools.change_what_to_send_setting(
-                    global_, key
-                )
+                bot.config.get("settings", {})[
+                    "what_to_send"
+                ] = tools.change_what_to_send_setting(global_, key)
             else:
                 local = bot.config["domains"][domain].get("what_to_send", global_)
                 local = tools.change_what_to_send_setting(local, key)
