@@ -351,7 +351,7 @@ class Post:
             self.what_to_parse,
         )
         self.repost.parse_post()
-        self.repost.text = repost_source + self.repost.text
+        self.repost.text = split(repost_source + " ".join(self.repost.text))
 
 
 class Story:
