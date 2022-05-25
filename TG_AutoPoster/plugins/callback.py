@@ -100,7 +100,7 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                 callback_query.edit_message_text(info, reply_markup=reply_markup)
                 return
 
-            if data[2] == "wtp":
+            if data[2] == "wts":
                 info, reply_markup = tools.generate_what_to_send_info(bot, data[1])
                 callback_query.edit_message_text(
                     info, reply_markup=reply_markup, disable_web_page_preview=True
@@ -129,7 +129,7 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
             )
             return
 
-        elif data[0] == "wtp":
+        elif data[0] == "wts":
             _, domain, key = data
             bot.reload_config()
             global_ = bot.config.get("settings", {}).get("what_to_send", ["all"])
