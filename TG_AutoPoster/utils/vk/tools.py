@@ -2,6 +2,7 @@ import re
 import shutil
 import subprocess
 import time
+from typing import List
 
 from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
 from mutagen.mp3 import MP3
@@ -33,7 +34,7 @@ class Attachments:
             raise KeyError(f"Key {item} not found")
 
 
-def start_process(command: list) -> int:
+def start_process(command: List) -> int:
     process = subprocess.Popen(command)
     while process.poll() is None:
         time.sleep(1)
@@ -69,7 +70,7 @@ def add_audio_tags(filename, artist, title, track_cover):
     return True
 
 
-def download_video(session: Session, link: str):
+def download_video(session: Session, link: str) -> str:
     filereq = session.get(link, stream=True)
     res = re.findall(r"id=(\d*)(&type)?", link)
     if res:

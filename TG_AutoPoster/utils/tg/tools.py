@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 from loguru import logger
 from pyrogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup,
@@ -125,7 +125,7 @@ def generate_what_to_send_info(bot, domain: str) -> Tuple[str, InlineKeyboardMar
     )
 
 
-def change_what_to_send_setting(what_to_send: list, value: str) -> list:
+def change_what_to_send_setting(what_to_send: List, value: str) -> List:
     attach_types = messages.ATTACHMENTS_TYPES.keys()
     if "all" in what_to_send:
         what_to_send = [i for i in attach_types if i != value]

@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from typing import Iterable, List, Union
+from typing import Iterable, List, Sequence, Union
 
 from loguru import logger
 from vk_api import VkApi
@@ -22,7 +22,7 @@ class Group:
         sign_posts: bool = True,
         send_reposts: Union[bool, str] = False,
         send_stories: bool = False,
-        what_to_send: list = None,
+        what_to_send: Sequence[str] = None,
         posts_count: int = 11,
         stop_list: Path = Path(),
         blacklist: Path = Path(),

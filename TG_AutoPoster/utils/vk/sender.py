@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Sequence, Union
 
 import pyrogram.errors
 from loguru import logger
@@ -14,7 +14,7 @@ class Sender:
         self,
         bot: Client,
         post: Post,
-        chat_ids: list[Union[int, str]],
+        chat_ids: Sequence[Union[int, str]],
         disable_notification: bool = False,
         disable_web_page_preview: bool = True,
         **kwargs,
