@@ -55,7 +55,6 @@ class Sender:
             self.send_attachments(chat_id, self.post.attachments["audio"], caption)
 
             if hasattr(self.post, "poll") and self.post.poll:
-                print(hasattr(self.post, "poll") and self.post.poll)
                 self.send_poll(chat_id)
 
     def send_attachments(self, chat_id, attachments, caption):
