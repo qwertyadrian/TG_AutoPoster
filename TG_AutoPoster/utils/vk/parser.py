@@ -155,23 +155,24 @@ class Post:
     def parse_video(self, attachment):
         logger.info("[VK] Извлечение видео")
         logger.debug(attachment)
+
         video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
-        if not attachment.get("platform"):
-            soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
-            if len(soup.find_all("source")) >= 2:
-                video_link = soup.find_all("source")[1].get("src")
-                filesize = self.session.http.head(video_link).headers["Content-Length"]
-                if int(filesize) >= 2097152000:
-                    logger.info(
-                        "[VK] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст."
-                    )
-                    self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                        video_link.replace("m.", ""), attachment
-                    )
-                    return None
-                else:
-                    file = download_video(self.session.http, video_link)
-                self.attachments.media.append(InputMediaVideo(file))
+        soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
+
+        if not attachment.get("platform") and len(soup.find_all("source")) >= 2:
+            video_link = soup.find_all("source")[1].get("src")
+            filesize = self.session.http.head(video_link).headers["Content-Length"]
+            if int(filesize) >= 2097152000:
+                logger.info(
+                    "[VK] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст."
+                )
+                self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
+                    video_link.replace("m.", ""), attachment
+                )
+                return None
+            else:
+                file = download_video(self.session.http, video_link)
+            self.attachments.media.append(InputMediaVideo(file))
         else:
             self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                 video_link.replace("m.", ""), attachment

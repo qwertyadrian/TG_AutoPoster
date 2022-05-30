@@ -31,8 +31,9 @@ class Sender:
             self.send_splitted_message(self.post.text, chat_id)
             if (
                 len(self.post.text) > 1
-                and len(self.post.attachments) == 0
-                or len(self.post.text[-1]) >= 1024
+                and len(self.post.text[-1]) >= 1024
+                or len(self.post.attachments) == 0
+
             ):
                 self._bot.send_message(
                     chat_id,
