@@ -69,7 +69,7 @@ class Group:
                     continue
                 for word in self.stop_list:
                     if word.lower() in post["text"].lower():
-                        continue
+                        break
                 else:
                     for word in self.blacklist:
                         post["text"] = re.sub(word, "", post["text"])
