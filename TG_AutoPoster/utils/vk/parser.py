@@ -108,8 +108,14 @@ class Post:
     def parse_link(self, attachment):
         logger.info("[VK] Парсинг ссылки")
         logger.debug(attachment)
+        if attachment[attachment["type"]]["title"] == self.text.strip():
+            self.text = ""
         if attachment["type"] == "link" and attachment["link"]["title"]:
             self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
+            if attachment["link"].get("photo"):
+                self.parse_photo(attachment["link"]["photo"])
+            if attachment["link"].get("product"):
+                self.text += '\nЦена: {}'.format(attachment["link"]["product"]["price"]["text"])
         elif attachment["type"] == "page":
             self.text += (
                 '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(
