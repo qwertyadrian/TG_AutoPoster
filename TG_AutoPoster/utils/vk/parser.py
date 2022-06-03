@@ -115,7 +115,9 @@ class Post:
             if attachment["link"].get("photo"):
                 self.parse_photo(attachment["link"]["photo"])
             if attachment["link"].get("product"):
-                self.text += '\nЦена: {}'.format(attachment["link"]["product"]["price"]["text"])
+                self.text += "\nЦена: {}".format(
+                    attachment["link"]["product"]["price"]["text"]
+                )
         elif attachment["type"] == "page":
             self.text += (
                 '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(

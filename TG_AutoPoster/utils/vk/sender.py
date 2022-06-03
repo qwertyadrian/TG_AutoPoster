@@ -33,7 +33,6 @@ class Sender:
                 len(self.post.text) >= 1
                 and len(self.post.text[-1]) >= 1024
                 or len(self.post.attachments) == 0
-
             ):
                 message = self._bot.send_message(
                     chat_id,
@@ -50,11 +49,17 @@ class Sender:
                 caption = self.post.text[-1]
                 msg_id = None
 
-            if self.send_attachments(chat_id, self.post.attachments["media"], caption, msg_id):
+            if self.send_attachments(
+                chat_id, self.post.attachments["media"], caption, msg_id
+            ):
                 caption = ""
-            if self.send_attachments(chat_id, self.post.attachments["docs"], caption, msg_id):
+            if self.send_attachments(
+                chat_id, self.post.attachments["docs"], caption, msg_id
+            ):
                 caption = ""
-            self.send_attachments(chat_id, self.post.attachments["audio"], caption, msg_id)
+            self.send_attachments(
+                chat_id, self.post.attachments["audio"], caption, msg_id
+            )
 
             if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll(chat_id)
