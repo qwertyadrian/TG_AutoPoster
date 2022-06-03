@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import re
 from setuptools import setup, find_packages
 
-version = "3.0.0"
+
+with open("requirements.txt", encoding="utf-8") as r:
+    requires = [i.strip() for i in r]
+
+with open("TG_AutoPoster/__init__.py", encoding="utf-8") as f:
+    version = re.findall(r"__version__ = \"(.+)\"", f.read())[0]
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
@@ -14,7 +20,7 @@ setup(
     author="qwertyadrian",
     author_email="me@qwertyadrian.ru",
 
-    description="Telegram Bot for AutoPosting from VK",
+    description="Telegram Bot for reposting from VK",
     long_description=long_description,
     long_description_content_type='text/markdown',
 
@@ -23,22 +29,11 @@ setup(
         version
     ),
 
-    license="MIT License, see LICENCE.md",
+    license="MIT",
     platforms=["OS Independent"],
 
     packages=find_packages(),
-    install_requires=[
-        "pyrogram==2.0.24",
-        "tgcrypto",
-        "loguru==0.6.0",
-        "wget==3.2",
-        "mutagen==1.45.1",
-        "beautifulsoup4==4.11.1",
-        "vk_api==11.9.8",
-        "streamlink==4.0.1",
-        "apscheduler==3.9.1",
-        "PyYAML==6.0",
-    ],
+    install_requires=requires,
 
     classifiers=[
         "License :: OSI Approved :: MIT License",
@@ -49,7 +44,11 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: Internet",
+        "Topic :: Communications",
         "Topic :: Communications :: Chat",
-    ]
+    ],
+    python_requires="~=3.7",
 )
