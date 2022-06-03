@@ -30,12 +30,12 @@ class Sender:
         for chat_id in self.chat_ids:
             self.send_splitted_message(self.post.text, chat_id)
             if (
-                len(self.post.text) > 1
+                len(self.post.text) >= 1
                 and len(self.post.text[-1]) >= 1024
                 or len(self.post.attachments) == 0
 
             ):
-                self._bot.send_message(
+                message = self._bot.send_message(
                     chat_id,
                     self.post.text[-1],
                     reply_markup=self.post.reply_markup
@@ -45,19 +45,21 @@ class Sender:
                     disable_notification=self.disable_notification,
                 )
                 caption = ""
+                msg_id = message.id
             else:
                 caption = self.post.text[-1]
+                msg_id = None
 
-            if self.send_attachments(chat_id, self.post.attachments["media"], caption):
+            if self.send_attachments(chat_id, self.post.attachments["media"], caption, msg_id):
                 caption = ""
-            if self.send_attachments(chat_id, self.post.attachments["docs"], caption):
+            if self.send_attachments(chat_id, self.post.attachments["docs"], caption, msg_id):
                 caption = ""
-            self.send_attachments(chat_id, self.post.attachments["audio"], caption)
+            self.send_attachments(chat_id, self.post.attachments["audio"], caption, msg_id)
 
             if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll(chat_id)
 
-    def send_attachments(self, chat_id, attachments, caption):
+    def send_attachments(self, chat_id, attachments, caption, msg_id):
         if len(attachments) == 0:
             return False
         elif len(attachments) == 1:
@@ -69,6 +71,7 @@ class Sender:
                     caption=caption,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
+                    reply_to_message_id=msg_id,
                 )
             elif isinstance(attachment, InputMediaVideo):
                 self._bot.send_video(
@@ -77,6 +80,7 @@ class Sender:
                     caption=caption,
                     reply_markup=self.post.reply_markup,
                     disable_notification=self.disable_notification,
+                    reply_to_message_id=msg_id,
                 )
             elif isinstance(attachment, InputMediaDocument):
                 self._bot.send_document(
@@ -84,6 +88,7 @@ class Sender:
                     document=attachment.media,
                     caption=caption,
                     disable_notification=self.disable_notification,
+                    reply_to_message_id=msg_id,
                 )
             elif isinstance(attachment, InputMediaAudio):
                 self._bot.send_audio(
@@ -95,6 +100,7 @@ class Sender:
                     performer=attachment.performer,
                     caption=caption,
                     disable_notification=self.disable_notification,
+                    reply_to_message_id=msg_id,
                 )
         else:
             attachments[0].caption = caption
@@ -102,6 +108,7 @@ class Sender:
                 chat_id,
                 media=attachments,
                 disable_notification=self.disable_notification,
+                reply_to_message_id=msg_id,
             )
         return True
 
