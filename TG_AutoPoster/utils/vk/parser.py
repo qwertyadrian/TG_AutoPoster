@@ -317,9 +317,7 @@ class Post:
                 InlineKeyboardButton("Оригинал поста", url=self.post_url)
             )
         self.reply_markup = (
-            InlineKeyboardMarkup(build_menu(button_list, n_cols=1))
-            if button_list
-            else None
+            InlineKeyboardMarkup(build_menu(button_list)) if button_list else None
         )
 
     def parse_user(self):
@@ -361,6 +359,9 @@ class Post:
         )
         self.repost.parse_post()
         self.repost.text = split(repost_source + " ".join(self.repost.text))
+
+    def __bool__(self):
+        return bool(self.text) and bool(self.attachments)
 
 
 class Story:
