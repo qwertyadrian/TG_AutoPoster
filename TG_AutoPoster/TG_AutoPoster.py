@@ -99,13 +99,14 @@ class AutoPoster(Client):
             )
             chat_ids = self.config["domains"][domain]["channel"]
             for post in chain(group.get_posts(), group.get_stories()):
-                sender = Sender(
-                    bot=self,
-                    post=post,
-                    chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
-                    **settings,
-                )
-                sender.send_post()
+                if post:
+                    sender = Sender(
+                        bot=self,
+                        post=post,
+                        chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                        **settings,
+                    )
+                    sender.send_post()
 
                 self.config["domains"][domain]["last_id"] = group.last_id
                 self.config["domains"][domain]["last_story_id"] = group.last_story_id

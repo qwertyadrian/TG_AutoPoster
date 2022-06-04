@@ -73,7 +73,7 @@ def create_parser():
 if __name__ == "__main__":
     args = create_parser().parse_args()
 
-    logs_dir = Path.cwd().absolute() / "logs"
+    logs_dir = args.config.parent.absolute() / "logs"
 
     if args.debug:
         logger.add(
