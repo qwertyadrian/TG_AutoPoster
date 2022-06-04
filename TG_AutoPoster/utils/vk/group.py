@@ -51,7 +51,7 @@ class Group:
         else:
             self.blacklist = []
 
-    def get_posts(self) -> Iterable[Post]:
+    def get_posts(self) -> Iterable[Union[Post, None]]:
         logger.info(
             "[VK] Проверка на наличие новых постов в {} с последним ID {}",
             self.domain,
@@ -91,6 +91,7 @@ class Group:
                             logger.info(
                                 "[VK] Отправка репостов полностью отключена, поэтому пост будет пропущен."
                             )
+                            yield None
                         elif self.send_reposts:
                             yield parsed_post
                             parsed_post.parse_repost()
