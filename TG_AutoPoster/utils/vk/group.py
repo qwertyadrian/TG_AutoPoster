@@ -85,16 +85,14 @@ class Group:
                     if "copy_history" in parsed_post.raw_post:
                         logger.info("[VK] В посте содержится репост.")
                         if self.send_reposts == "post_only":
-                            if parsed_post:
-                                logger.info("[VK] Отправка поста без репоста.")
-                                yield parsed_post
+                            logger.info("[VK] Отправка поста без репоста.")
+                            yield parsed_post
                         elif not self.send_reposts:
                             logger.info(
                                 "[VK] Отправка репостов полностью отключена, поэтому пост будет пропущен."
                             )
                         elif self.send_reposts:
-                            if parsed_post:
-                                yield parsed_post
+                            yield parsed_post
                             parsed_post.parse_repost()
                             yield parsed_post.repost
                     else:
