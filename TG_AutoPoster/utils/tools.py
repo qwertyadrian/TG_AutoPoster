@@ -1,5 +1,9 @@
+from functools import wraps
+from time import sleep
 from typing import List
 
+from loguru import logger
+from pyrogram.errors import FloodWait, SlowmodeWait
 from pyrogram.types import InlineKeyboardButton
 
 # Символы, на которых можно разбить сообщение
@@ -38,3 +42,15 @@ def build_menu(
     if footer_buttons:
         menu.append(footer_buttons)
     return menu
+
+
+def timeout_handler(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except (FloodWait, SlowmodeWait) as e:
+                logger.warning(e.MESSAGE, value=e.value)
+                sleep(e.value)
+    return wrapped

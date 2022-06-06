@@ -6,6 +6,7 @@ from pyrogram import Client
 from pyrogram.types import (InputMediaAudio, InputMediaDocument, InputMediaPhoto,
                             InputMediaVideo)
 
+from ..tools import timeout_handler
 from .parser import Post
 
 
@@ -34,7 +35,7 @@ class Sender:
                 and len(self.post.text[-1]) >= 1024
                 or len(self.post.attachments) == 0
             ):
-                message = self._bot.send_message(
+                message = timeout_handler(self._bot.send_message)(
                     chat_id,
                     self.post.text[-1],
                     reply_markup=self.post.reply_markup
@@ -64,6 +65,7 @@ class Sender:
             if hasattr(self.post, "poll") and self.post.poll:
                 self.send_poll(chat_id)
 
+    @timeout_handler
     def send_attachments(self, chat_id, attachments, caption, msg_id):
         if len(attachments) == 0:
             return False
@@ -117,6 +119,7 @@ class Sender:
             )
         return True
 
+    @timeout_handler
     def send_poll(self, chat_id):
         logger.info("Отправка опроса")
         try:
@@ -136,6 +139,7 @@ class Sender:
                 disable_notification=self.disable_notification,
             )
 
+    @timeout_handler
     def send_splitted_message(self, text, chat_id):
         for i in range(len(text) - 1):
             self._bot.send_message(
