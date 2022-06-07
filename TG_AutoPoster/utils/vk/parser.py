@@ -361,7 +361,7 @@ class Post:
         self.repost.text = split(repost_source + " ".join(self.repost.text))
 
     def __bool__(self):
-        return bool(self.text) or bool(self.attachments) or bool(self.poll)
+        return bool(''.join(self.text)) or bool(self.attachments) or bool(self.poll)
 
 
 class Story:
