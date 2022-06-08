@@ -53,4 +53,5 @@ def timeout_handler(func):
             except (FloodWait, SlowmodeWait) as e:
                 logger.warning(e.MESSAGE, value=e.value)
                 sleep(e.value)
+
     return wrapped
