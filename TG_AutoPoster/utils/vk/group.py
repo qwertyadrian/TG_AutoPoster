@@ -24,8 +24,8 @@ class Group:
         send_stories: bool = False,
         what_to_send: Sequence[str] = None,
         posts_count: int = 11,
-        stop_list: Path = Path(),
-        blacklist: Path = Path(),
+        stop_list: str = "",
+        blacklist: str = "",
         **kwargs,
     ):
         self.domain = str(domain)
@@ -41,13 +41,17 @@ class Group:
 
         self.stop_list = Path(stop_list)
         if self.stop_list.is_file():
-            self.stop_list = self.stop_list.read_text().split("\n")
+            self.stop_list = list(
+                filter(lambda x: bool(x), self.stop_list.read_text().split("\n"))
+            )
         else:
             self.stop_list = []
 
         self.blacklist = Path(blacklist)
         if self.blacklist.is_file():
-            self.blacklist = self.blacklist.read_text().split("\n")
+            self.blacklist = list(
+                filter(lambda x: bool(x), self.blacklist.read_text().split("\n"))
+            )
         else:
             self.blacklist = []
 
