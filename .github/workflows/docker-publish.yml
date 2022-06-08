@@ -9,7 +9,7 @@ on:
       - 'setup.py'
       - 'requirements.txt'
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   push_to_registry:
@@ -47,9 +47,9 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}
-            type=semver,pattern=v{{major}}.{{minor}}
+            type=pep440,pattern={{version}}
+            type=pep440,pattern={{major}}
+            type=pep440,pattern={{major}}.{{minor}}
       -
         name: Build and push to Docker Hub
         uses: docker/build-push-action@v3

@@ -25,11 +25,9 @@ setup(
     long_description_content_type='text/markdown',
 
     url="https://github.com/qwertyadrian/TG_AutoPoster",
-    download_url="https://github.com/qwertyadrian/TG_AutoPoster/archive/v{}.zip".format(
-        version
-    ),
+    download_url="https://github.com/qwertyadrian/TG_AutoPoster/releases/latest",
 
-    license="MIT",
+    license="MIT License",
     platforms=["OS Independent"],
 
     packages=find_packages(),
