@@ -1,5 +1,3 @@
-from random import choice
-
 import pyrogram.filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -65,30 +63,6 @@ def send_last_logs(bot: AutoPoster, message: Message):
                 message.reply(msg, parse_mode=ParseMode.DISABLED)
         else:
             message.reply("Логи не найдены.")
-
-
-@AutoPoster.on_message(
-    pyrogram.filters.command(commands=["list", "sources_list"])
-    & pyrogram.filters.private
-)
-def source_list(bot: AutoPoster, message: Message):
-    if tools.admin_check(bot, message):
-        bot.reload_config()
-        sources_list = bot.config["domains"].keys()
-        sources = "Список источников:\nИсточник        ---->        Назначение  (ID последнего отправленного поста)\n\n"
-        for source in sources_list:
-            sources += "https://vk.com/{}        ---->        {}  ({})\n".format(
-                source,
-                bot.config["domains"][source]["channel"],
-                bot.config["domains"][source]["last_id"],
-            )
-        sources += (
-            "\nДля удаления источника отправьте команду /remove <домен группы вк>\nНапример, /remove "
-            + choice(list(sources_list))
-        )
-        message.reply(
-            sources, disable_web_page_preview=True, parse_mode=ParseMode.DISABLED
-        )
 
 
 @AutoPoster.on_message(
