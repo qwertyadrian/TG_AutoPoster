@@ -132,7 +132,7 @@ class Sender:
             logger.critical(
                 "Отправка публичных опросов в каналы запрещена. Отправка анонимного опроса"
             )
-            self.post.poll["is_anonymous"] = False
+            self.post.poll["is_anonymous"] = True
             self._bot.send_poll(
                 chat_id,
                 **self.post.poll,
