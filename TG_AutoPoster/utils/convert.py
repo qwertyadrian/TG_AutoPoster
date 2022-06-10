@@ -51,7 +51,7 @@ def determine_type(config: ConfigParser, section: str, option: str):
             value = "post_only"
     elif option == "what_to_send":
         value = value.split(",")
-    elif value.isdigit():
+    elif value.isdigit() or value[1:].isdigit():
         value = int(value)
     elif value in ("yes", "True"):
         value = True

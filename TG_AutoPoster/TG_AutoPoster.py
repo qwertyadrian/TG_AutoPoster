@@ -32,6 +32,7 @@ class AutoPoster(Client):
                 self.config: dict = yaml.safe_load(stream)
         else:
             self.config = ini_to_dict(self.config_path.with_suffix(".ini"))
+            self.save_config()
 
         self.admins_id = self.config.get("settings", {}).get("admins_id", [])
 
