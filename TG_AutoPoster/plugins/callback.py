@@ -71,7 +71,7 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                     button_list, n_cols=2, footer_buttons=footer_buttons
                 )
 
-                option = bot.config["settings"]["send_reposts"]
+                option = bot.config["settings"].get("send_reposts", False)
 
                 if data[1] != "global":
                     button_list.append(
