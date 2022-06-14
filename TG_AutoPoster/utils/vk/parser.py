@@ -35,13 +35,11 @@ class Post:
         self.raw_post = post
         self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.raw_post)
         self.text = ""
-        self.user = None
         self.repost = None
         self.repost_source = None
         self.reply_markup = None
         self.attachments = Attachments()
         self.poll = None
-        self.attachments_types = []
         self.what_to_parse = what_to_parse
 
     def parse_post(self):
@@ -50,9 +48,6 @@ class Post:
             self.parse_text()
 
         if "attachments" in self.raw_post:
-            self.attachments_types = tuple(
-                x["type"] for x in self.raw_post["attachments"]
-            )
             for attachment in self.raw_post["attachments"]:
                 if attachment["type"] in (
                     "link",
@@ -82,7 +77,6 @@ class Post:
                     self.parse_music(attachment["audio"])
 
         if self.sign_posts:
-            self.parse_user()
             self.sign_post()
 
         self.text = split(self.text)
@@ -294,23 +288,23 @@ class Post:
     def sign_post(self):
         button_list = []
         logger.info("[VK] Подписывание поста и добавление ссылки на его оригинал.")
-        if self.user:
-            user = "https://vk.com/{0[domain]}".format(self.user)
-            button_list.append(
-                InlineKeyboardButton(
-                    "Автор поста: {first_name} {last_name}".format(**self.user),
-                    url=user,
-                )
-            )
-        if self.attachments_types.count("photo") > 1:
-            if self.user:
+        user = self.parse_user()
+        if len(self.attachments.media) > 1:
+            if user:
                 self.text += (
-                    '\nАвтор поста: <a href="{}">{first_name} {last_name}</a>'.format(
-                        user, **self.user
+                    '\nАвтор поста: <a href="https://vk.com/{domain}">{first_name} {last_name}</a>'.format(
+                        user, **user
                     )
                 )
             self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
         else:
+            if user:
+                button_list.append(
+                    InlineKeyboardButton(
+                        "Автор поста: {first_name} {last_name}".format(**user),
+                        url="https://vk.com/{0[domain]}".format(user),
+                    )
+                )
             button_list.append(
                 InlineKeyboardButton("Оригинал поста", url=self.post_url)
             )
@@ -320,16 +314,18 @@ class Post:
 
     def parse_user(self):
         logger.info("[VK] Получение информации об авторе поста")
+        user = None
         if "signer_id" in self.raw_post:
-            self.user = self.session.method(
+            user = self.session.method(
                 method="users.get",
                 values={"user_ids": self.raw_post["signer_id"], "fields": "domain"},
             )[0]
         elif self.raw_post["owner_id"] != self.raw_post["from_id"]:
-            self.user = self.session.method(
+            user = self.session.method(
                 method="users.get",
                 values={"user_ids": self.raw_post["from_id"], "fields": "domain"},
             )[0]
+        return user
 
     def parse_repost(self):
         logger.info("[VK] Включена отправка репостов. Начинаем парсинг репоста")
