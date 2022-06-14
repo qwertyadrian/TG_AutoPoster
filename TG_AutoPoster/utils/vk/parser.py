@@ -297,6 +297,10 @@ class Post:
                     )
                 )
             self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
+            if self.raw_post.get("copyright"):
+                self.text += '\nИсточник: <a href="{link}">{name}</a>'.format(
+                    **self.raw_post["copyright"]
+                )
         else:
             if user:
                 button_list.append(
@@ -308,6 +312,13 @@ class Post:
             button_list.append(
                 InlineKeyboardButton("Оригинал поста", url=self.post_url)
             )
+            if self.raw_post.get("copyright"):
+                button_list.append(
+                    InlineKeyboardButton(
+                        "Источник: {name}".format(**self.raw_post["copyright"]),
+                        url=self.raw_post["copyright"]["link"],
+                    )
+                )
         self.reply_markup = (
             InlineKeyboardMarkup(build_menu(button_list)) if button_list else None
         )
