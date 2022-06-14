@@ -1,5 +1,4 @@
 import re
-import shutil
 import subprocess
 import time
 from typing import List
@@ -76,8 +75,8 @@ def download_video(session: Session, link: str) -> str:
     if res:
         file = res[0][0] + ".mp4"
     else:
-        file = re.findall(r"\/(.*)\/(.*)\?", link)[0][1]
-    with open(file, "wb") as receive:
-        shutil.copyfileobj(filereq.raw, receive)
+        file = re.findall(r"/(.*)/(.*)\?", link)[0][1]
+    with open(file, "wb") as f:
+        f.write(filereq.content)
     del filereq
     return file

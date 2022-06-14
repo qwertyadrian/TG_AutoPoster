@@ -162,7 +162,7 @@ class Post:
         if not attachment.get("platform") and len(soup.find_all("source")) >= 2:
             video_link = soup.find_all("source")[1].get("src")
             filesize = self.session.http.head(video_link).headers["Content-Length"]
-            if int(filesize) >= 2097152000:
+            if int(filesize) >= 2 * 10**9:
                 logger.info(
                     "[VK] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст."
                 )
