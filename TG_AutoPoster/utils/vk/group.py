@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from typing import Iterable, List, Sequence, Union
+from typing import Dict, Iterable, List, Sequence, Union
 
 from loguru import logger
 from vk_api import VkApi
@@ -61,7 +61,25 @@ class Group:
             self.domain,
             self.last_id,
         )
-        posts = self.get_raw_posts()
+        if self.posts_count > 100:
+            logger.warning(
+                "[VK] Проверяется более 100 постов за раз. "
+                "После проверки рекомендуется уменьшить значение posts_count до 100 или меньше."
+            )
+            total = self.get_raw_posts(1)["count"]
+            offset = min(self.posts_count, total)
+            while offset > 0:
+                posts = self.get_raw_posts(100, offset)["items"]
+                yield from self.__get_posts(posts)
+                offset -= min(100, offset)
+            else:
+                posts = self.get_raw_posts(100, offset)["items"]
+                yield from self.__get_posts(posts)
+        else:
+            posts = self.get_raw_posts(self.posts_count)["items"]
+            yield from self.__get_posts(posts)
+
+    def __get_posts(self, posts) -> Iterable[Union[Post, None]]:
         for post in reversed(posts):
             is_pinned = post.get("is_pinned", False)
             if post["id"] > self.last_id or (
@@ -124,24 +142,24 @@ class Group:
                 ):
                     yield parsed_story
 
-    def get_raw_posts(self) -> List:
+    def get_raw_posts(self, count: int = 11, offset: int = 0) -> Dict:
         try:
             group = re.sub(DOMAIN_REGEX, "", self.domain)
             if group.startswith("club") or group.startswith("public") or "-" in group:
                 group = group.replace("club", "-").replace("public", "-")
                 feed = self._session.method(
                     method="wall.get",
-                    values={"owner_id": group, "count": self.posts_count},
+                    values={"owner_id": group, "count": count, "offset": offset},
                 )
             else:
                 feed = self._session.method(
                     method="wall.get",
-                    values={"domain": group, "count": self.posts_count},
+                    values={"domain": group, "count": count, "offset": offset},
                 )
-            return feed["items"]
+            return feed
         except Exception as error:
             logger.exception("[VK] Ошибка получения постов: {}", error)
-            return list()
+            return dict()
 
     def get_raw_stories(self) -> List:
         try:
