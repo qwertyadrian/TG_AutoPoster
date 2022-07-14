@@ -5,6 +5,6 @@ loguru==0.6.0
 wget==3.2
 mutagen==1.45.1
 beautifulsoup4==4.11.1
-streamlink==4.1.0
+streamlink==4.2.0
 apscheduler==3.9.1
 PyYAML==6.0
