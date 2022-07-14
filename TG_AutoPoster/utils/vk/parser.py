@@ -84,7 +84,7 @@ class Post:
     def parse_text(self):
         if self.raw_post["text"]:
             logger.info("[VK] Обнаружен текст. Извлечение.")
-            self.text += self.raw_post["text"] + "\n"
+            self.text += self.raw_post["text"]
             if self.pattern != "@":
                 self.text = sub(self.pattern, "", self.text, flags=IGNORECASE)
             self.text = (
@@ -98,6 +98,8 @@ class Post:
                 self.text,
                 flags=MULTILINE,
             )
+            self.text = sub(r"<a(.*?)><(.*?)/a>", "", self.text, flags=MULTILINE)
+            self.text += "\n"
 
     def parse_link(self, attachment):
         logger.info("[VK] Парсинг ссылки")
@@ -291,10 +293,8 @@ class Post:
         user = self.parse_user()
         if len(self.attachments.media) > 1:
             if user:
-                self.text += (
-                    '\nАвтор поста: <a href="https://vk.com/{domain}">{first_name} {last_name}</a>'.format(
-                        user, **user
-                    )
+                self.text += '\nАвтор поста: <a href="https://vk.com/{domain}">{first_name} {last_name}</a>'.format(
+                    user, **user
                 )
             self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
             if self.raw_post.get("copyright"):
