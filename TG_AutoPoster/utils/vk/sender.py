@@ -111,12 +111,24 @@ class Sender:
                 )
         else:
             attachments[0].caption = caption
-            self._bot.send_media_group(
-                chat_id,
-                media=attachments,
-                disable_notification=self.disable_notification,
-                reply_to_message_id=msg_id,
-            )
+            try:
+                self._bot.send_media_group(
+                    chat_id,
+                    media=attachments,
+                    disable_notification=self.disable_notification,
+                    reply_to_message_id=msg_id,
+                )
+            except pyrogram.errors.MediaEmpty:
+                for doc in attachments:
+                    self._bot.send_document(
+                        chat_id,
+                        document=doc.media,
+                        caption=doc.caption,
+                        disable_notification=self.disable_notification,
+                        reply_to_message_id=msg_id,
+                        reply_markup=self.post.reply_markup,
+                    )
+                    self.post.reply_markup = None
         return True
 
     @timeout_handler
