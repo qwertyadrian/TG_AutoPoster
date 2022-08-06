@@ -1,5 +1,5 @@
 vk_api==11.9.9
-pyrogram==2.0.33
+pyrogram==2.0.35
 tgcrypto
 loguru==0.6.0
 wget==3.2
