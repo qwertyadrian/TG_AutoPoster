@@ -7,6 +7,7 @@ import yaml
 from loguru import logger
 from pyrogram import Client
 from pyrogram.handlers.handler import Handler
+from pyrogram.types import BotCommand
 from vk_api import VkApi
 
 from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
@@ -51,6 +52,20 @@ class AutoPoster(Client):
                 root="TG_AutoPoster.plugins",
             ),
             **kwargs,
+        )
+
+    def start(self):
+        super().start()
+        self.register_commands()
+
+    def register_commands(self):
+        commands = [
+            BotCommand("help", "Cправка"),
+            BotCommand("settings", "Настройки"),
+            BotCommand("about", "О боте"),
+        ]
+        self.set_bot_commands(
+            commands
         )
 
     def load_plugins(self):
