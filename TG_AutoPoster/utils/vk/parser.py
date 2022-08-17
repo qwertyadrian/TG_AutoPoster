@@ -175,6 +175,12 @@ class Post:
                 file = download_video(self.session.http, video_link)
             self.attachments.media.append(InputMediaVideo(file))
         else:
+            video = self.session.method(
+                method="video.get",
+                values={"owner_id": attachment["owner_id"], "videos": "{owner_id}_{id}".format(**attachment)}
+            )["items"]
+            if video:
+                video_link = video[0].get("files", {}).get("external", video_link)
             self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                 video_link.replace("m.", ""), attachment
             )
