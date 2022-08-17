@@ -123,6 +123,8 @@ class Group:
                     time.sleep(5)
 
     def get_stories(self) -> Iterable[Story]:
+        if not self.send_stories:
+            return Story()
         logger.info(
             "[VK] Проверка на наличие новых историй в {} с последним ID {}",
             self.domain,
