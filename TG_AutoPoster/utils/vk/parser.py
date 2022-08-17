@@ -370,11 +370,14 @@ class Post:
 
 
 class Story:
-    def __init__(self, story):
+    def __init__(self, story=None):
         self.story = story
         self.text = [""]
         self.attachments = Attachments()
         self.reply_markup = None
+
+    def __bool__(self):
+        return bool(self.story)
 
     def parse_story(self):
         if self.story["type"] == "photo":
