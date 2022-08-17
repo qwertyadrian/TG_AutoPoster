@@ -93,10 +93,9 @@ class Post:
                 .replace(">", "&gt;")
             )
             self.text = sub(
-                r"\[(.*?)\|(.*?)\]",
-                r'<a href="https://vk.com/\1">\2</a>',
+                r"\[((https://)?vk\.com/)?(.*?)\|(.*?)\]",
+                self.link_sub,
                 self.text,
-                flags=MULTILINE,
             )
             self.text = sub(r"<a(.*?)><(.*?)/a>", "", self.text, flags=MULTILINE)
             self.text += "\n"
@@ -286,6 +285,12 @@ class Post:
         }
         if len(self.poll["options"]) == 1:
             self.poll["options"].append("...")
+
+    @staticmethod
+    def link_sub(match):
+        if match.group(3).startswith("https:"):
+            return "<a href='{2}'>{3}</a>".format(*match.groups())
+        return "<a href='https://vk.com/{2}'>{3}</a>".format(*match.groups())
 
     def sign_post(self):
         button_list = []
