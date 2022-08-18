@@ -103,6 +103,7 @@ class AutoPoster(Client):
                 captcha_handler=captcha_handler,
                 api_version="5.131",
             )
+            vk_session.auth()
         for domain in self.config["domains"].keys():
             settings = {
                 **self.config.get("settings", {}),
