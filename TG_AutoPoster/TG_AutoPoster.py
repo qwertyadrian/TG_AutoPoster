@@ -29,8 +29,7 @@ class AutoPoster(Client):
         self.cache_dir = cache_dir.absolute()
 
         if self.config_path.exists():
-            with self.config_path.open() as stream:
-                self.config: dict = yaml.safe_load(stream)
+            self.reload_config()
         else:
             self.config = ini_to_dict(self.config_path.with_suffix(".ini"))
             self.save_config()
@@ -88,6 +87,8 @@ class AutoPoster(Client):
         except FileNotFoundError:
             self.cache_dir.mkdir()
             os.chdir(self.cache_dir)
+
+        self.reload_config()
 
         if self.config["vk"].get("token"):
             vk_session = VkApi(token=self.config["vk"]["token"], api_version="5.131")
