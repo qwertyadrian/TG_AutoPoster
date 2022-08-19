@@ -90,7 +90,7 @@ class Group:
             logger.info("[VK] Обнаружен новый пост с ID {}", post["id"])
             if post.get("marked_as_ads", 0):
                 logger.info("[VK] Пост рекламный. Он будет пропущен.")
-                yield
+                return
             for word in self.stop_list:
                 if word.lower() in post["text"].lower():
                     break
