@@ -199,10 +199,14 @@ class Post:
                 logger.warning(
                     "[VK] Unable to get audio link. Attempt using official VK API"
                 )
-                track = self.session.method(
-                    method="audio.getById",
-                    values={"audios": "{owner_id}_{id}".format(**attachment)},
-                )[0]
+                try:
+                    track = self.session.method(
+                        method="audio.getById",
+                        values={"audios": "{owner_id}_{id}".format(**attachment)},
+                    )[0]
+                except exceptions.ApiError:
+                    logger.warning("[VK] Аудиозапись недоступна для скачивания")
+                    return
         else:
             track = attachment
         name = (
