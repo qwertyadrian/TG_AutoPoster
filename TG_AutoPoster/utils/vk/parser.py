@@ -190,7 +190,7 @@ class Post:
             "[VK] Извлечение аудио {} - {}", attachment["artist"], attachment["title"]
         )
         logger.debug(attachment)
-        if not attachment.get("url"):
+        if not attachment.get("url") or attachment.get("url", "").endswith("audio_api_unavailable.mp3"):
             try:
                 track = self.audio_session.get_audio_by_id(
                     attachment["owner_id"], attachment["id"]

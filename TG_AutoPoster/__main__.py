@@ -41,7 +41,7 @@ def create_parser():
         "--sleep",
         type=int,
         const=3600,
-        default=0,
+        default=3600,
         nargs="?",
         help="Проверять новые посты каждые N (по умолчанию 3600) секунд",
         metavar="N",
@@ -118,17 +118,19 @@ if __name__ == "__main__":
         else:
             sleep_env = 3600
 
-    if args.sleep or sleep_env:
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(
-            func=client.get_new_posts,
-            trigger="interval",
-            seconds=args.sleep or sleep_env,
-            max_instances=1,
-            next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=5),
-        )
-        scheduler.start()
-        client.run()
-    else:
-        with client:
-            client.get_new_posts()
+    scheduler = BackgroundScheduler()
+    for domain in client.config["domains"].keys():
+        if client.config["domains"][domain].get("use_long_poll"):
+            scheduler.add_job(
+                func=client.listen,
+                args=(domain,),
+            )
+    scheduler.add_job(
+        func=client.get_new_posts,
+        trigger="interval",
+        seconds=args.sleep or sleep_env,
+        max_instances=1,
+        next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=5),
+    )
+    scheduler.start()
+    client.run()

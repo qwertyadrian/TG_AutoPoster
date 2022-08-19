@@ -9,6 +9,7 @@ from pyrogram import Client
 from pyrogram.handlers.handler import Handler
 from pyrogram.types import BotCommand
 from vk_api import VkApi
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
 
@@ -27,6 +28,7 @@ class AutoPoster(Client):
         self.config_path = config_path.absolute()
         self.logs_path = logs_dir.absolute()
         self.cache_dir = cache_dir.absolute()
+        self.vk_session = None
 
         if self.config_path.exists():
             self.reload_config()
@@ -52,6 +54,28 @@ class AutoPoster(Client):
             ),
             **kwargs,
         )
+
+        try:
+            os.chdir(self.cache_dir)
+        except FileNotFoundError:
+            self.cache_dir.mkdir()
+            os.chdir(self.cache_dir)
+
+        if self.config["vk"].get("token"):
+            self.vk_session = VkApi(token=self.config["vk"]["token"], api_version="5.131")
+        else:
+            logger.warning(
+                "Использование логина и пароля не рекомендуется. "
+                "Используйте ключ доступа пользователя."
+            )
+            self.vk_session = VkApi(
+                login=self.config["vk"]["login"],
+                password=self.config["vk"]["password"],
+                auth_handler=auth_handler,
+                captcha_handler=captcha_handler,
+                api_version="5.131",
+            )
+            self.vk_session.auth()
 
     def start(self):
         super().start()
@@ -82,37 +106,18 @@ class AutoPoster(Client):
                     pass
 
     def get_new_posts(self):
-        try:
-            os.chdir(self.cache_dir)
-        except FileNotFoundError:
-            self.cache_dir.mkdir()
-            os.chdir(self.cache_dir)
-
         self.reload_config()
 
-        if self.config["vk"].get("token"):
-            vk_session = VkApi(token=self.config["vk"]["token"], api_version="5.131")
-        else:
-            logger.warning(
-                "Использование логина и пароля не рекомендуется. "
-                "Используйте ключ доступа пользователя."
-            )
-            vk_session = VkApi(
-                login=self.config["vk"]["login"],
-                password=self.config["vk"]["password"],
-                auth_handler=auth_handler,
-                captcha_handler=captcha_handler,
-                api_version="5.131",
-            )
-            vk_session.auth()
         for domain in self.config["domains"].keys():
+            if self.config["domains"][domain].get("use_long_poll"):
+                continue
             settings = {
                 **self.config.get("settings", {}),
                 **self.config["domains"][domain],
             }
             group = Group(
                 domain=domain,
-                session=vk_session,
+                session=self.vk_session,
                 **settings,
             )
             chat_ids = self.config["domains"][domain]["channel"]
@@ -135,6 +140,39 @@ class AutoPoster(Client):
                 for data in self.cache_dir.iterdir():
                     data.unlink()
         logger.info("[VK] Работа завершена")
+
+    def listen(self, domain):
+        settings = {
+            **self.config.get("settings", {}),
+            **self.config["domains"][domain],
+        }
+        group = Group(
+            domain=domain,
+            session=self.vk_session,
+            **settings,
+        )
+        chat_ids = self.config["domains"][domain]["channel"]
+        longpoll = VkBotLongPoll(self.vk_session, group_id=-group.group_id)
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.WALL_POST_NEW:
+                for p in group.get_post(event.raw["object"]):
+                    if p:
+                        sender = Sender(
+                            bot=self,
+                            post=p,
+                            chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                            **settings,
+                        )
+                        sender.send_post()
+
+                        self.config["domains"][domain]["last_id"] = group.last_id
+                        self.config["domains"][domain]["last_story_id"] = group.last_story_id
+                        self.config["domains"][domain]["pinned_id"] = group.pinned_id
+
+                        self.save_config()
+
+                        for data in self.cache_dir.iterdir():
+                            data.unlink()
 
     def reload_config(self):
         with self.config_path.open() as stream:
