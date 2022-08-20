@@ -83,7 +83,7 @@ class AutoPoster(Client):
 
     def register_commands(self):
         commands = [
-            BotCommand("help", "Cправка"),
+            BotCommand("help", "Помощь"),
             BotCommand("settings", "Настройки"),
             BotCommand("about", "О боте"),
         ]
