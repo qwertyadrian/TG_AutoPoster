@@ -12,6 +12,7 @@ HELP = (
     "/remove - удалить источник постов\n"
     "/add - добавить источник постов\n"
     "/get_config - получить файл конфигурации бота\n"
+    "/restart - перезапустить бота"
     "/about - о боте\n\n"
     "Для поиска среди источников необходимо включить <a href='https://core.telegram.org/bots/inline'>inline mode.</a>"
 )

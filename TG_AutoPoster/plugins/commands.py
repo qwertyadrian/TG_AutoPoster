@@ -1,3 +1,6 @@
+import os
+import sys
+
 import pyrogram.filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -145,6 +148,16 @@ def register(bot: AutoPoster, message: Message):
                 }
             bot.save_config()
             message.reply("Вы были добавлены в список администраторов")
+
+
+@AutoPoster.on_message(
+    pyrogram.filters.command(commands=["restart"]) & pyrogram.filters.private
+)
+def restart(bot: AutoPoster, message: Message):
+    if tools.admin_check(bot, message):
+        message.reply("Перезапуск бота...")
+        os.chdir(bot.config_path.parent)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
 @AutoPoster.on_message(
