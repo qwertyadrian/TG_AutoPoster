@@ -41,7 +41,8 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
             bot.config["domains"][domain].get("last_id", 0),
             bot.config["domains"][domain].get("last_story_id", 0),
             bot.config["domains"][domain].get("pinned_id", 0),
-        ) + "Отправляемые вложения: `{}`".format(settings.get("what_to_send", "всё"))
+            settings.get("what_to_send", "всё"),
+        ) + "\nИзменение параметра Long Poll API будет применено только при перезапуске бота."
         footer_button = [
             InlineKeyboardButton("Удалить источник", callback_data="delete " + domain)
         ]
@@ -86,6 +87,13 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
             callback_data="show {} wts".format(domain),
         ),
     ]
+    if domain != "global":
+        button_list.append(InlineKeyboardButton(
+            "Long Poll API: {}".format(
+                "✔️" if settings.get("use_long_poll") else "❌️",
+            ),
+            callback_data="switch {} use_long_poll".format(domain),
+        ))
 
     return text, InlineKeyboardMarkup(
         build_menu(button_list, footer_buttons=footer_button, n_cols=2)
