@@ -53,5 +53,11 @@ def timeout_handler(func):
             except (FloodWait, SlowmodeWait) as e:
                 logger.warning(e.MESSAGE, value=e.value)
                 sleep(e.value)
+            except (ConnectionError, AttributeError) as e:
+                logger.error(
+                    "{}. Ожидание 10 секунд. Если сообщение повторяется более 5 раз - перезапустите бота.",
+                    e,
+                )
+                sleep(10)
 
     return wrapped
