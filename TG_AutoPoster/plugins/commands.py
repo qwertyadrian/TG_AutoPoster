@@ -96,13 +96,15 @@ def add_source(bot: AutoPoster, message: Message):
     if tools.admin_check(bot, message):
         if len(message.command) >= 3:
             bot.reload_config()
+            if not bot.config.get("domains"):
+                bot.config["domains"] = {}
             bot.config["domains"][message.command[1]] = dict(
                 zip(
-                    ["channel", "last_id", "pinned_id", "last_story_id"],
-                    [int(i) if i.isnumeric() else i for i in message.command[2:]],
+                    ("channel", "last_id", "pinned_id", "last_story_id"),
+                    (int(i) if i.isnumeric() else i for i in message.command[2:]),
                 )
             )
-            info = "Источник {} был добавлен.".format(message.command[1])
+            info = "Источник `{}` был добавлен.".format(message.command[1])
             bot.save_config()
             message.reply(info)
         else:

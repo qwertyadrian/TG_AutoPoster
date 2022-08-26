@@ -108,7 +108,7 @@ class AutoPoster(Client):
     def get_new_posts(self):
         self.reload_config()
 
-        for domain in self.config["domains"].keys():
+        for domain in self.config.get("domains", {}).keys():
             if self.config["domains"][domain].get("use_long_poll"):
                 continue
             settings = {
@@ -139,7 +139,7 @@ class AutoPoster(Client):
 
                 for data in self.cache_dir.iterdir():
                     data.unlink()
-        logger.info("[VK] Работа завершена")
+        logger.info("[VK] Проверка завершена")
 
     def listen(self, domain):
         settings = {
