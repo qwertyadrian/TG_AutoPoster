@@ -1,14 +1,17 @@
 from typing import List, Tuple, Union
 
 from loguru import logger
-from pyrogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup,
-                            InlineQuery, Message)
+from pyrogram import filters
+from pyrogram.types import (CallbackQuery, InlineKeyboardButton,
+                            InlineKeyboardMarkup, InlineQuery, Message)
 
 from ..tools import build_menu
 from . import messages
 
 
-def admin_check(bot, message: Union[Message, InlineQuery, CallbackQuery]) -> bool:
+def is_admin(
+    _, bot, message: Union[Message, InlineQuery, CallbackQuery]
+) -> bool:
     if isinstance(message, Message):
         logger.info(
             messages.LOG_MESSAGE,
@@ -27,6 +30,9 @@ def admin_check(bot, message: Union[Message, InlineQuery, CallbackQuery]) -> boo
             message=message,
         )
     return message.from_user.id in bot.admins_id
+
+
+is_admin = filters.create(is_admin)
 
 
 def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
