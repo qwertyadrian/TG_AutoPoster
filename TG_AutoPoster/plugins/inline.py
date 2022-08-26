@@ -5,27 +5,26 @@ from .. import AutoPoster
 from ..utils.tg import tools
 
 
-@AutoPoster.on_inline_query()
+@AutoPoster.on_inline_query(tools.is_admin)
 def inline(bot: AutoPoster, query: InlineQuery):
-    if tools.admin_check(bot, query):
-        string = query.query.lower()
+    string = query.query.lower()
 
-        results = []
+    results = []
 
-        bot.reload_config()
-        sources_list = bot.config.get("domains", {}).keys()
+    bot.reload_config()
+    sources_list = bot.config.get("domains", {}).keys()
 
-        for source in sources_list:
-            if not string or source.startswith(string):
-                text, reply_markup = tools.generate_setting_info(bot, source)
-                results.append(
-                    InlineQueryResultArticle(
-                        title=source,
-                        input_message_content=InputTextMessageContent(
-                            text, disable_web_page_preview=True
-                        ),
-                        reply_markup=reply_markup,
-                    )
+    for source in sources_list:
+        if not string or source.startswith(string):
+            text, reply_markup = tools.generate_setting_info(bot, source)
+            results.append(
+                InlineQueryResultArticle(
+                    title=source,
+                    input_message_content=InputTextMessageContent(
+                        text, disable_web_page_preview=True
+                    ),
+                    reply_markup=reply_markup,
                 )
+            )
 
-        query.answer(results=results, cache_time=0)
+    query.answer(results=results, cache_time=0)
