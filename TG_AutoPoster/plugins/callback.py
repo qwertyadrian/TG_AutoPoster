@@ -16,10 +16,8 @@ def callback(bot: AutoPoster, callback_query: CallbackQuery):
                 **bot.config["domains"].pop(data[1]),
             }
         except KeyError:
-            info = (
-                "Источник {} не был найден. Возможно он был уже удален.".format(
-                    data[1]
-                )
+            info = "Источник {} не был найден. Возможно он был уже удален.".format(
+                data[1]
             )
         else:
             info = messages.SECTION_DELETED.format(data[1], **section)

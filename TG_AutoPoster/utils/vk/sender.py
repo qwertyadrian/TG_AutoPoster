@@ -3,8 +3,8 @@ from typing import Sequence, Union
 import pyrogram.errors
 from loguru import logger
 from pyrogram import Client
-from pyrogram.types import (InputMediaAudio, InputMediaDocument, InputMediaPhoto,
-                            InputMediaVideo)
+from pyrogram.types import (InputMediaAudio, InputMediaDocument,
+                            InputMediaPhoto, InputMediaVideo)
 
 from ..tools import timeout_handler
 from .parser import Post
@@ -155,5 +155,7 @@ class Sender:
     def send_splitted_message(self, text, chat_id):
         for i in range(len(text) - 1):
             self._bot.send_message(
-                chat_id, text[i], disable_notification=self.disable_notification
+                chat_id,
+                text[i],
+                disable_notification=self.disable_notification,
             )

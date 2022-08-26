@@ -42,7 +42,9 @@ class Group:
         self.stop_list = Path(stop_list)
         if self.stop_list.is_file():
             self.stop_list = list(
-                filter(lambda x: bool(x), self.stop_list.read_text().split("\n"))
+                filter(
+                    lambda x: bool(x), self.stop_list.read_text().split("\n")
+                )
             )
         else:
             self.stop_list = []
@@ -50,7 +52,9 @@ class Group:
         self.blacklist = Path(blacklist)
         if self.blacklist.is_file():
             self.blacklist = list(
-                filter(lambda x: bool(x), self.blacklist.read_text().split("\n"))
+                filter(
+                    lambda x: bool(x), self.blacklist.read_text().split("\n")
+                )
             )
         else:
             self.blacklist = []
@@ -135,7 +139,9 @@ class Group:
         stories = self.get_raw_stories()
         for story in reversed(stories):
             if story["id"] > self.last_story_id:
-                logger.info("[VK] Обнаружен новая история с ID {}", story["id"])
+                logger.info(
+                    "[VK] Обнаружен новая история с ID {}", story["id"]
+                )
                 parsed_story = Story(story)
                 parsed_story.parse_story()
                 self.last_story_id = story["id"]
@@ -150,7 +156,11 @@ class Group:
         try:
             feed = self._session.method(
                 method="wall.get",
-                values={"owner_id": self.group_id, "count": count, "offset": offset},
+                values={
+                    "owner_id": self.group_id,
+                    "count": count,
+                    "offset": offset,
+                },
             )
             return feed
         except Exception as error:
@@ -162,7 +172,11 @@ class Group:
             stories = self._session.method(
                 method="stories.get", values={"owner_id": self.group_id}
             )
-            return stories["items"][0]["stories"] if stories["count"] >= 1 else list()
+            return (
+                stories["items"][0]["stories"]
+                if stories["count"] >= 1
+                else list()
+            )
         except Exception as error:
             logger.error("[VK] Ошибка получения историй: {}", error)
             return list()
@@ -170,7 +184,11 @@ class Group:
     @property
     def group_id(self):
         group = re.sub(DOMAIN_REGEX, "", self.domain)
-        if group.startswith("club") or group.startswith("public") or "-" in group:
+        if (
+            group.startswith("club")
+            or group.startswith("public")
+            or "-" in group
+        ):
             group = group.replace("club", "-").replace("public", "-")
         elif group.startswith("id"):
             group = group.replace("id", "")

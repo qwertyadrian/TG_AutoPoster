@@ -3,8 +3,9 @@ from re import IGNORECASE, MULTILINE, sub
 
 from bs4 import BeautifulSoup
 from loguru import logger
-from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup, InputMediaAudio,
-                            InputMediaDocument, InputMediaPhoto, InputMediaVideo)
+from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
+                            InputMediaAudio, InputMediaDocument,
+                            InputMediaPhoto, InputMediaVideo)
 from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
 from wget import download
@@ -33,7 +34,9 @@ class Post:
         self.sign_posts = sign_posts
         self.pattern = "@" + sub(DOMAIN_REGEX, "", domain)
         self.raw_post = post
-        self.post_url = "https://vk.com/wall{owner_id}_{id}".format(**self.raw_post)
+        self.post_url = "https://vk.com/wall{owner_id}_{id}".format(
+            **self.raw_post
+        )
         self.text = ""
         self.repost = None
         self.repost_source = None
@@ -55,23 +58,31 @@ class Post:
                     "album",
                 ) and self.what_to_parse.intersection({"link", "all"}):
                     self.parse_link(attachment)
-                if attachment["type"] == "photo" and self.what_to_parse.intersection(
+                if attachment[
+                    "type"
+                ] == "photo" and self.what_to_parse.intersection(
                     {"photo", "all"}
                 ):
                     self.parse_photo(attachment["photo"])
-                if attachment["type"] == "video" and self.what_to_parse.intersection(
+                if attachment[
+                    "type"
+                ] == "video" and self.what_to_parse.intersection(
                     {"video", "all"}
                 ):
                     self.parse_video(attachment["video"])
-                if attachment["type"] == "doc" and self.what_to_parse.intersection(
-                    {"doc", "all"}
-                ):
+                if attachment[
+                    "type"
+                ] == "doc" and self.what_to_parse.intersection({"doc", "all"}):
                     self.parse_doc(attachment["doc"])
-                if attachment["type"] == "poll" and self.what_to_parse.intersection(
+                if attachment[
+                    "type"
+                ] == "poll" and self.what_to_parse.intersection(
                     {"polls", "all"}
                 ):
                     self.parse_poll(attachment["poll"])
-                if attachment["type"] == "audio" and self.what_to_parse.intersection(
+                if attachment[
+                    "type"
+                ] == "audio" and self.what_to_parse.intersection(
                     {"music", "all"}
                 ):
                     self.parse_music(attachment["audio"])
@@ -97,7 +108,9 @@ class Post:
                 self.link_sub,
                 self.text,
             )
-            self.text = sub(r"<a(.*?)><(.*?)/a>", "", self.text, flags=MULTILINE)
+            self.text = sub(
+                r"<a(.*?)><(.*?)/a>", "", self.text, flags=MULTILINE
+            )
             self.text += "\n"
 
     def parse_link(self, attachment):
@@ -106,16 +119,16 @@ class Post:
         if attachment[attachment["type"]]["title"] == self.text.strip():
             self.text = ""
         if attachment["type"] == "link" and attachment["link"]["title"]:
-            self.text += '\n🔗 <a href="{url}">{title}</a>'.format(**attachment["link"])
+            self.text += '\n🔗 <a href="{url}">{title}</a>'.format(
+                **attachment["link"]
+            )
             if attachment["link"].get("product"):
                 self.text += "\nЦена: {}".format(
                     attachment["link"]["product"]["price"]["text"]
                 )
         elif attachment["type"] == "page":
-            self.text += (
-                '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(
-                    **attachment["page"]
-                )
+            self.text += '\n🔗 <a href="{view_url}">{title}</a>\n👁 {views} раз(а)'.format(
+                **attachment["page"]
             )
         elif attachment["type"] == "album":
             self.text += (
@@ -141,28 +154,43 @@ class Post:
         logger.info("[VK] Извлечение документа {}", attachment["title"])
         logger.debug(attachment)
         try:
-            attachment["title"] = sub(r"[/\\:*?\"><|]", "", attachment["title"])
+            attachment["title"] = sub(
+                r"[/\\:*?\"><|]", "", attachment["title"]
+            )
             if attachment["title"].endswith(attachment["ext"]):
-                doc = download(attachment["url"], out="{title}".format(**attachment))
+                doc = download(
+                    attachment["url"], out="{title}".format(**attachment)
+                )
             else:
                 doc = download(
                     attachment["url"], out="{title}.{ext}".format(**attachment)
                 )
             self.attachments.documents.append(InputMediaDocument(doc))
         except urllib.error.URLError as error:
-            logger.exception("[VK] Невозможно скачать вложенный файл: {0}.", error)
+            logger.exception(
+                "[VK] Невозможно скачать вложенный файл: {0}.", error
+            )
             self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment)
 
     def parse_video(self, attachment):
         logger.info("[VK] Извлечение видео")
         logger.debug(attachment)
 
-        video_link = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
-        soup = BeautifulSoup(self.session.http.get(video_link).text, "html.parser")
+        video_link = "https://m.vk.com/video{owner_id}_{id}".format(
+            **attachment
+        )
+        soup = BeautifulSoup(
+            self.session.http.get(video_link).text, "html.parser"
+        )
 
-        if not attachment.get("platform") and len(soup.find_all("source")) >= 2:
+        if (
+            not attachment.get("platform")
+            and len(soup.find_all("source")) >= 2
+        ):
             video_link = soup.find_all("source")[1].get("src")
-            filesize = self.session.http.head(video_link).headers["Content-Length"]
+            filesize = self.session.http.head(video_link).headers[
+                "Content-Length"
+            ]
             if int(filesize) >= 2 * 10**9:
                 logger.info(
                     "[VK] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст."
@@ -177,20 +205,29 @@ class Post:
         else:
             video = self.session.method(
                 method="video.get",
-                values={"owner_id": attachment["owner_id"], "videos": "{owner_id}_{id}".format(**attachment)}
+                values={
+                    "owner_id": attachment["owner_id"],
+                    "videos": "{owner_id}_{id}".format(**attachment),
+                },
             )["items"]
             if video:
-                video_link = video[0].get("files", {}).get("external", video_link)
+                video_link = (
+                    video[0].get("files", {}).get("external", video_link)
+                )
             self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
                 video_link.replace("m.", ""), attachment
             )
 
     def parse_music(self, attachment):
         logger.info(
-            "[VK] Извлечение аудио {} - {}", attachment["artist"], attachment["title"]
+            "[VK] Извлечение аудио {} - {}",
+            attachment["artist"],
+            attachment["title"],
         )
         logger.debug(attachment)
-        if not attachment.get("url") or attachment.get("url", "").endswith("audio_api_unavailable.mp3"):
+        if not attachment.get("url") or attachment.get("url", "").endswith(
+            "audio_api_unavailable.mp3"
+        ):
             try:
                 track = self.audio_session.get_audio_by_id(
                     attachment["owner_id"], attachment["id"]
@@ -202,10 +239,14 @@ class Post:
                 try:
                     track = self.session.method(
                         method="audio.getById",
-                        values={"audios": "{owner_id}_{id}".format(**attachment)},
+                        values={
+                            "audios": "{owner_id}_{id}".format(**attachment)
+                        },
                     )[0]
                 except exceptions.ApiError:
-                    logger.warning("[VK] Аудиозапись недоступна для скачивания")
+                    logger.warning(
+                        "[VK] Аудиозапись недоступна для скачивания"
+                    )
                     return
         else:
             track = attachment
@@ -256,14 +297,17 @@ class Post:
             try:
                 file = download(track["url"], out=name)
             except (urllib.error.URLError, IndexError, ValueError):
-                logger.exception("[VK] Не удалось скачать аудиозапись. Пропускаем ее")
+                logger.exception(
+                    "[VK] Не удалось скачать аудиозапись. Пропускаем ее"
+                )
                 return
         if track.get("album"):
             if track["album"].get("thumb"):
                 for key in track["album"]["thumb"]:
                     if key.startswith("photo"):
                         track_cover = download(
-                            track["album"]["thumb"][key].replace("impf/", ""), bar=None
+                            track["album"]["thumb"][key].replace("impf/", ""),
+                            bar=None,
                         )
         logger.debug("Adding tags in track")
         result = add_audio_tags(
@@ -304,14 +348,18 @@ class Post:
 
     def sign_post(self):
         button_list = []
-        logger.info("[VK] Подписывание поста и добавление ссылки на его оригинал.")
+        logger.info(
+            "[VK] Подписывание поста и добавление ссылки на его оригинал."
+        )
         user = self.parse_user()
         if len(self.attachments.media) > 1:
             if user:
                 self.text += '\nАвтор поста: <a href="https://vk.com/{domain}">{first_name} {last_name}</a>'.format(
                     user, **user
                 )
-            self.text += '\n<a href="{}">Оригинал поста</a>'.format(self.post_url)
+            self.text += '\n<a href="{}">Оригинал поста</a>'.format(
+                self.post_url
+            )
             if self.raw_post.get("copyright"):
                 self.text += '\nИсточник: <a href="{link}">{name}</a>'.format(
                     **self.raw_post["copyright"]
@@ -330,12 +378,16 @@ class Post:
             if self.raw_post.get("copyright"):
                 button_list.append(
                     InlineKeyboardButton(
-                        "Источник: {name}".format(**self.raw_post["copyright"]),
+                        "Источник: {name}".format(
+                            **self.raw_post["copyright"]
+                        ),
                         url=self.raw_post["copyright"]["link"],
                     )
                 )
         self.reply_markup = (
-            InlineKeyboardMarkup(build_menu(button_list)) if button_list else None
+            InlineKeyboardMarkup(build_menu(button_list))
+            if button_list
+            else None
         )
 
     def parse_user(self):
@@ -344,17 +396,25 @@ class Post:
         if "signer_id" in self.raw_post:
             user = self.session.method(
                 method="users.get",
-                values={"user_ids": self.raw_post["signer_id"], "fields": "domain"},
+                values={
+                    "user_ids": self.raw_post["signer_id"],
+                    "fields": "domain",
+                },
             )[0]
         elif self.raw_post["owner_id"] != self.raw_post["from_id"]:
             user = self.session.method(
                 method="users.get",
-                values={"user_ids": self.raw_post["from_id"], "fields": "domain"},
+                values={
+                    "user_ids": self.raw_post["from_id"],
+                    "fields": "domain",
+                },
             )[0]
         return user
 
     def parse_repost(self):
-        logger.info("[VK] Включена отправка репостов. Начинаем парсинг репоста")
+        logger.info(
+            "[VK] Включена отправка репостов. Начинаем парсинг репоста"
+        )
         source_id = int(self.raw_post["copy_history"][0]["from_id"])
         try:
             source_info = self.session.method(
@@ -381,7 +441,11 @@ class Post:
         self.repost.text = split(repost_source + " ".join(self.repost.text))
 
     def __bool__(self):
-        return bool("".join(self.text)) or bool(self.attachments) or bool(self.poll)
+        return (
+            bool("".join(self.text))
+            or bool(self.attachments)
+            or bool(self.poll)
+        )
 
 
 class Story:
@@ -425,4 +489,6 @@ class Story:
     def parse_link(self):
         logger.info("[AP] Обнаружена ссылка, создание кнопки")
         button_list = [InlineKeyboardButton(**self.story["link"])]
-        self.reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
+        self.reply_markup = InlineKeyboardMarkup(
+            build_menu(button_list, n_cols=2)
+        )

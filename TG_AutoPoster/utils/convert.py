@@ -21,7 +21,9 @@ def ini_to_dict(config_path: Path) -> dict:
         elif option == "token":
             result["vk"][option] = config.get("global", option)
         else:
-            result["settings"][option] = determine_type(config, "global", option)
+            result["settings"][option] = determine_type(
+                config, "global", option
+            )
 
     for option in config.options("pyrogram"):
         result["telegram"][option] = determine_type(config, "pyrogram", option)
@@ -31,11 +33,15 @@ def ini_to_dict(config_path: Path) -> dict:
             result["proxy"][option] = determine_type(config, "proxy", option)
 
     for section in (
-        config.sections()[3:] if config.has_section("proxy") else config.sections()[2:]
+        config.sections()[3:]
+        if config.has_section("proxy")
+        else config.sections()[2:]
     ):
         result["domains"][section] = {}
         for option in config.options(section):
-            result["domains"][section][option] = determine_type(config, section, option)
+            result["domains"][section][option] = determine_type(
+                config, section, option
+            )
 
     return result
 
