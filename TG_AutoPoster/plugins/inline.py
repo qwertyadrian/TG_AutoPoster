@@ -13,7 +13,7 @@ def inline(bot: AutoPoster, query: InlineQuery):
         results = []
 
         bot.reload_config()
-        sources_list = bot.config["domains"].keys()
+        sources_list = bot.config.get("domains", {}).keys()
 
         for source in sources_list:
             if not string or source.startswith(string):

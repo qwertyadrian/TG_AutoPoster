@@ -120,7 +120,7 @@ if __name__ == "__main__":
             sleep_env = 3600
 
     scheduler = BackgroundScheduler()
-    for domain in client.config["domains"].keys():
+    for domain in client.config.get("domains", {}).keys():
         if client.config["domains"][domain].get("use_long_poll"):
             scheduler.add_job(
                 func=client.listen,
