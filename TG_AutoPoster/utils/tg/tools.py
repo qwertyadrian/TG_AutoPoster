@@ -32,7 +32,7 @@ def admin_check(bot, message: Union[Message, InlineQuery, CallbackQuery]) -> boo
 def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
         **bot.config.get("settings", {}),
-        **bot.config["domains"].get(domain, {}),
+        **bot.config.get("domains", {}).get(domain, {}),
     }
     if domain != "global":
         text = messages.INLINE_INPUT_MESSAGE_CONTENT.format(
