@@ -35,25 +35,36 @@ def is_admin(
 is_admin = filters.create(is_admin)
 
 
-def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
+def generate_setting_info(
+    bot, domain: str
+) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
         **bot.config.get("settings", {}),
         **bot.config.get("domains", {}).get(domain, {}),
     }
     if domain != "global":
-        text = messages.INLINE_INPUT_MESSAGE_CONTENT.format(
-            domain.replace("https://vk.com/", "").replace("https://m.vk.com/", ""),
-            bot.config["domains"][domain]["channel"],
-            bot.config["domains"][domain].get("last_id", 0),
-            bot.config["domains"][domain].get("last_story_id", 0),
-            bot.config["domains"][domain].get("pinned_id", 0),
-            settings.get("what_to_send", "всё"),
-        ) + "\nИзменение параметра Long Poll API будет применено только при перезапуске бота."
+        text = (
+            messages.INLINE_INPUT_MESSAGE_CONTENT.format(
+                domain.replace("https://vk.com/", "").replace(
+                    "https://m.vk.com/", ""
+                ),
+                bot.config["domains"][domain]["channel"],
+                bot.config["domains"][domain].get("last_id", 0),
+                bot.config["domains"][domain].get("last_story_id", 0),
+                bot.config["domains"][domain].get("pinned_id", 0),
+                settings.get("what_to_send", "всё"),
+            )
+            + "\nИзменение параметра Long Poll API будет применено только при перезапуске бота."
+        )
         footer_button = [
-            InlineKeyboardButton("Удалить источник", callback_data="delete " + domain)
+            InlineKeyboardButton(
+                "Удалить источник", callback_data="delete " + domain
+            )
         ]
     else:
-        text = messages.GLOBAL_SETTINGS.format(settings.get("what_to_send", "всё"))
+        text = messages.GLOBAL_SETTINGS.format(
+            settings.get("what_to_send", "всё")
+        )
         footer_button = None
     reposts = settings.get("send_reposts", 0)
     if reposts == "post_only":
@@ -65,7 +76,9 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
         reposts = "❌"
     button_list = [
         InlineKeyboardButton(
-            "Подписи: {}".format("✔️" if settings.get("sign_posts", True) else "❌"),
+            "Подписи: {}".format(
+                "✔️" if settings.get("sign_posts", True) else "❌"
+            ),
             callback_data="switch {} sign_posts".format(domain),
         ),
         InlineKeyboardButton(
@@ -79,7 +92,9 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
             callback_data="switch {} disable_notification".format(domain),
         ),
         InlineKeyboardButton(
-            "Истории: {}".format("✔️" if settings.get("send_stories", False) else "❌"),
+            "Истории: {}".format(
+                "✔️" if settings.get("send_stories", False) else "❌"
+            ),
             callback_data="switch {} send_stories".format(domain),
         ),
         InlineKeyboardButton(
@@ -94,19 +109,23 @@ def generate_setting_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
         ),
     ]
     if domain != "global":
-        button_list.append(InlineKeyboardButton(
-            "Long Poll API: {}".format(
-                "✔️" if settings.get("use_long_poll") else "❌️",
-            ),
-            callback_data="switch {} use_long_poll".format(domain),
-        ))
+        button_list.append(
+            InlineKeyboardButton(
+                "Long Poll API: {}".format(
+                    "✔️" if settings.get("use_long_poll") else "❌️",
+                ),
+                callback_data="switch {} use_long_poll".format(domain),
+            )
+        )
 
     return text, InlineKeyboardMarkup(
         build_menu(button_list, footer_buttons=footer_button, n_cols=2)
     )
 
 
-def generate_what_to_send_info(bot, domain: str) -> Tuple[str, InlineKeyboardMarkup]:
+def generate_what_to_send_info(
+    bot, domain: str
+) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
         **bot.config.get("settings", {}),
         **bot.config["domains"].get(domain, {}),

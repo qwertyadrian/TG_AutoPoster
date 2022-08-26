@@ -9,7 +9,7 @@ from pyrogram import Client
 from pyrogram.handlers.handler import Handler
 from pyrogram.types import BotCommand
 from vk_api import VkApi
-from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+from vk_api.bot_longpoll import VkBotEventType, VkBotLongPoll
 
 from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
 
@@ -62,11 +62,12 @@ class AutoPoster(Client):
             os.chdir(self.cache_dir)
 
         if self.config["vk"].get("token"):
-            self.vk_session = VkApi(token=self.config["vk"]["token"], api_version="5.131")
+            self.vk_session = VkApi(
+                token=self.config["vk"]["token"], api_version="5.131"
+            )
         else:
             logger.warning(
-                "Использование логина и пароля не рекомендуется. "
-                "Используйте ключ доступа пользователя."
+                "Использование логина и пароля не рекомендуется. Используйте ключ доступа пользователя."
             )
             self.vk_session = VkApi(
                 login=self.config["vk"]["login"],
@@ -87,9 +88,7 @@ class AutoPoster(Client):
             BotCommand("settings", "Настройки"),
             BotCommand("about", "О боте"),
         ]
-        self.set_bot_commands(
-            commands
-        )
+        self.set_bot_commands(commands)
 
     def load_plugins(self):
         if self.plugins:
@@ -126,7 +125,9 @@ class AutoPoster(Client):
                     sender = Sender(
                         bot=self,
                         post=post,
-                        chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                        chat_ids=chat_ids
+                        if isinstance(chat_ids, list)
+                        else [chat_ids],
                         **settings,
                     )
                     sender.send_post()
@@ -160,7 +161,9 @@ class AutoPoster(Client):
                         sender = Sender(
                             bot=self,
                             post=p,
-                            chat_ids=chat_ids if isinstance(chat_ids, list) else [chat_ids],
+                            chat_ids=chat_ids
+                            if isinstance(chat_ids, list)
+                            else [chat_ids],
                             **settings,
                         )
                         sender.send_post()
