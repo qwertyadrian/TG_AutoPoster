@@ -143,7 +143,6 @@ def get_config(bot: AutoPoster, message: Message):
 @AutoPoster.on_message(
     pyrogram.filters.command(commands=["register"])
     & pyrogram.filters.private
-    & tools.is_admin
 )
 def register(bot: AutoPoster, message: Message):
     if len(message.command) >= 2:
