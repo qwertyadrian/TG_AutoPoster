@@ -102,7 +102,9 @@ class Group:
                     break
             else:
                 for word in self.blacklist:
-                    post["text"] = re.sub(word, "", post["text"])
+                    post["text"] = re.sub(
+                        word, "", post["text"], flags=re.MULTILINE
+                    )
                 parsed_post = Post(
                     post,
                     self.domain,
