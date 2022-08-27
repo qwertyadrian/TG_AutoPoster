@@ -55,12 +55,6 @@ class AutoPoster(Client):
             **kwargs,
         )
 
-        try:
-            os.chdir(self.cache_dir)
-        except FileNotFoundError:
-            self.cache_dir.mkdir()
-            os.chdir(self.cache_dir)
-
         if self.config["vk"].get("token"):
             self.vk_session = VkApi(
                 token=self.config["vk"]["token"], api_version="5.131"
@@ -81,6 +75,12 @@ class AutoPoster(Client):
     def start(self):
         super().start()
         self.register_commands()
+
+        try:
+            os.chdir(self.cache_dir)
+        except FileNotFoundError:
+            self.cache_dir.mkdir()
+            os.chdir(self.cache_dir)
 
     def register_commands(self):
         commands = [
