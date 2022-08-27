@@ -133,7 +133,9 @@ def settings(bot: AutoPoster, message: Message):
 )
 def get_config(bot: AutoPoster, message: Message):
     message.reply(
-        "Конфигурация бота:\n```{}```".format(bot.config_path.read_text())
+        "Конфигурация бота:\n```{}```".format(
+            bot.config_path.read_text(encoding="utf-8")
+        )
     )
     message.reply_document(
         document=bot.config_path, caption="Файл конфигурации бота."
