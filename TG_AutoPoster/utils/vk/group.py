@@ -43,7 +43,8 @@ class Group:
         if self.stop_list.is_file():
             self.stop_list = list(
                 filter(
-                    lambda x: bool(x), self.stop_list.read_text().split("\n")
+                    lambda x: bool(x),
+                    self.stop_list.read_text(encoding="utf-8").split("\n")
                 )
             )
         else:
@@ -53,7 +54,8 @@ class Group:
         if self.blacklist.is_file():
             self.blacklist = list(
                 filter(
-                    lambda x: bool(x), self.blacklist.read_text().split("\n")
+                    lambda x: bool(x),
+                    self.blacklist.read_text(encoding="utf-8").split("\n")
                 )
             )
         else:
