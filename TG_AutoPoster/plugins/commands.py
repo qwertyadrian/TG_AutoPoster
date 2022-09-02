@@ -173,6 +173,16 @@ def restart(bot: AutoPoster, message: Message):
 
 
 @AutoPoster.on_message(
+    pyrogram.filters.command(commands=["exit"])
+    & pyrogram.filters.private
+    & tools.is_admin
+)
+def exit_(_, message: Message):
+    message.reply("Завершение работы...")
+    sys.exit(0)
+
+
+@AutoPoster.on_message(
     pyrogram.filters.command(commands=["about"]) & pyrogram.filters.private
 )
 def about(_, message: Message):

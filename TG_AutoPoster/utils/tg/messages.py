@@ -13,8 +13,10 @@ HELP = (
     "/add - добавить источник постов\n"
     "/get_config - получить файл конфигурации бота\n"
     "/restart - перезапустить бота\n"
+    "/exit - выключить бота\n"
     "/about - о боте\n\n"
-    "Для настройки источников необходимо включить <a href='https://core.telegram.org/bots/inline'>inline mode.</a>"
+    "Для настройки источников необходимо включить "
+    "<a href='https://core.telegram.org/bots/inline'>inline mode.</a>"
 )
 
 ADD = (
