@@ -178,9 +178,9 @@ class AutoPoster(Client):
                             data.unlink()
 
     def reload_config(self):
-        with self.config_path.open() as stream:
+        with self.config_path.open(encoding="utf-8") as stream:
             self.config: dict = yaml.safe_load(stream)
 
     def save_config(self):
-        with self.config_path.open("w") as stream:
+        with self.config_path.open("w", encoding="utf-8") as stream:
             yaml.dump(self.config, stream, indent=4)
