@@ -26,6 +26,8 @@ class Group:
         posts_count: int = 11,
         stop_list: str = "",
         blacklist: str = "",
+        header: str = "",
+        footer: str = "",
         **kwargs,
     ):
         self.domain = str(domain)
@@ -38,6 +40,8 @@ class Group:
         self.send_stories = send_stories
         self.what_to_parse = set(what_to_send) if what_to_send else {"all"}
         self.posts_count = posts_count
+        self.header = header
+        self.footer = footer
 
         self.stop_list = Path(stop_list)
         if self.stop_list.is_file():
@@ -111,6 +115,8 @@ class Group:
                     self._session,
                     self.sign_posts,
                     self.what_to_parse,
+                    self.header,
+                    self.footer
                 )
                 parsed_post.parse_post()
                 self.update_ids(is_pinned, post["id"])
