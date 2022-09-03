@@ -25,6 +25,8 @@ class Post:
         session: VkApi,
         sign_posts: bool = False,
         what_to_parse: set = None,
+        header: str = "",
+        footer: str = "",
     ):
         self.session = session
         try:
@@ -44,6 +46,8 @@ class Post:
         self.attachments = Attachments()
         self.poll = None
         self.what_to_parse = what_to_parse
+        self.header = header
+        self.footer = footer
 
     def parse_post(self):
         logger.info("[VK] Парсинг поста.")
@@ -90,12 +94,13 @@ class Post:
         if self.sign_posts:
             self.sign_post()
 
+        self.text = "{}\n\n{}\n{}".format(self.header, self.text, self.footer)
         self.text = split(self.text)
 
     def parse_text(self):
         if self.raw_post["text"]:
             logger.info("[VK] Обнаружен текст. Извлечение.")
-            self.text += self.raw_post["text"]
+            self.text += self.raw_post["text"].strip()
             if self.pattern != "@":
                 self.text = sub(self.pattern, "", self.text, flags=IGNORECASE)
             self.text = (
