@@ -35,6 +35,13 @@ def is_admin(
 is_admin = filters.create(is_admin)
 
 
+def option_filter(option):
+    def func(_, __, callback_query: CallbackQuery):
+        return callback_query.data.split()[0] == option
+
+    return filters.create(func)
+
+
 def generate_setting_info(
     bot, domain: str
 ) -> Tuple[str, InlineKeyboardMarkup]:
