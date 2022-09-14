@@ -95,7 +95,7 @@ class Post:
             self.sign_post()
 
         self.text = "{}\n\n{}\n{}".format(self.header, self.text, self.footer)
-        self.text = split(self.text)
+        self.text = split(self.text.strip())
 
     def parse_text(self):
         if self.raw_post["text"]:
