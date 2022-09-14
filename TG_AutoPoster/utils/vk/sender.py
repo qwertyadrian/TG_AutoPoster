@@ -34,6 +34,7 @@ class Sender:
                 len(self.post.text) >= 1
                 and len(self.post.text[-1]) >= 1024
                 or len(self.post.attachments) == 0
+                and bool(self.post.text[-1])
             ):
                 message = timeout_handler(self._bot.send_message)(
                     chat_id,
