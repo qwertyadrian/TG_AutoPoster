@@ -47,6 +47,14 @@ def generate_setting_info(
 ) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
         **bot.config.get("settings", {}),
+        **dict(
+            last_id=0,
+            last_story_id=0,
+            pinned_id=0,
+            what_to_send="всё",
+            header='отсутствует',
+            footer='отсутствует',
+        ),
         **bot.config.get("domains", {}).get(domain, {}),
     }
     if domain != "global":
@@ -55,11 +63,7 @@ def generate_setting_info(
                 domain.replace("https://vk.com/", "").replace(
                     "https://m.vk.com/", ""
                 ),
-                bot.config["domains"][domain]["channel"],
-                bot.config["domains"][domain].get("last_id", 0),
-                bot.config["domains"][domain].get("last_story_id", 0),
-                bot.config["domains"][domain].get("pinned_id", 0),
-                settings.get("what_to_send", "всё"),
+                **settings,
             )
             + "\nИзменение параметра Long Poll API будет применено только при перезапуске бота."
         )
