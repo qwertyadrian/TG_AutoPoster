@@ -143,6 +143,10 @@ class AutoPoster(Client):
         logger.info("[VK] Проверка завершена")
 
     def listen(self, domain):
+        logger.info(
+            "[VK] Для источника {} включен режим Long Poll API",
+            domain
+        )
         settings = {
             **self.config.get("settings", {}),
             **self.config["domains"][domain],
@@ -155,6 +159,7 @@ class AutoPoster(Client):
         chat_ids = self.config["domains"][domain]["channel"]
         longpoll = VkBotLongPoll(self.vk_session, group_id=-group.group_id)
         for event in longpoll.listen():
+            logger.debug("Received event: {}", event)
             if event.type == VkBotEventType.WALL_POST_NEW:
                 for p in group.get_post(event.raw["object"]):
                     if p:
