@@ -188,13 +188,18 @@ def update_header_footer(bot: AutoPoster, message: Message):
         domain, key = bot.conversations[message.from_user.id]
         bot.reload_config()
         if domain == "global":
-            bot.config["settings"][key] = str(message.text.markdown)
+            if message.text.markdown == "DELETE" and key in bot.config["settings"]:
+                bot.config["settings"].pop(key)
+            else:
+                bot.config["settings"][key] = str(message.text.markdown)
         else:
-            bot.config["domains"][domain][key] = str(message.text.markdown)
+            if message.text.markdown == "DELETE" and key in bot.config["domains"][domain]:
+                bot.config["domains"][domain].pop(key)
+            else:
+                bot.config["domains"][domain][key] = str(message.text.markdown)
         bot.save_config()
         message.reply(messages.CHANGE_SUCCESS.format(key.capitalize()))
         bot.conversations.pop(message.from_user.id)
-
 
 
 @AutoPoster.on_message(
