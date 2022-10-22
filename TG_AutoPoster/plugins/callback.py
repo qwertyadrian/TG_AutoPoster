@@ -24,7 +24,7 @@ def delete_domain(bot: AutoPoster, callback_query: CallbackQuery):
     callback_query.edit_message_text(info)
 
 
-@AutoPoster.on_callback_query(tools.is_admin & tools.option_filter("switch"))
+@AutoPoster.on_callback_query(tools.option_filter("switch") & tools.is_admin)
 def switch_option(bot: AutoPoster, callback_query: CallbackQuery):
     data = callback_query.data.split()
     bot.reload_config()
@@ -152,3 +152,13 @@ def wts_config(bot: AutoPoster, callback_query: CallbackQuery):
     callback_query.edit_message_text(
         info, reply_markup=reply_markup, disable_web_page_preview=True
     )
+
+
+@AutoPoster.on_callback_query(tools.option_filter("set") & tools.is_admin)
+def set_param(bot: AutoPoster, callback_query: CallbackQuery):
+    data = callback_query.data.split()
+    _, domain, key = data
+    bot.conversations.update(
+        {callback_query.from_user.id: (domain, key)}
+    )
+    callback_query.edit_message_text(messages.CHANGE_PARAM.format(key))

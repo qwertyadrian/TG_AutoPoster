@@ -38,6 +38,8 @@ class AutoPoster(Client):
 
         self.admins_id = self.config.get("settings", {}).get("admins_id", [])
 
+        self.conversations = {}
+
         if self.config.get("proxy"):
             proxy = self.config["proxy"]
             proxy["scheme"] = "socks5"

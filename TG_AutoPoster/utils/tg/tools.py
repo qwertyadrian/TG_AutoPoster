@@ -118,6 +118,14 @@ def generate_setting_info(
             "Отправляемые вложения",
             callback_data="show {} wts".format(domain),
         ),
+        InlineKeyboardButton(
+            "Изменить header",
+            callback_data="set {} header".format(domain),
+        ),
+        InlineKeyboardButton(
+            "Изменить footer",
+            callback_data="set {} footer".format(domain),
+        )
     ]
     if domain != "global":
         button_list.append(
