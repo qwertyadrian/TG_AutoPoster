@@ -182,6 +182,21 @@ def exit_(_, message: Message):
     sys.exit(0)
 
 
+@AutoPoster.on_message()
+def update_header_footer(bot: AutoPoster, message: Message):
+    if message.from_user.id in bot.conversations.keys():
+        domain, key = bot.conversations[message.from_user.id]
+        bot.reload_config()
+        if domain == "global":
+            bot.config["settings"][key] = str(message.text.markdown)
+        else:
+            bot.config["domains"][domain][key] = str(message.text.markdown)
+        bot.save_config()
+        message.reply(messages.CHANGE_SUCCESS.format(key.capitalize()))
+        bot.conversations.pop(message.from_user.id)
+
+
+
 @AutoPoster.on_message(
     pyrogram.filters.command(commands=["about"]) & pyrogram.filters.private
 )
