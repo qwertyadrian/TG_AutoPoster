@@ -77,6 +77,6 @@ def download_video(session: Session, link: str) -> str:
     else:
         file = re.findall(r"/(.*)/(.*)\?", link)[0][1]
     with open(file, "wb") as f:
-        f.write(filereq.content)
-    del filereq
+        for chunk in filereq:
+            f.write(chunk)
     return file
