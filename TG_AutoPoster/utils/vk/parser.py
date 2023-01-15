@@ -184,6 +184,9 @@ class Post:
         video_link = "https://m.vk.com/video{owner_id}_{id}".format(
             **attachment
         )
+        if attachment.get("access_key"):
+            video_link += "?list={access_key}".format(**attachment)
+
         soup = BeautifulSoup(
             self.session.http.get(video_link).text, "html.parser"
         )
@@ -192,8 +195,8 @@ class Post:
             not attachment.get("platform")
             and len(soup.find_all("source")) >= 2
         ):
-            video_link = soup.find_all("source")[1].get("src")
-            filesize = self.session.http.head(video_link).headers[
+            video_file = soup.find_all("source")[1].get("src")
+            filesize = self.session.http.head(video_file).headers[
                 "Content-Length"
             ]
             if int(filesize) >= 2 * 10**9:
@@ -205,7 +208,7 @@ class Post:
                 )
                 return None
             else:
-                file = download_video(self.session.http, video_link)
+                file = download_video(self.session.http, video_file)
             self.attachments.media.append(InputMediaVideo(file))
         else:
             video = self.session.method(
