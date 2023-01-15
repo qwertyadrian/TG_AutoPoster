@@ -22,7 +22,7 @@ def create_parser():
     parser = argparse.ArgumentParser(
         prog="TG_AutoPoster",
         description="Telegram Bot for AutoPosting from VK",
-        epilog="(C) 2018-2022 Adrian Polyakov\nReleased under the MIT License.",
+        epilog="(C) 2018-2023 Adrian Polyakov\nReleased under the MIT License.",
     )
 
     parser.add_argument(
