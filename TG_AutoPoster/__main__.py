@@ -2,13 +2,17 @@ import argparse
 import datetime
 import os
 import sys
+import warnings
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
+from pytz_deprecation_shim import PytzUsageWarning
 
 from . import AutoPoster, __version__
+
+warnings.filterwarnings("ignore", category=PytzUsageWarning)
 
 if os.name != "nt":
     TEMP_DIR = TemporaryDirectory(prefix="TG_AutoPoster")
