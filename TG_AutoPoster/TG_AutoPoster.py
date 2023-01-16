@@ -11,7 +11,7 @@ from pyrogram.types import BotCommand
 from vk_api import VkApi
 from vk_api.bot_longpoll import VkBotEventType, VkBotLongPoll
 
-from .utils import Group, Sender, auth_handler, captcha_handler, ini_to_dict
+from .utils import Group, Sender, auth_handler, captcha_handler
 
 
 class AutoPoster(Client):
@@ -33,8 +33,10 @@ class AutoPoster(Client):
         if self.config_path.exists():
             self.reload_config()
         else:
-            self.config = ini_to_dict(self.config_path.with_suffix(".ini"))
-            self.save_config()
+            raise FileNotFoundError(
+                "Не удалось найти файл конфигурации бота. Проверьте, "
+                "указан ли корректный путь к файлу: {}".format(self.config_path.absolute())
+            )
 
         self.admins_id = self.config.get("settings", {}).get("admins_id", [])
 

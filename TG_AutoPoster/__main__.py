@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     logger.info("TG AutoPoster запущен")
     logger.debug(
-        "Python {}\nTG_AutoPoster {}\nOS: {}\nConfig path: {}\nCache dir: {}\nPassed args:{}",
+        "Python {}\nTG_AutoPoster {}\nOS: {}\nConfig path: {}\nCache dir: {}\nPassed args: {}",
         sys.version,
         __version__,
         sys.platform,
