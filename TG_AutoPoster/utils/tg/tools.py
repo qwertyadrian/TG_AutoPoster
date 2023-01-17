@@ -46,7 +46,6 @@ def generate_setting_info(
     bot, domain: str
 ) -> Tuple[str, InlineKeyboardMarkup]:
     settings = {
-        **bot.config.get("settings", {}),
         **dict(
             last_id=0,
             last_story_id=0,
@@ -55,6 +54,7 @@ def generate_setting_info(
             header='отсутствует',
             footer='отсутствует',
         ),
+        **bot.config.get("settings", {}),
         **bot.config.get("domains", {}).get(domain, {}),
     }
     if domain != "global":
