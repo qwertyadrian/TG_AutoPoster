@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 import pyrogram.filters
 from pyrogram.types import Message
 
@@ -21,6 +24,32 @@ def update_header_footer(bot: AutoPoster, message: Message):
     bot.save_config()
     message.reply(messages.CHANGE_SUCCESS.format(key.capitalize()))
     bot.conversations.pop(message.from_user.id)
+
+@AutoPoster.on_message(
+    tools.status_filter("stop_list")
+    | tools.status_filter("blacklist"))
+def stoplist_update(bot: AutoPoster, message: Message):
+    filetype, domain = bot.conversations[message.from_user.id]
+
+    bot.reload_config()
+    if domain == "global":
+        global_stoplist = Path(bot.config.get("settings", {}).get(
+            filetype,
+            bot.config_path.parent / f"{filetype}_global.txt"
+        ))
+        bot.config.get("settings", {})[filetype] = str(global_stoplist)
+        with global_stoplist.open("a") as f:
+            f.write(message.text + "\n")
+    else:
+        domain_clear = re.sub(r"https://(m\.)?vk\.com/", "", domain)
+        domain_stoplist = Path(bot.config["domains"][domain].get(
+            filetype,
+            bot.config_path.parent / f"{filetype}_{domain_clear}.txt"
+        ))
+        bot.config["domains"][domain][filetype] = str(domain_stoplist)
+        with domain_stoplist.open("a") as f:
+            f.write(message.text + "\n")
+    bot.save_config()
 
 
 @AutoPoster.on_message(pyrogram.filters.forwarded)
