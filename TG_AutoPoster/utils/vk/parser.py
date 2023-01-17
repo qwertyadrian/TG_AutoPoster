@@ -11,7 +11,7 @@ from vk_api.audio import VkAudio
 from wget import download
 
 from ..tools import build_menu, split
-from .tools import Attachments, add_audio_tags, download_video, start_process
+from .tools import Attachments, add_audio_tags, download_video, m3u8_to_mp3
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -270,37 +270,7 @@ class Post:
         if ".m3u8" in track["url"]:
             logger.warning("[VK] Файлом аудиозаписи является m3u8 плейлист.")
             file = name
-            streamlink_args = [
-                "streamlink",
-                "--output",
-                name.replace(".mp3", ".ts"),
-                track["url"],
-                "best",
-            ]
-            ffmpeg_args = [
-                "ffmpeg",
-                "-i",
-                name.replace(".mp3", ".ts"),
-                "-b:a",
-                "320k",
-                name,
-            ]
-
-            result = start_process(streamlink_args)
-            if result > 0:
-                logger.critical(
-                    "[VK] При запуске команды {} произошла ошибка.",
-                    " ".join(streamlink_args),
-                )
-                return
-
-            result = start_process(ffmpeg_args)
-            if result > 0:
-                logger.critical(
-                    "[VK] При запуске команды {} произошла ошибка",
-                    " ".join(ffmpeg_args),
-                )
-                return
+            m3u8_to_mp3(track["url"], name)
         else:
             try:
                 file = download(track["url"], out=name)
