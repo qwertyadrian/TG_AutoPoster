@@ -39,6 +39,13 @@ def option_filter(option):
 
     return filters.create(func)
 
+def status_filter(status):
+    def func(_, bot, message: Message):
+        if message.from_user.id in bot.conversations.keys():
+            return bot.conversations[message.from_user.id][0] == status
+
+    return filters.create(func)
+
 
 def generate_setting_info(
     bot, domain: str
