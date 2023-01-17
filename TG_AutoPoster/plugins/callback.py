@@ -159,6 +159,6 @@ def set_param(bot: AutoPoster, callback_query: CallbackQuery):
     data = callback_query.data.split()
     _, domain, key = data
     bot.conversations.update(
-        {callback_query.from_user.id: (domain, key)}
+        {callback_query.from_user.id: ("set", domain, key)}
     )
     callback_query.edit_message_text(messages.CHANGE_PARAM.format(key))
