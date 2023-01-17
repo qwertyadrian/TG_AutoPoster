@@ -9,6 +9,7 @@ from ..tools import build_menu
 from . import messages
 
 
+@filters.create
 def is_admin(
     _, bot, message: Union[Message, InlineQuery, CallbackQuery]
 ) -> bool:
@@ -30,9 +31,6 @@ def is_admin(
             message=message,
         )
     return message.from_user.id in bot.admins_id
-
-
-is_admin = filters.create(is_admin)
 
 
 def option_filter(option):
