@@ -25,7 +25,7 @@ def send_welcome(_, message: Message):
     ]
     message.reply(
         messages.HELP,
-        parse_mode=ParseMode.HTML,
+        parse_mode=ParseMode.MARKDOWN,
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(button),
     )
