@@ -181,6 +181,13 @@ def exit_(_, message: Message):
     message.reply("Завершение работы...")
     sys.exit(0)
 
+@AutoPoster.on_message(
+    pyrogram.filters.command(commands=["cancel"]) & pyrogram.filters.private
+)
+def cancel(bot: AutoPoster, message: Message):
+    if message.from_user.id in bot.conversations.keys():
+        message.reply("Операция отменена.")
+        bot.conversations.pop(message.from_user.id)
 
 @AutoPoster.on_message()
 def update_header_footer(bot: AutoPoster, message: Message):
