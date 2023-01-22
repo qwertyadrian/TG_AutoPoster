@@ -102,7 +102,9 @@ class Group:
                 logger.info("[VK] Пост рекламный. Он будет пропущен.")
                 return
             for word in self.stop_list:
-                if word.lower() in post["text"].lower():
+                if re.findall(
+                        word, post["text"], flags=re.MULTILINE | re.IGNORECASE
+                ):
                     logger.info("[VK] В посте содержится выражение {} "
                                 "из стоп списка. Пост будет пропущен", word)
                     break
