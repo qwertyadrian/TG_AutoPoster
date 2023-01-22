@@ -103,6 +103,8 @@ class Group:
                 return
             for word in self.stop_list:
                 if word.lower() in post["text"].lower():
+                    logger.info("[VK] В посте содержится выражение {} "
+                                "из стоп списка. Пост будет пропущен", word)
                     break
             else:
                 for word in self.blacklist:
