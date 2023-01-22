@@ -38,7 +38,7 @@ def stoplist_update(bot: AutoPoster, message: Message):
             bot.config_path.parent / f"{filetype}_global.txt"
         ))
         bot.config.get("settings", {})[filetype] = str(global_stoplist)
-        with global_stoplist.open("a") as f:
+        with global_stoplist.open("a", encoding="utf-8") as f:
             f.write(message.text + "\n")
     else:
         domain_clear = re.sub(r"https://(m\.)?vk\.com/", "", domain)
@@ -47,7 +47,7 @@ def stoplist_update(bot: AutoPoster, message: Message):
             bot.config_path.parent / f"{filetype}_{domain_clear}.txt"
         ))
         bot.config["domains"][domain][filetype] = str(domain_stoplist)
-        with domain_stoplist.open("a") as f:
+        with domain_stoplist.open("a", encoding="utf-8") as f:
             f.write(message.text + "\n")
     bot.save_config()
 
