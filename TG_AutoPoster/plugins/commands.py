@@ -170,7 +170,7 @@ def update_stoplist(bot: AutoPoster, message: Message):
     domain = message.command[1] if len(message.command) >= 2 else "global"
     if domain != "global":
         if domain not in bot.config["domains"].keys():
-            message.reply(f"Источник {domain} не найден.")
+            message.reply(f"Источник `{domain}` не найден.")
             return
     bot.conversations.update(
         {message.from_user.id: ("stop_list", domain)}
@@ -185,6 +185,10 @@ def update_stoplist(bot: AutoPoster, message: Message):
 )
 def update_blacklist(bot: AutoPoster, message: Message):
     domain = message.command[1] if len(message.command) >= 2 else "global"
+    if domain != "global":
+        if domain not in bot.config["domains"].keys():
+            message.reply(f"Источник `{domain}` не найден.")
+            return
     bot.conversations.update(
         {message.from_user.id: ("blacklist", domain)}
     )
