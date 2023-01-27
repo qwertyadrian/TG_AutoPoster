@@ -52,7 +52,7 @@ def stoplist_update(bot: AutoPoster, message: Message):
     bot.save_config()
 
 
-@AutoPoster.on_message(pyrogram.filters.forwarded)
+@AutoPoster.on_message(pyrogram.filters.forwarded & pyrogram.filters.private)
 def get_forward_id(_, message: Message):
     if message.forward_from:
         id_ = message.forward_from.id
