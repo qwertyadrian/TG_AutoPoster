@@ -179,6 +179,38 @@ def update_stoplist(bot: AutoPoster, message: Message):
 
 
 @AutoPoster.on_message(
+    pyrogram.filters.command(commands=["delete_stoplist", "delete_blacklist"])
+    & pyrogram.filters.private
+    & tools.is_admin
+)
+def delete_stoplist(bot: AutoPoster, message: Message):
+    bot.reload_config()
+    if message.command[0].split("_")[1] == "stoplist":
+        filetype = "stop_list"
+    else:
+        filetype = "blacklist"
+
+    domain = message.command[1] if len(message.command) >= 2 else "global"
+    if domain == "global":
+        if filetype in bot.config.get("settings", {}).keys():
+            os.remove(bot.config["settings"][filetype])
+            bot.config["settings"].pop(filetype)
+    else:
+        if domain in bot.config["domains"].keys():
+            if filetype in bot.config["domains"][domain].keys():
+                os.remove(bot.config["domains"][domain][filetype])
+                bot.config["domains"][domain].pop(filetype)
+        else:
+            message.reply(f"Источник `{domain}` не найден.")
+            return
+
+    message.reply(
+        getattr(messages, f"{filetype.replace('_', '').upper()}_DELETED")
+    )
+    bot.save_config()
+
+
+@AutoPoster.on_message(
     pyrogram.filters.command(commands=["update_blacklist"])
     & pyrogram.filters.private
     & tools.is_admin
