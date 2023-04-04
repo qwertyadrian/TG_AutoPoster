@@ -201,9 +201,12 @@ def update_blacklist(bot: AutoPoster, message: Message):
     & tools.is_admin
 )
 def restart(bot: AutoPoster, message: Message):
-    message.reply("Перезапуск бота...")
-    os.chdir(bot.config_path.parent)
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    if sys.platform.startswith("win32"):
+        message.reply("Команда не доступна в Windows.")
+    else:
+        message.reply("Перезапуск бота...")
+        os.chdir(bot.config_path.parent)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
 @AutoPoster.on_message(
@@ -212,8 +215,11 @@ def restart(bot: AutoPoster, message: Message):
     & tools.is_admin
 )
 def exit_(_, message: Message):
-    message.reply("Завершение работы...")
-    sys.exit(0)
+    if sys.platform.startswith("win32"):
+        message.reply("Команда не доступна в Windows.")
+    else:
+        message.reply("Завершение работы...")
+        sys.exit(0)
 
 @AutoPoster.on_message(
     pyrogram.filters.command(commands=["cancel"]) & pyrogram.filters.private
