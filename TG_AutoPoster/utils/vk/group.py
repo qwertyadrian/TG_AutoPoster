@@ -101,6 +101,9 @@ class Group:
             if post.get("marked_as_ads", 0):
                 logger.info("[VK] Пост рекламный. Он будет пропущен.")
                 return
+            if post.get("post_type", "post") == "suggest":
+                logger.info("[VK] Пост из предложки. Он будет пропущен")
+                return
             for word in self.stop_list:
                 if re.findall(
                         word, post["text"], flags=re.MULTILINE | re.IGNORECASE
