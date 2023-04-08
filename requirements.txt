@@ -8,5 +8,5 @@ beautifulsoup4==4.12.0
 apscheduler==3.10.1
 PyYAML==6.0
 m3u8==3.4.0
-crypto==1.4.1
+pycryptodome==3.17
 moviepy==1.0.3
