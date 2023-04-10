@@ -79,16 +79,16 @@ class Group:
             total = self.get_raw_posts(1)["count"]
             offset = min(self.posts_count, total)
             while offset > 0:
-                posts = self.get_raw_posts(100, offset)["items"]
+                posts = self.get_raw_posts(100, offset).get("items", list())
                 for post in reversed(posts):
                     yield from self.get_post(post)
                 offset -= min(100, offset)
             else:
-                posts = self.get_raw_posts(100, offset)["items"]
+                posts = self.get_raw_posts(100, offset).get("items", list())
                 for post in reversed(posts):
                     yield from self.get_post(post)
         else:
-            posts = self.get_raw_posts(self.posts_count)["items"]
+            posts = self.get_raw_posts(self.posts_count).get("items", list())
             for post in reversed(posts):
                 yield from self.get_post(post)
 
