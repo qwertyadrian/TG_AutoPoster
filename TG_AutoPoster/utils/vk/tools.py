@@ -6,7 +6,8 @@ from urllib.request import urlopen
 
 import m3u8
 from Crypto.Cipher import AES
-from moviepy.audio.io.AudioFileClip import AudioFileClip
+from moviepy.audio.io.AudioFileClip import AudioClip, AudioFileClip
+from moviepy.video.io.VideoFileClip import VideoFileClip
 from mutagen.id3 import APIC, ID3, TIT2, TPE1, error
 from mutagen.mp3 import MP3
 from requests import Session
@@ -131,3 +132,15 @@ def m3u8_to_mp3(url, name):
     audioclip.write_audiofile(name)
     audioclip.close()
     os.unlink(tmp_file.name)
+
+
+def gif_to_video(path):
+    result = path.replace(".gif", ".mp4")
+    videoclip = VideoFileClip(path)
+
+    make_frame = lambda t: 2 * [0.0]
+    audioclip = AudioClip(make_frame, duration=videoclip.duration)
+    videoclip = videoclip.set_audio(audioclip)
+    videoclip.write_videofile(result)
+
+    return result

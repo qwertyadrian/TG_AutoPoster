@@ -11,7 +11,8 @@ from vk_api.audio import VkAudio
 from wget import download
 
 from ..tools import build_menu, split
-from .tools import Attachments, add_audio_tags, download_video, m3u8_to_mp3
+from .tools import (Attachments, add_audio_tags, download_video, gif_to_video,
+                    m3u8_to_mp3)
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
@@ -170,7 +171,13 @@ class Post:
                 doc = download(
                     attachment["url"], out="{title}.{ext}".format(**attachment)
                 )
-            self.attachments.documents.append(InputMediaDocument(doc))
+            if (attachment["ext"] == "gif" or attachment["type"] == 3) and len(
+                self.attachments.media
+            ) != 0:
+                doc = gif_to_video(doc)
+                self.attachments.media.append(InputMediaVideo(doc))
+            else:
+                self.attachments.documents.append(InputMediaDocument(doc))
         except urllib.error.URLError as error:
             logger.exception(
                 "[VK] Невозможно скачать вложенный файл: {0}.", error
