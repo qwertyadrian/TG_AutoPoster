@@ -181,7 +181,7 @@ class Group:
             )
             return feed
         except Exception as error:
-            logger.exception("[VK] Ошибка получения постов: {}", error)
+            logger.error("[VK] Ошибка получения постов: {}", error)
             return dict()
 
     def get_raw_stories(self) -> List:
