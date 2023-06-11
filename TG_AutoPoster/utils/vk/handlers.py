@@ -16,7 +16,7 @@ def auth_handler() -> Tuple[str, bool]:
     input_thread.start()
     for _ in range(120):
         sleep(1)
-        if user_input[0] is not None:
+        if user_input[0]:
             num = user_input[0]
             user_input[0] = None
             break
@@ -33,7 +33,7 @@ def captcha_handler(captcha):
     input_thread.start()
     for _ in range(120):
         sleep(1)
-        if user_input[1] is not None:
+        if user_input[1]:
             key = user_input[1]
             user_input[1] = None
             break
