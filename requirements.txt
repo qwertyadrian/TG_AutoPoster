@@ -1,5 +1,5 @@
 vk_api==11.9.9
-pyrogram==2.0.103
+pyrogram==2.0.106
 tgcrypto
 loguru==0.7.0
 wget==3.2
@@ -7,6 +7,6 @@ mutagen==1.46.0
 beautifulsoup4==4.12.2
 apscheduler==3.10.1
 PyYAML==6.0
-m3u8==3.4.0
-pycryptodome==3.17
+m3u8==3.5.0
+pycryptodome==3.18.0
 moviepy==1.0.3
