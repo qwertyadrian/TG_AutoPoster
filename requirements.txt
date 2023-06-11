@@ -1,4 +1,4 @@
-vk_api==11.9.9
+vk_api @ git+https://github.com/qwertyadrian/vk_api@auth_fix
 pyrogram==2.0.106
 tgcrypto
 loguru==0.7.0
