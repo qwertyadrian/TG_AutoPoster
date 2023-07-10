@@ -245,8 +245,9 @@ class Post:
             logger.warning("[VK] Аудиозапись недоступна. Пропускаем её.")
             return
 
-        if not attachment.get("url") or attachment.get("url", "").endswith(
-            "audio_api_unavailable.mp3"
+        if (
+            not attachment.get("url") or "audio_api_unavailable.mp3" in
+            attachment.get("url", "audio_api_unavailable.mp3")
         ):
             try:
                 track = self.audio_session.get_audio_by_id(
