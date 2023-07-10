@@ -126,26 +126,8 @@ class AutoPoster(Client):
                 **settings,
             )
             chat_ids = self.config["domains"][domain]["channel"]
-            for post in chain(group.get_posts(), group.get_stories()):
-                if post:
-                    sender = Sender(
-                        bot=self,
-                        post=post,
-                        chat_ids=chat_ids
-                        if isinstance(chat_ids, list)
-                        else [chat_ids],
-                        **settings,
-                    )
-                    sender.send_post()
+            self._iter_posts(group, settings, chat_ids)
 
-                self.config["domains"][domain]["last_id"] = group.last_id
-                self.config["domains"][domain]["last_story_id"] = group.last_story_id
-                self.config["domains"][domain]["pinned_id"] = group.pinned_id
-
-                self.save_config()
-
-                for data in self.cache_dir.iterdir():
-                    data.unlink()
         logger.info("[VK] Проверка завершена")
 
     def listen(self, domain):
@@ -163,6 +145,7 @@ class AutoPoster(Client):
             **settings,
         )
         chat_ids = self.config["domains"][domain]["channel"]
+        self._iter_posts(group, settings, chat_ids)
         longpoll = VkBotLongPoll(self.vk_session, group_id=-group.group_id)
         for event in longpoll.listen():
             logger.debug("Received event: {}", event)
@@ -195,3 +178,25 @@ class AutoPoster(Client):
     def save_config(self):
         with self.config_path.open("w", encoding="utf-8") as stream:
             yaml.dump(self.config, stream, indent=4, allow_unicode=True)
+
+    def _iter_posts(self, group, settings, chat_ids):
+        for post in chain(group.get_posts(), group.get_stories()):
+            if post:
+                sender = Sender(
+                    bot=self,
+                    post=post,
+                    chat_ids=chat_ids
+                    if isinstance(chat_ids, list)
+                    else [chat_ids],
+                    **settings,
+                )
+                sender.send_post()
+
+            self.config["domains"][group.domain]["last_id"] = group.last_id
+            self.config["domains"][group.domain]["last_story_id"] = group.last_story_id
+            self.config["domains"][group.domain]["pinned_id"] = group.pinned_id
+
+            self.save_config()
+
+            for data in self.cache_dir.iterdir():
+                data.unlink()
