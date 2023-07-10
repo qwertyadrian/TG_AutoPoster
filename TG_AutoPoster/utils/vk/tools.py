@@ -113,7 +113,7 @@ def get_ts(url):
             cipher = AES.new(key, AES.MODE_CBC, iv=iv)
             decrypt_func = cipher.decrypt
 
-        ts_url = f"{key_link}/{segment.uri}"
+        ts_url = f"{key_link if key_link else segment.key.base_uri}/{segment.uri}"
         coded_data = read_keys(ts_url)
         ts_content += decrypt_func(coded_data)
     return ts_content
