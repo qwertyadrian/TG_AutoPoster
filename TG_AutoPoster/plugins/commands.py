@@ -8,6 +8,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from .. import AutoPoster
 from ..utils import split
 from ..utils.tg import messages, tools
+from ..utils.vk import Group
 
 
 @AutoPoster.on_message(
@@ -225,6 +226,26 @@ def update_blacklist(bot: AutoPoster, message: Message):
         {message.from_user.id: ("blacklist", domain)}
     )
     message.reply(messages.BLACKLIST_UPDATE)
+
+
+@AutoPoster.on_message(
+    pyrogram.filters.command(commands=["check"])
+    & pyrogram.filters.private
+    & tools.is_admin
+)
+def check(bot: AutoPoster, message: Message):
+    result = ""
+    for domain in bot.config.get("domains", {}).keys():
+        group = Group(
+            domain=domain,
+            session=bot.vk_session,
+        )
+        if group.get_raw_posts(1):
+            result += f"`{domain}` — исправен\n"
+        else:
+            result += f"`{domain}` — недоступен\n"
+    message.reply(messages.CHECK_RESULTS.format(result))
+
 
 
 @AutoPoster.on_message(
