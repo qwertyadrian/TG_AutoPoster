@@ -1,6 +1,7 @@
 import urllib.error
 from re import IGNORECASE, MULTILINE, sub
 
+import requests
 from bs4 import BeautifulSoup
 from loguru import logger
 from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
@@ -8,7 +9,7 @@ from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
                             InputMediaPhoto, InputMediaVideo)
 from vk_api import VkApi, exceptions
 from vk_api.audio import VkAudio
-from wget import download
+from wget import download, detect_filename
 
 from ..tools import build_menu, split
 from .tools import (Attachments, add_audio_tags, download_video, gif_to_video,
@@ -16,6 +17,7 @@ from .tools import (Attachments, add_audio_tags, download_video, gif_to_video,
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 
 class Post:
@@ -469,13 +471,21 @@ class Story:
     def parse_video(self):
         logger.info("[VK] Извлечение видео")
         video_link = None
-        video_file = None
-        for _, v in self.story["video"]["files"].items():
-            video_link = v
+        for k, v in self.story["video"]["files"].items():
+            if k != 'failover_host':
+                video_link = v
         if video_link is not None:
-            video_file = download(video_link)
-        if video_file is not None:
-            self.attachments.media.append(InputMediaVideo(video_file))
+            filereq = requests.get(
+                video_link, headers={"User-agent": USER_AGENT}, stream=True
+            )
+            if filereq.ok:
+                video_file = detect_filename(
+                    headers=filereq.headers, default="history.mp4",
+                )
+                with open(video_file, "wb") as f:
+                    for chunk in filereq:
+                        f.write(chunk)
+                self.attachments.media.append(InputMediaVideo(video_file))
 
     def parse_link(self):
         logger.info("[AP] Обнаружена ссылка, создание кнопки")
