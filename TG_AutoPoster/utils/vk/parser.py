@@ -240,6 +240,11 @@ class Post:
             attachment["title"],
         )
         logger.debug(attachment)
+
+        if attachment.get("content_restricted"):
+            logger.warning("[VK] Аудиозапись недоступна. Пропускаем её.")
+            return
+
         if not attachment.get("url") or attachment.get("url", "").endswith(
             "audio_api_unavailable.mp3"
         ):
