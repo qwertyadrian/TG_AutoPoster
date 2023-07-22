@@ -8,6 +8,7 @@ telegram: # Подробнее в README.md
     api_id: 12345
     bot_token: 'token'
 
+# С этого символа начинаются строки, которые будут проигнорированы
 #settings:
 #    disable_notification: true
 #    disable_web_page_preview: false
@@ -35,6 +36,8 @@ telegram: # Подробнее в README.md
 #        channel:
 #        - 123456789
 #        - '@username'
+#        # Или
+#        #channel: [123456789, '@username']
 #        #what_to_send: ['all']
 #        #disable_notification: false
 
