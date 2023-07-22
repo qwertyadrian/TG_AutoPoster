@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: TG_AutoPoster
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Adrian
+    family-names: Polyakov
+    email: me@qwertyadrian.ru
+repository-code: 'https://github.com/qwertyadrian/TG_AutoPoster'
+repository-artifact: 'https://pypi.org/project/TG-AutoPoster/'
+abstract: Telegram Bot for reposting from VK
+keywords:
+  - python
+  - telegram
+  - vk
+  - telegram-bot
+license: MIT
