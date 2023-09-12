@@ -10,3 +10,4 @@ PyYAML==6.0
 m3u8==3.5.0
 pycryptodome==3.18.0
 moviepy==1.0.3
+pytz_deprecation_shim
