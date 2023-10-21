@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM cicirello/pyaction:latest
 
 VOLUME /data
 WORKDIR /data
