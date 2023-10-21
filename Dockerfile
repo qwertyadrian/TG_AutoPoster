@@ -1,4 +1,4 @@
-FROM cicirello/pyaction:latest
+FROM cicirello/pyaction:4.22.0
 
 VOLUME /data
 WORKDIR /data
