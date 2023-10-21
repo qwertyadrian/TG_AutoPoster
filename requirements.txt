@@ -1,12 +1,12 @@
 vk_api @ git+https://github.com/python273/vk_api@master
 pyrogram==2.0.106
 tgcrypto
-loguru==0.7.0
+loguru==0.7.2
 wget==3.2
-mutagen==1.46.0
+mutagen==1.47.0
 beautifulsoup4==4.12.2
-apscheduler==3.10.1
-PyYAML==6.0
-m3u8==3.5.0
-pycryptodome==3.18.0
+apscheduler==3.10.4
+PyYAML==6.0.1
+m3u8==3.6.0
+pycryptodome==3.19.0
 moviepy==1.0.3
