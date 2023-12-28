@@ -51,6 +51,24 @@ class Post:
         self.what_to_parse = what_to_parse
         self.header = header
         self.footer = footer
+        self.video_token = None
+
+        r = self.session.http.post(
+            "https://login.vk.com/?act=web_token",
+            params=dict(
+                version=1,
+                app_id=7879029,
+                access_token=self.session.token["access_token"],
+            ),
+            headers=dict(
+                Origin="https://m.vk.com",
+                Referer="https://m.vk.com",
+            )
+        )
+        if r.ok:
+            r = r.json()
+            if r["type"] == "okay":
+                self.video_token = r["data"]["access_token"]
 
     def parse_post(self):
         logger.info("[VK] Парсинг поста.")
@@ -190,50 +208,63 @@ class Post:
         logger.info("[VK] Извлечение видео")
         logger.debug(attachment)
 
-        video_link = "https://m.vk.com/video{owner_id}_{id}".format(
-            **attachment
-        )
-        if attachment.get("access_key"):
-            video_link += "?list={access_key}".format(**attachment)
+        video_text = (
+            '\n🎥 <a href="https://m.vk.com/video{owner_id}_{id}?list={access_key}">{title}</a>'
+            '\n👁 {views} раз(а) ⏳ {duration} сек'
+        ).format(**attachment)
 
-        soup = BeautifulSoup(
-            self.session.http.get(video_link).text, "html.parser"
-        )
-
-        if (
-            not attachment.get("platform")
-            and len(soup.find_all("source")) >= 2
-        ):
-            video_file = soup.find_all("source")[1].get("src")
-            filesize = self.session.http.head(video_file).headers[
-                "Content-Length"
-            ]
-            if int(filesize) >= 2 * 10**9:
-                logger.info(
-                    "[VK] Видео весит более 2 ГБ. Добавляем ссылку на видео в текст."
-                )
-                self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                    video_link.replace("m.", ""), attachment
-                )
-                return None
-            else:
-                file = download_video(self.session.http, video_file)
-            self.attachments.media.append(InputMediaVideo(file))
-        else:
-            video = self.session.method(
-                method="video.get",
-                values={
-                    "owner_id": attachment["owner_id"],
-                    "videos": "{owner_id}_{id}".format(**attachment),
-                },
-            )["items"]
-            if video:
-                video_link = (
-                    video[0].get("files", {}).get("external", video_link)
-                )
-            self.text += '\n🎥 <a href="{0}">{1[title]}</a>\n👁 {1[views]} раз(а) ⏳ {1[duration]} сек'.format(
-                video_link.replace("m.", ""), attachment
+        if self.video_token is None:
+            logger.warning(
+                "[VK] Токен для получения видеозаписей не доступен. "
+                "Добавляем ссылку на видео в текст."
             )
+            self.text += video_text
+            return
+
+        video = self.session.http.get(
+            "https://api.vk.com/method/video.get",
+            params=dict(
+                v="5.223",
+                client_id=7879029,
+                access_token=self.video_token,
+                owner_id=attachment["owner_id"],
+                videos="{owner_id}_{id}_{access_key}".format(**attachment),
+            )
+        )
+        if video.ok:
+            video = video.json()["response"]["items"][0]
+        else:
+            logger.warning(
+                "[VK] Не удалось получить прямую ссылку на видео. "
+                "Пропускаем его."
+            )
+            self.text += video_text
+            return
+
+        video_link = None
+        for k, v in video["files"].items():
+            if k.startswith("mp4_"):
+                video_link = v
+
+        if video_link is not None:
+            video_file = self.session.http.get(video_link, stream=True)
+            if video_file.ok:
+                if int(video_file.headers['Content-Length']) >= 2 * 10**9:
+                    logger.info(
+                        "[VK] Видео весит более 2 ГБ. "
+                        "Добавляем ссылку на видео в текст."
+                    )
+                    self.text += video_text
+                else:
+                    video_name = detect_filename(
+                        headers=video_file.headers, default="video.mp4",
+                    )
+                    with open(video_name, "wb") as f:
+                        for chunk in video_file:
+                            f.write(chunk)
+                    self.attachments.media.append(InputMediaVideo(video_name))
+        else:
+            self.text += video_text
 
     def parse_music(self, attachment):
         logger.info(
