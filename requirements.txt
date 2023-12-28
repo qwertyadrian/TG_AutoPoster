@@ -7,6 +7,6 @@ mutagen==1.47.0
 beautifulsoup4==4.12.2
 apscheduler==3.10.4
 PyYAML==6.0.1
-m3u8==3.6.0
-pycryptodome==3.19.0
+m3u8==4.0.0
+pycryptodome==3.19.1
 moviepy==1.0.3
