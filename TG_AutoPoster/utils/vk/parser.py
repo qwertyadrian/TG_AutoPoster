@@ -243,7 +243,7 @@ class Post:
 
         video_link = None
         for k, v in video["files"].items():
-            if k.startswith("mp4_"):
+            if k in ("mp4_240", "mp4_360", "mp4_480", "mp4_720"):
                 video_link = v
 
         if video_link is not None:
