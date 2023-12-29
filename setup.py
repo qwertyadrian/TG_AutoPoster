@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import re
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 with open("requirements.txt", encoding="utf-8") as r:
@@ -30,7 +30,11 @@ setup(
     license="MIT License",
     platforms=["OS Independent"],
 
-    packages=find_packages(),
+    package_dir={
+        "TG_AutoPoster": "TG_AutoPoster",
+        "vk_api": "vk_api/vk_api",
+        "jconfig": "vk_api/jconfig",
+    },
     install_requires=requires,
 
     classifiers=[
