@@ -1,4 +1,3 @@
-vk_api @ git+https://github.com/python273/vk_api@master
 pyrogram==2.0.106
 tgcrypto
 loguru==0.7.2
