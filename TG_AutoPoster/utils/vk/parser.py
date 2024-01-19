@@ -208,10 +208,14 @@ class Post:
         logger.info("[VK] Извлечение видео")
         logger.debug(attachment)
 
+        lnk = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
+        if attachment.get("access_key"):
+            lnk += "?list={access_key}"
+
         video_text = (
-            '\n🎥 <a href="https://m.vk.com/video{owner_id}_{id}?list={access_key}">{title}</a>'
+            '\n🎥 <a href="{}">{title}</a>'
             '\n👁 {views} раз(а) ⏳ {duration} сек'
-        ).format(**attachment)
+        ).format(lnk, **attachment)
 
         if self.video_token is None:
             logger.warning(
