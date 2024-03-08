@@ -209,8 +209,10 @@ class Post:
         logger.debug(attachment)
 
         lnk = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
+        vid_key = "{owner_id}_{id}".format(**attachment)
         if attachment.get("access_key"):
             lnk += "?list={access_key}"
+            vid_key += "_{access_key}"
 
         video_text = (
             '\n🎥 <a href="{}">{title}</a>'
@@ -232,7 +234,7 @@ class Post:
                 client_id=7879029,
                 access_token=self.video_token,
                 owner_id=attachment["owner_id"],
-                videos="{owner_id}_{id}_{access_key}".format(**attachment),
+                videos=vid_key,
             )
         )
         if video.ok:
