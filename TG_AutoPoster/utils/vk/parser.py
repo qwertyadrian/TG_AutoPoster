@@ -177,6 +177,13 @@ class Post:
     def parse_doc(self, attachment):
         logger.info("[VK] Извлечение документа {}", attachment["title"])
         logger.debug(attachment)
+        if not self.check_file_size(attachment["url"]):
+            logger.warning(
+                '[VK] Размер документа превышает допустимый. '
+                'Добавляем ссылку на документ в текст.'
+            )
+            self.text += '\n📃 <a href="{url}">{title}</a>'.format(**attachment)
+            return
         try:
             attachment["title"] = sub(
                 r"[/\\:*?\"><|]", "", attachment["title"]
@@ -467,6 +474,10 @@ class Post:
         )
         self.repost.parse_post()
         self.repost.text = split(repost_source + " ".join(self.repost.text))
+
+    def check_file_size(self, url, max_size=2e9):
+        r = self.session.http.head(url)
+        return int(r.headers["Content-Length"]) < max_size
 
     def __bool__(self):
         return (
