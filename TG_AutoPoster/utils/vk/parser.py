@@ -2,7 +2,6 @@ import urllib.error
 from re import IGNORECASE, MULTILINE, sub
 
 import requests
-from bs4 import BeautifulSoup
 from loguru import logger
 from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
                             InputMediaAudio, InputMediaDocument,
@@ -12,8 +11,7 @@ from vk_api.audio import VkAudio
 from wget import download, detect_filename
 
 from ..tools import build_menu, split
-from .tools import (Attachments, add_audio_tags, download_video, gif_to_video,
-                    m3u8_to_mp3)
+from .tools import Attachments, add_audio_tags, gif_to_video, m3u8_to_mp3
 
 MAX_FILENAME_LENGTH = 255
 DOMAIN_REGEX = r"https://(m\.)?vk\.com/"
