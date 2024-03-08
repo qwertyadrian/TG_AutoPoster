@@ -3,9 +3,9 @@ tgcrypto
 loguru==0.7.2
 wget==3.2
 mutagen==1.47.0
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
 apscheduler==3.10.4
 PyYAML==6.0.1
 m3u8==4.0.0
-pycryptodome==3.19.1
+pycryptodome==3.20.0
 moviepy==1.0.3
