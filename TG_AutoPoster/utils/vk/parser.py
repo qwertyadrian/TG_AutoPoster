@@ -260,9 +260,9 @@ class Post:
         if video_link is not None:
             video_file = self.session.http.get(video_link, stream=True)
             if video_file.ok:
-                if int(video_file.headers['Content-Length']) >= 2 * 10**9:
+                if not self.check_file_size(video_link):
                     logger.info(
-                        "[VK] Видео весит более 2 ГБ. "
+                        "[VK] Размер видео превышает допустимый. "
                         "Добавляем ссылку на видео в текст."
                     )
                     self.text += video_text
@@ -271,8 +271,9 @@ class Post:
                         headers=video_file.headers, default="video.mp4",
                     )
                     with open(video_name, "wb") as f:
-                        for chunk in video_file:
-                            f.write(chunk)
+                        for chunk in video_file.iter_content(chunk_size=1024):
+                            if chunk:
+                                f.write(chunk)
                     self.attachments.media.append(InputMediaVideo(video_name))
         else:
             self.text += video_text
