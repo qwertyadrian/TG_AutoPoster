@@ -39,6 +39,7 @@ def option_filter(option):
 
     return filters.create(func)
 
+
 def status_filter(status):
     def func(_, bot, message: Message):
         if message.from_user.id in bot.conversations.keys():
