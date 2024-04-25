@@ -7,7 +7,8 @@ from pyrogram.types import Message
 from .. import AutoPoster
 from ..utils.tg import messages, tools
 
-@AutoPoster.on_message(tools.status_filter("set"))
+
+@AutoPoster.on_message(pyrogram.filters.private & tools.status_filter("set"))
 def update_header_footer(bot: AutoPoster, message: Message):
     _, domain, key = bot.conversations[message.from_user.id]
     bot.reload_config()
@@ -25,9 +26,13 @@ def update_header_footer(bot: AutoPoster, message: Message):
     message.reply(messages.CHANGE_SUCCESS.format(key.capitalize()))
     bot.conversations.pop(message.from_user.id)
 
+
 @AutoPoster.on_message(
-    tools.status_filter("stop_list")
-    | tools.status_filter("blacklist"))
+    pyrogram.filters.private & (
+            tools.status_filter("stop_list")
+            | tools.status_filter("blacklist")
+    )
+)
 def stoplist_update(bot: AutoPoster, message: Message):
     filetype, domain = bot.conversations[message.from_user.id]
 
