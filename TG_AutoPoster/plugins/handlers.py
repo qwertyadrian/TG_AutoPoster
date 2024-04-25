@@ -61,6 +61,8 @@ def stoplist_update(bot: AutoPoster, message: Message):
 def get_forward_id(_, message: Message):
     if message.forward_from:
         id_ = message.forward_from.id
-    else:
+    elif message.forward_from_chat:
         id_ = message.forward_from_chat.id
+    else:
+        id_ = "hidden"
     message.reply("Channel (user) ID is `{}`".format(id_))
