@@ -92,6 +92,5 @@ pip3 install -U TG-AutoPoster
 2. Telegram: [@QwertyAdrian](https://t.me/QwertyAdrian)
 
 Для пожертвований на развитие проекта:
-1. [Qiwi](https://qiwi.com/n/QWERTYADRIAN)
-2. Bitcoin: `1H1UVnXgvcLo3RWmxuYmi7b16ADo6XBWw5`
-3. TON: `EQD42Z5d8d1gT1uSpKTAaLYHlQ95vdMXrlNlYMpSFpQawwuY`
+1. Bitcoin: `1H1UVnXgvcLo3RWmxuYmi7b16ADo6XBWw5`
+2. TON: `EQD42Z5d8d1gT1uSpKTAaLYHlQ95vdMXrlNlYMpSFpQawwuY`
