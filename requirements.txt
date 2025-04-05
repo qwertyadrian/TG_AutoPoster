@@ -1,4 +1,4 @@
-pyrogram==2.0.106
+kurigram==2.1.38
 tgcrypto
 loguru==0.7.2
 wget==3.2
