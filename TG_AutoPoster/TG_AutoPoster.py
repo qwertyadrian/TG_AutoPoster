@@ -77,8 +77,8 @@ class AutoPoster(Client):
             )
             self.vk_session.auth()
 
-    def start(self):
-        super().start()
+    def start(self, *args, **kwargs):
+        super().start(*args, **kwargs)
         self.register_commands()
 
         try:
