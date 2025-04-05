@@ -25,6 +25,7 @@ class Group:
         what_to_send: Sequence[str] = None,
         posts_count: int = 11,
         stop_list: str = "",
+        invert_stop_list: bool = False,
         blacklist: str = "",
         header: str = "",
         footer: str = "",
@@ -43,6 +44,7 @@ class Group:
         self.header = header
         self.footer = footer
 
+        self.invert_stop_list = invert_stop_list
         self.stop_list = Path(stop_list)
         if self.stop_list.is_file():
             self.stop_list = list(
@@ -105,11 +107,15 @@ class Group:
                 logger.info("[VK] Пост из предложки. Он будет пропущен")
                 return
             for word in self.stop_list:
-                if re.findall(
-                        word, post["text"], flags=re.MULTILINE | re.IGNORECASE
-                ):
-                    logger.info("[VK] В посте содержится выражение {} "
-                                "из стоп списка. Пост будет пропущен", word)
+                found = bool(re.findall(
+                    word, post["text"], flags=re.MULTILINE | re.IGNORECASE
+                ))
+                if found != self.invert_stop_list:  # XOR logic - stop if found and not inverted, or not found and inverted
+                    logger.info("[VK] В посте {} выражение {} "
+                                "из стоп списка. Пост будет пропущен",
+                                "отсутствует" if self.invert_stop_list else "содержится",
+                                word)
+                    self.update_ids(is_pinned, post["id"])
                     break
             else:
                 for word in self.blacklist:
@@ -144,6 +150,7 @@ class Group:
                 else:
                     yield parsed_post
                 time.sleep(5)
+            yield
 
     def get_stories(self) -> Iterable[Story]:
         if not self.send_stories:
