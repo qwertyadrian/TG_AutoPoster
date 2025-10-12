@@ -72,8 +72,6 @@ class AutoPoster(Client):
                 auth_handler=auth_handler,
                 captcha_handler=captcha_handler,
                 api_version="5.131",
-                app_id=6287487,
-                client_secret="QbYic1K3lEV5kTGiqlq2",
             )
             self.vk_session.auth()
 
