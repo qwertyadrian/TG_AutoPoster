@@ -9,3 +9,5 @@ pyyaml==6.0.3
 m3u8==6.0.0
 pycryptodome==3.23.0
 moviepy==2.2.1
+# vk_api requirements
+requests>=2.20.0,<3.0.0
