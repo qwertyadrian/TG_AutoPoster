@@ -1,5 +1,5 @@
 kurigram==2.2.13
-tgcrypto
+tgcrypto==1.2.5
 loguru==0.7.3
 wget==3.2
 mutagen==1.47.0
