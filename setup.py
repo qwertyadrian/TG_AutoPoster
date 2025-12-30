@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 with open("requirements.txt", encoding="utf-8") as r:
-    requires = [i.strip() for i in r]
+    requires = [i.strip() for i in r if not i.startswith("#")]
 
 with open("TG_AutoPoster/__init__.py", encoding="utf-8") as f:
     version = re.findall(r"__version__ = \"(.+)\"", f.read())[0]
@@ -42,15 +42,17 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet",
         "Topic :: Communications",
         "Topic :: Communications :: Chat",
     ],
-    python_requires="~=3.7",
+    python_requires="~=3.8",
 )

@@ -213,11 +213,16 @@ class Post:
         logger.info("[VK] Извлечение видео")
         logger.debug(attachment)
 
-        lnk = "https://m.vk.com/video{owner_id}_{id}".format(**attachment)
-        vid_key = "{owner_id}_{id}".format(**attachment)
-        if attachment.get("access_key"):
-            lnk += "?list={access_key}"
-            vid_key += "_{access_key}"
+        access_key = attachment.get("access_key")
+        owner_id = attachment["owner_id"]
+        vid_id = attachment["id"]
+
+        lnk = f"https://m.vk.com/video{owner_id}_{vid_id}"
+        vid_key = f"{owner_id}_{vid_id}"
+
+        if access_key:
+            lnk += f"?list={access_key}"
+            vid_key += f"_{access_key}"
 
         video_text = (
             '\n🎥 <a href="{}">{title}</a>'

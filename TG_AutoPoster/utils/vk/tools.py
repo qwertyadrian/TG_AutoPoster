@@ -141,7 +141,7 @@ def gif_to_video(path):
 
     make_frame = lambda t: 2 * [0.0]
     audioclip = AudioClip(make_frame, duration=videoclip.duration)
-    videoclip = videoclip.set_audio(audioclip)
+    videoclip = videoclip.with_audio(audioclip)
     videoclip.write_videofile(result)
 
     return result

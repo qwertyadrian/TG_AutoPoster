@@ -2,6 +2,8 @@ from threading import Thread
 from time import sleep
 from typing import Tuple
 
+from vk_api import vk_api
+
 user_input = ["", None]
 
 
@@ -26,7 +28,7 @@ def auth_handler() -> Tuple[str, bool]:
     return num, remember_device
 
 
-def captcha_handler(captcha):
+def captcha_handler(captcha: vk_api.Captcha):
     key = user_input[1]
     input_thread = Thread(target=get_captcha_code, args=(user_input, captcha))
     input_thread.daemon = True
@@ -39,14 +41,15 @@ def captcha_handler(captcha):
             break
     if not key:
         raise TimeoutError("Время ожидания ввода истекло.")
-    return captcha.try_again(key)
+    return captcha.try_again(success_token=key)
 
 
 def get_auth_code(user_input_ref):
     user_input_ref[0] = input("Введите код авторизации: ")
 
 
-def get_captcha_code(user_input_ref, captcha):
+def get_captcha_code(user_input_ref, captcha: vk_api.Captcha):
     user_input_ref[1] = input(
-        "Enter captcha code {0}: ".format(captcha.get_url())
-    ).strip()
+        f"Solve captcha from url \n{captcha.redirect_uri}\n"
+        f"and enter success_token from response in browser web developer tools:\n>> "
+    )
