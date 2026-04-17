@@ -110,7 +110,7 @@ ENV/
 .mypy_cache/
 
 tests/
-config.ini
+config.yaml
 *.pid
-TG_AutoPoster.session
-TG_AutoPoster.session-journal
+autoposter.session
+autoposter.session-journal
