@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 
 import pyrogram.filters
@@ -259,7 +260,7 @@ def restart(bot: AutoPoster, message: Message):
     else:
         message.reply("Перезапуск бота...")
         os.chdir(bot.config_path.parent)
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        os.execv(sys.executable, [sys.executable, "-m", "TG_AutoPoster"] + sys.argv[1:])
 
 
 @AutoPoster.on_message(
@@ -272,7 +273,7 @@ def exit_(_, message: Message):
         message.reply("Команда не доступна в Windows.")
     else:
         message.reply("Завершение работы...")
-        sys.exit(0)
+        os.kill(os.getpid(), signal.SIGTERM)
 
 @AutoPoster.on_message(
     pyrogram.filters.command(commands=["cancel"]) & pyrogram.filters.private
