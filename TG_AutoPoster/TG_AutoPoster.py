@@ -122,7 +122,8 @@ class AutoPoster(Client):
                 session=self.vk_session,
                 **settings,
             )
-            chat_ids = self.config["domains"][domain]["channel"]
+            chat_ids = (self.config["domains"][domain]["channel"], self.config["domains"][domain].get("topic_id"),)
+            logger.info(f"chat_ids: {chat_ids}")
             self._iter_posts(group, settings, chat_ids)
 
         logger.info("[VK] Проверка завершена")
@@ -141,7 +142,8 @@ class AutoPoster(Client):
             session=self.vk_session,
             **settings,
         )
-        chat_ids = self.config["domains"][domain]["channel"]
+        chat_ids = (self.config["domains"][domain]["channel"], self.config["domains"][domain].get("topic_id"),)
+        logger.info(chat_ids)
         self._iter_posts(group, settings, chat_ids)
         longpoll = VkBotLongPoll(self.vk_session, group_id=-group.group_id)
         for event in longpoll.listen():
