@@ -1,4 +1,3 @@
-import logging
 from typing import Sequence, Union, Optional, Tuple
 
 import pyrogram.errors
@@ -29,9 +28,8 @@ class Sender:
 
     @logger.catch(reraise=True)
     def send_post(self):
-        logging.info(f"Sending posts to {self.chat_ids}")
+        logger.info(f"Sending posts to {self.chat_ids}")
         for chat_id, thread_id in self.chat_ids:
-            logger.info(thread_id)
             self.send_splitted_message(self.post.text, chat_id, thread_id)
             if (
                 len(self.post.text) >= 1
