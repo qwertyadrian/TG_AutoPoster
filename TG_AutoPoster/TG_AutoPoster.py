@@ -1,6 +1,6 @@
 import os
 from importlib import import_module
-from itertools import chain
+from itertools import chain, zip_longest
 from pathlib import Path
 
 import yaml
@@ -122,8 +122,9 @@ class AutoPoster(Client):
                 session=self.vk_session,
                 **settings,
             )
-            chat_ids = self.config["domains"][domain]["channel"]
-            self._iter_posts(group, settings, chat_ids)
+            domain_config = self.config["domains"][domain]
+            channel_topic_pairs = self._get_channel_topic_pairs(domain_config)
+            self._iter_posts(group, settings, channel_topic_pairs)
 
         logger.info("[VK] Проверка завершена")
 
@@ -141,8 +142,9 @@ class AutoPoster(Client):
             session=self.vk_session,
             **settings,
         )
-        chat_ids = self.config["domains"][domain]["channel"]
-        self._iter_posts(group, settings, chat_ids)
+        domain_config = self.config["domains"][domain]
+        channel_topic_pairs = self._get_channel_topic_pairs(domain_config)
+        self._iter_posts(group, settings, channel_topic_pairs)
         longpoll = VkBotLongPoll(self.vk_session, group_id=-group.group_id)
         for event in longpoll.listen():
             logger.debug("Received event: {}", event)
@@ -152,9 +154,7 @@ class AutoPoster(Client):
                         sender = Sender(
                             bot=self,
                             post=p,
-                            chat_ids=chat_ids
-                            if isinstance(chat_ids, list)
-                            else [chat_ids],
+                            chat_ids=channel_topic_pairs,
                             **settings,
                         )
                         sender.send_post()
@@ -176,15 +176,25 @@ class AutoPoster(Client):
         with self.config_path.open("w", encoding="utf-8") as stream:
             yaml.dump(self.config, stream, indent=4, allow_unicode=True)
 
+    def _get_channel_topic_pairs(self, domain_config: dict):
+        chat_ids = domain_config.get("channel")
+        topic_ids = domain_config.get("topic_id")
+
+        chat_ids = chat_ids if isinstance(chat_ids, list) else [chat_ids]
+        topic_ids = topic_ids if isinstance(topic_ids, list) else [topic_ids]
+
+        if len(topic_ids) > len(chat_ids):
+            raise ValueError("Number of topic IDs must be less than or equal to the number of channel IDs")
+
+        return zip_longest(chat_ids, topic_ids)
+
     def _iter_posts(self, group, settings, chat_ids):
         for post in chain(group.get_posts(), group.get_stories()):
             if post:
                 sender = Sender(
                     bot=self,
                     post=post,
-                    chat_ids=chat_ids
-                    if isinstance(chat_ids, list)
-                    else [chat_ids],
+                    chat_ids=chat_ids,
                     **settings,
                 )
                 sender.send_post()
